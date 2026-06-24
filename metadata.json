@@ -1,0 +1,6 @@
+{
+  "name": "FitCircle",
+  "description": "A gamified social fitness tracker featuring leaderboards, daily streaks, customizable health goals, and a virtual consistency race for monthly discounts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
