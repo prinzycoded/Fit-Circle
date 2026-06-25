@@ -23,12 +23,88 @@ import {
   Award,
   Shield,
   Bell,
+  Megaphone,
+  Trash2,
+  Pin,
+  MessageCircle,
+  ThumbsUp,
+  Group,
+  Timer,
+  Gift,
+  UserPlus,
 } from "lucide-react";
 
-export default function OwnerDashboard({ gym, members, onViewMember }) {
+export default function OwnerDashboard({ gym, members, feedPosts, challenges, accountabilityGroups, currentUser, onRemovePost, onCreateAnnouncement, onCreateShoutout, onCreateChallenge, onNudgeGroup }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewingMember, setViewingMember] = useState(null);
   const [sortBy, setSortBy] = useState("points");
+  const [showAnnounceModal, setShowAnnounceModal] = useState(false);
+  const [announceContent, setAnnounceContent] = useState("");
+  const [shoutoutMember, setShoutoutMember] = useState(null);
+  const [shoutoutReason, setShoutoutReason] = useState("");
+  const [showChallengeModal, setShowChallengeModal] = useState(false);
+  const [challengeForm, setChallengeForm] = useState({
+    title: "", description: "", type: "duration", targetValue: 60, metricLabel: "min", daysLeft: 7, rewardPoints: 300
+  });
+
+  // Generate activity timeline from existing data
+  const [timelineActivities] = useState(() => {
+    const activities = [];
+    const now = Date.now();
+    const hrs = (n) => `${n}h ago`;
+    
+    members.forEach((m, i) => {
+      activities.push({
+        id: `act-checkin-${m.id}`,
+        memberName: m.name,
+        memberAvatar: m.avatar,
+        action: "checked in",
+        detail: `${m.checkInsThisMonth} check-ins this month`,
+        time: hrs(i + 1),
+        type: "checkin",
+      });
+      activities.push({
+        id: `act-workout-${m.id}`,
+        memberName: m.name,
+        memberAvatar: m.avatar,
+        action: "completed a workout",
+        detail: `${m.metrics.activeMinutes} min active`,
+        time: hrs(i + 3),
+        type: "workout",
+      });
+      if (m.streak >= 10) {
+        activities.push({
+          id: `act-streak-${m.id}`,
+          memberName: m.name,
+          memberAvatar: m.avatar,
+          action: "hit a streak milestone",
+          detail: `${m.streak} day streak!`,
+          time: hrs(i + 5),
+          type: "streak",
+        });
+      }
+    });
+    
+    feedPosts.forEach((p, i) => {
+      if (i < 5) {
+        activities.push({
+          id: `act-post-${p.id}`,
+          memberName: p.authorName,
+          memberAvatar: p.authorAvatar,
+          action: "shared a post",
+          detail: p.content.substring(0, 50) + (p.content.length > 50 ? "..." : ""),
+          time: p.timestamp,
+          type: "post",
+        });
+      }
+    });
+
+    return activities.sort((a, b) => {
+      const aNum = parseInt(a.time) || 0;
+      const bNum = parseInt(b.time) || 0;
+      return aNum - bNum;
+    }).slice(0, 20);
+  });
 
   const filteredMembers = members
     .filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -105,6 +181,50 @@ export default function OwnerDashboard({ gym, members, onViewMember }) {
             <span className={`w-1.5 h-1.5 rounded-full ${member.status === "online" ? "bg-theme-success" : "bg-theme-muted"}`}></span>
             {member.lastActive}
           </span>
+        </div>
+
+        {/* Shoutout action */}
+        <div className="pt-3 border-t border-theme-border">
+          {shoutoutMember === member.id ? (
+            <div className="space-y-2">
+              <textarea
+                placeholder={`Why is ${member.name} awesome?`}
+                value={shoutoutReason}
+                onChange={(e) => setShoutoutReason(e.target.value)}
+                rows={2}
+                className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-3 py-2 text-xs font-body text-theme-primary placeholder-theme-muted resize-none focus:outline-none focus:border-theme-accent transition-colors"
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    if (shoutoutReason.trim()) {
+                      onCreateShoutout(member.name, member.avatar, shoutoutReason.trim());
+                      setShoutoutReason("");
+                      setShoutoutMember(null);
+                    }
+                  }}
+                  disabled={!shoutoutReason.trim()}
+                  className="flex-1 py-2 rounded-xl bg-theme-accent hover:bg-theme-accent-hover disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-display font-bold transition-all cursor-pointer"
+                >
+                  Send Shoutout
+                </button>
+                <button
+                  onClick={() => { setShoutoutMember(null); setShoutoutReason(""); }}
+                  className="py-2 px-4 rounded-xl border border-theme-border text-xs font-display font-bold text-theme-secondary hover:bg-theme-border/30 transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShoutoutMember(member.id)}
+              className="w-full py-2.5 rounded-xl bg-theme-warning-light text-theme-warning text-xs font-display font-bold hover:bg-theme-warning/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <Star size={14} />
+              Give Shoutout
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -314,16 +434,22 @@ export default function OwnerDashboard({ gym, members, onViewMember }) {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <button className="card flex items-center gap-3 hover:bg-theme-accent-light/50 transition-colors text-left cursor-pointer">
+        <button
+          onClick={() => setShowAnnounceModal(true)}
+          className="card flex items-center gap-3 hover:bg-theme-accent-light/50 transition-colors text-left cursor-pointer"
+        >
           <div className="p-2 bg-theme-accent-light text-theme-accent rounded-xl">
-            <Bell size={18} />
+            <Megaphone size={18} />
           </div>
           <div>
             <p className="text-xs font-display font-bold text-theme-primary">Send Announcement</p>
             <p className="text-[10px] text-theme-muted">Notify all members</p>
           </div>
         </button>
-        <button className="card flex items-center gap-3 hover:bg-theme-support-light/50 transition-colors text-left cursor-pointer">
+        <button
+          onClick={() => setShowChallengeModal(true)}
+          className="card flex items-center gap-3 hover:bg-theme-support-light/50 transition-colors text-left cursor-pointer"
+        >
           <div className="p-2 bg-theme-support-light text-theme-support rounded-xl">
             <Zap size={18} />
           </div>
@@ -342,6 +468,322 @@ export default function OwnerDashboard({ gym, members, onViewMember }) {
           </div>
         </button>
       </div>
+
+      {/* Feed Moderation */}
+      <div className="card p-0 overflow-hidden">
+        <div className="px-5 py-4 border-b border-theme-border flex items-center gap-2">
+          <MessageCircle size={16} className="text-theme-accent" />
+          <h2 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">Feed Moderation</h2>
+          <span className="text-[10px] font-bold bg-theme-accent-light text-theme-accent px-2 py-0.5 rounded-full">{feedPosts.length} posts</span>
+        </div>
+        <div className="divide-y divide-theme-border/50">
+          {feedPosts.length === 0 ? (
+            <div className="px-5 py-8 text-center text-sm text-theme-muted">No posts yet.</div>
+          ) : (
+            [...feedPosts].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)).slice(0, 15).map((post) => (
+              <div key={post.id} className="flex items-center justify-between px-5 py-3 hover:bg-theme-border/10 transition-colors">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <img referrerPolicy="no-referrer" src={post.authorAvatar} alt="" className="w-8 h-8 rounded-lg border border-theme-border shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-display font-bold text-theme-primary truncate">{post.authorName}</p>
+                    <p className="text-[11px] text-theme-secondary truncate">{post.content}</p>
+                    <div className="flex items-center gap-2 text-[9px] text-theme-muted mt-0.5">
+                      <span className={`px-1.5 py-0.5 rounded font-bold ${
+                        post.type === "Announcement" ? "bg-theme-accent-light text-theme-accent" :
+                        post.type === "Workout" ? "bg-theme-accent-light text-theme-accent" :
+                        post.type === "Challenge" ? "bg-theme-warning-light text-theme-warning" :
+                        post.type === "Milestone" ? "bg-theme-success-light text-theme-success" :
+                        "bg-theme-border/30 text-theme-muted"
+                      }`}>{post.type}</span>
+                      <span>{post.timestamp}</span>
+                      <span className="flex items-center gap-1"><ThumbsUp size={9} />{post.likes}</span>
+                      {post.pinned && <span className="text-theme-accent flex items-center gap-1"><Pin size={9} />Pinned</span>}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => onRemovePost(post.id)}
+                    className="p-1.5 rounded-lg hover:bg-theme-border/30 text-theme-muted hover:text-theme-accent transition-colors cursor-pointer"
+                    title="Remove post"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+        <div className="px-5 py-2.5 text-center text-[10px] font-bold text-theme-muted bg-theme-border/5">
+          Showing {Math.min(15, feedPosts.length)} of {feedPosts.length} posts
+        </div>
+      </div>
+
+      {/* Activity Timeline */}
+      <div className="card p-0 overflow-hidden">
+        <div className="px-5 py-4 border-b border-theme-border flex items-center gap-2">
+          <Activity size={16} className="text-theme-support" />
+          <h2 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">Activity Timeline</h2>
+          <span className="text-[10px] font-bold bg-theme-support-light text-theme-support px-2 py-0.5 rounded-full">Live</span>
+        </div>
+        <div className="divide-y divide-theme-border/50">
+          {timelineActivities.map((act) => (
+            <div key={act.id} className="flex items-center gap-3 px-5 py-3">
+              <img referrerPolicy="no-referrer" src={act.memberAvatar} alt="" className="w-8 h-8 rounded-full border border-theme-border shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-body text-theme-primary leading-relaxed">
+                  <span className="font-display font-bold">{act.memberName}</span> {act.action}
+                </p>
+                <p className="text-[10px] text-theme-muted">{act.detail}</p>
+              </div>
+              <span className="text-[10px] text-theme-muted shrink-0">{act.time}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Group Hub */}
+      <div className="card p-0 overflow-hidden">
+        <div className="px-5 py-4 border-b border-theme-border flex items-center gap-2">
+          <Group size={16} className="text-theme-warning" />
+          <h2 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">Group Hub</h2>
+          <span className="text-[10px] font-bold bg-theme-warning-light text-theme-warning px-2 py-0.5 rounded-full">{accountabilityGroups.length} groups</span>
+        </div>
+        <div className="divide-y divide-theme-border/50">
+          {accountabilityGroups.length === 0 ? (
+            <div className="px-5 py-8 text-center text-sm text-theme-muted">No groups yet.</div>
+          ) : (
+            accountabilityGroups.map((group) => {
+              const totalMinutes = group.members.reduce((s, m) => s + m.weeklyMinutes, 0);
+              const pct = group.groupChallenge ? Math.round(group.groupChallenge.current / group.groupChallenge.target * 100) : 0;
+              return (
+                <div key={group.id} className="px-5 py-4 hover:bg-theme-border/10 transition-colors">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-theme-warning-light text-theme-warning rounded-lg">
+                        <Users size={14} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-display font-bold text-theme-primary">{group.name}</p>
+                        <p className="text-[9px] text-theme-muted">{group.members.length} members · {totalMinutes} min this week</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => onNudgeGroup(group.id, group.members[0]?.name)}
+                      className="p-1.5 rounded-lg hover:bg-theme-border/30 text-theme-muted hover:text-theme-accent transition-colors cursor-pointer"
+                      title="Send nudge"
+                    >
+                      <UserPlus size={14} />
+                    </button>
+                  </div>
+                  {group.groupChallenge && (
+                    <div className="mt-2 bg-theme-border/10 rounded-xl p-3">
+                      <div className="flex items-center justify-between text-[10px] mb-1.5">
+                        <span className="font-bold text-theme-primary flex items-center gap-1"><Gift size={11} /> {group.groupChallenge.title}</span>
+                        <span className="text-theme-muted">{group.groupChallenge.current}/{group.groupChallenge.target} {group.groupChallenge.unit}</span>
+                      </div>
+                      <div className="progress-bar h-1.5">
+                        <div className="progress-bar-fill bg-theme-warning" style={{ width: `${Math.min(100, pct)}%` }}></div>
+                      </div>
+                    </div>
+                  )}
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {group.members.map((m) => (
+                      <div key={m.id} className="flex items-center gap-1 bg-theme-border/20 rounded-full pl-1 pr-2 py-0.5">
+                        <img referrerPolicy="no-referrer" src={m.avatar} alt="" className="w-4 h-4 rounded-full" />
+                        <span className="text-[9px] font-bold text-theme-secondary">{m.name.split(" ")[0]}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+        <div className="px-5 py-2.5 text-center text-[10px] font-bold text-theme-muted bg-theme-border/5">
+          {accountabilityGroups.reduce((s, g) => s + g.members.length, 0)} total members across all groups
+        </div>
+      </div>
+
+      {/* Announcement Modal */}
+      {showAnnounceModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowAnnounceModal(false)}>
+          <div className="card max-w-lg w-full space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-theme-accent-light text-theme-accent rounded-xl">
+                  <Megaphone size={18} />
+                </div>
+                <h3 className="text-base font-display font-extrabold text-theme-primary">Send Announcement</h3>
+              </div>
+              <button onClick={() => setShowAnnounceModal(false)} className="p-1.5 rounded-lg hover:bg-theme-border/30 text-theme-muted cursor-pointer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <textarea
+              placeholder="Write your announcement to all members..."
+              value={announceContent}
+              onChange={(e) => setAnnounceContent(e.target.value)}
+              rows={4}
+              className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-3 text-sm font-body text-theme-primary placeholder-theme-muted resize-none focus:outline-none focus:border-theme-accent transition-colors"
+            />
+            <p className="text-[10px] text-theme-muted font-medium">
+              This will appear as a pinned announcement in the community social feed.
+            </p>
+            <div className="flex items-center gap-3 pt-1">
+              <button
+                onClick={() => setShowAnnounceModal(false)}
+                className="flex-1 py-2.5 rounded-xl border border-theme-border text-xs font-display font-bold text-theme-secondary hover:bg-theme-border/30 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (announceContent.trim()) {
+                    onCreateAnnouncement(announceContent.trim());
+                    setAnnounceContent("");
+                    setShowAnnounceModal(false);
+                  }
+                }}
+                disabled={!announceContent.trim()}
+                className="flex-1 py-2.5 rounded-xl bg-theme-accent hover:bg-theme-accent-hover disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-display font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Megaphone size={14} />
+                Send to All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Challenge Creation Modal */}
+      {showChallengeModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowChallengeModal(false)}>
+          <div className="card max-w-lg w-full space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-theme-support-light text-theme-support rounded-xl">
+                  <Zap size={18} />
+                </div>
+                <h3 className="text-base font-display font-extrabold text-theme-primary">Create Gym Challenge</h3>
+              </div>
+              <button onClick={() => setShowChallengeModal(false)} className="p-1.5 rounded-lg hover:bg-theme-border/30 text-theme-muted cursor-pointer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Challenge Title</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 30-Day Streak Challenge"
+                  value={challengeForm.title}
+                  onChange={(e) => setChallengeForm({...challengeForm, title: e.target.value})}
+                  className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary placeholder-theme-muted focus:outline-none focus:border-theme-accent transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Description</label>
+                <textarea
+                  placeholder="Describe the challenge goals..."
+                  value={challengeForm.description}
+                  onChange={(e) => setChallengeForm({...challengeForm, description: e.target.value})}
+                  rows={2}
+                  className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary placeholder-theme-muted resize-none focus:outline-none focus:border-theme-accent transition-colors"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Type</label>
+                  <select
+                    value={challengeForm.type}
+                    onChange={(e) => setChallengeForm({...challengeForm, type: e.target.value})}
+                    className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary focus:outline-none focus:border-theme-accent cursor-pointer"
+                  >
+                    <option value="duration">Duration (min)</option>
+                    <option value="steps">Steps</option>
+                    <option value="frequency">Frequency (days)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Target</label>
+                  <input
+                    type="number"
+                    value={challengeForm.targetValue}
+                    onChange={(e) => setChallengeForm({...challengeForm, targetValue: parseInt(e.target.value) || 0})}
+                    className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary focus:outline-none focus:border-theme-accent transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Label</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. min, steps, sessions"
+                    value={challengeForm.metricLabel}
+                    onChange={(e) => setChallengeForm({...challengeForm, metricLabel: e.target.value})}
+                    className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary placeholder-theme-muted focus:outline-none focus:border-theme-accent transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Duration (days)</label>
+                  <input
+                    type="number"
+                    value={challengeForm.daysLeft}
+                    onChange={(e) => setChallengeForm({...challengeForm, daysLeft: parseInt(e.target.value) || 0})}
+                    className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary focus:outline-none focus:border-theme-accent transition-colors"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Reward Points</label>
+                <input
+                  type="number"
+                  value={challengeForm.rewardPoints}
+                  onChange={(e) => setChallengeForm({...challengeForm, rewardPoints: parseInt(e.target.value) || 0})}
+                  className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary focus:outline-none focus:border-theme-accent transition-colors"
+                />
+              </div>
+            </div>
+
+            <p className="text-[10px] text-theme-muted font-medium">
+              This challenge will appear in all members' challenge dashboards.
+            </p>
+
+            <div className="flex items-center gap-3 pt-1">
+              <button
+                onClick={() => setShowChallengeModal(false)}
+                className="flex-1 py-2.5 rounded-xl border border-theme-border text-xs font-display font-bold text-theme-secondary hover:bg-theme-border/30 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (challengeForm.title.trim() && challengeForm.description.trim()) {
+                    onCreateChallenge(
+                      challengeForm.title.trim(),
+                      challengeForm.description.trim(),
+                      challengeForm.type,
+                      challengeForm.targetValue,
+                      challengeForm.metricLabel,
+                      challengeForm.daysLeft,
+                      challengeForm.rewardPoints
+                    );
+                    setChallengeForm({ title: "", description: "", type: "duration", targetValue: 60, metricLabel: "min", daysLeft: 7, rewardPoints: 300 });
+                    setShowChallengeModal(false);
+                  }
+                }}
+                disabled={!challengeForm.title.trim() || !challengeForm.description.trim()}
+                className="flex-1 py-2.5 rounded-xl bg-theme-support hover:bg-theme-support/80 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-display font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Zap size={14} />
+                Launch Challenge
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Member detail modal */}
       {viewingMember && (

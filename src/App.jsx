@@ -449,6 +449,69 @@ export default function App() {
     showToast("Your post has been shared with the community!", "success");
   };
 
+  // Remove a post (owner moderation)
+  const handleRemovePost = (postId) => {
+    setFeedPosts(prev => prev.filter(p => p.id !== postId));
+    showToast("Post has been removed from the feed.", "info");
+  };
+
+  // Gym announcement (owner)
+  const handleCreateAnnouncement = (content) => {
+    const newPost = {
+      id: `post_announce_${Date.now()}`,
+      authorName: gym.name,
+      authorAvatar: gym.ownerAvatar,
+      type: "Announcement",
+      content: content,
+      likes: 0,
+      likedByCount: 0,
+      hasLiked: false,
+      timestamp: "Just now",
+      comments: [],
+      pinned: true,
+    };
+    setFeedPosts(prev => [newPost, ...prev]);
+    showToast("Announcement sent to all members!", "success");
+  };
+
+  // Give a member shoutout (owner)
+  const handleCreateShoutout = (memberName, memberAvatar, reason) => {
+    const newPost = {
+      id: `post_shoutout_${Date.now()}`,
+      authorName: gym.name,
+      authorAvatar: gym.ownerAvatar,
+      type: "Milestone",
+      content: `Owner Shoutout: ${memberName} ${reason}`,
+      likes: 0,
+      likedByCount: 0,
+      hasLiked: false,
+      timestamp: "Just now",
+      comments: [],
+    };
+    setFeedPosts(prev => [newPost, ...prev]);
+    showToast(`Shoutout sent for ${memberName}!`, "success");
+  };
+
+  // Create a gym-wide challenge (owner)
+  const handleCreateOwnerChallenge = (title, description, type, targetValue, metricLabel, daysLeft, rewardPoints) => {
+    const newChallenge = {
+      id: `owner_chal_${Date.now()}`,
+      title,
+      description,
+      type,
+      targetValue,
+      currentValue: 0,
+      metricLabel,
+      daysLeft,
+      invitedBy: gym.name,
+      status: "active",
+      rewardPoints,
+      createdByOwner: true,
+    };
+    setChallenges(prev => [newChallenge, ...prev]);
+    showToast(`Challenge "${title}" created and sent to all members!`, "success");
+  };
+
   // Accept a challenge card
   const handleAcceptChallenge = (challengeId) => {
     setChallenges(chals => chals.map(c => {
@@ -686,6 +749,15 @@ export default function App() {
           <OwnerDashboard
             gym={gym}
             members={members}
+            feedPosts={feedPosts}
+            challenges={challenges}
+            accountabilityGroups={accountabilityGroups}
+            currentUser={user}
+            onRemovePost={handleRemovePost}
+            onCreateAnnouncement={handleCreateAnnouncement}
+            onCreateShoutout={handleCreateShoutout}
+            onCreateChallenge={handleCreateOwnerChallenge}
+            onNudgeGroup={handleNudgeGroupMember}
           />
         ) : (
 

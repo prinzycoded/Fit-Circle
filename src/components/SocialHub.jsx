@@ -39,7 +39,7 @@ export default function SocialHub({
     setShowImageInput(false);
   };
 
-  const categories = ["All", "Workout", "Challenge", "Milestone", "Nutrition"];
+  const categories = ["All", "Announcement", "Workout", "Challenge", "Milestone", "Nutrition"];
 
   const normalizePost = (p) => ({
     ...p,
@@ -58,7 +58,9 @@ export default function SocialHub({
     })),
   });
 
-  const filteredPosts = (activeFilter === "All" ? feed : feed.filter(p => p.type === activeFilter)).map(normalizePost);
+  const filteredPosts = (activeFilter === "All" ? [...feed] : feed.filter(p => p.type === activeFilter))
+    .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
+    .map(normalizePost);
 
   const PostContent = ({ post }) => {
     const getCategoryStyle = (type) => {
@@ -67,6 +69,7 @@ export default function SocialHub({
         case "Challenge": return { bg: "bg-theme-warning-light", text: "text-theme-warning" };
         case "Milestone": return { bg: "bg-theme-success-light", text: "text-theme-success" };
         case "Nutrition": return { bg: "bg-theme-support-light", text: "text-theme-support" };
+        case "Announcement": return { bg: "bg-theme-accent-light", text: "text-theme-accent" };
         default: return { bg: "bg-theme-border/50", text: "text-theme-muted" };
       }
     };
@@ -76,6 +79,7 @@ export default function SocialHub({
       "Challenge": { background: 'linear-gradient(135deg, #3D6B8C 0%, #5a8aa5 100%)' },
       "Milestone": { background: 'linear-gradient(135deg, #1D202B 0%, #3a3f4a 100%)' },
       "Nutrition": { background: 'linear-gradient(135deg, #3D6B8C 0%, #2e4f63 100%)' },
+      "Announcement": { background: 'linear-gradient(135deg, #D95C42 0%, #1D202B 100%)' },
     };
 
     const categoryStyle = getCategoryStyle(post.type);
