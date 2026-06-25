@@ -5,7 +5,10 @@ import {
   MoreVertical,
   Send,
   Repeat2,
-  Bookmark
+  Bookmark,
+  PenSquare,
+  Image,
+  X
 } from "lucide-react";
 
 import { motion } from "motion/react";
@@ -15,10 +18,26 @@ export default function SocialHub({
   currentUser, 
   onAddComment,
   onToggleLike,
-  onReshare
+  onReshare,
+  onCreatePost
 }) {
   const [newComment, setNewComment] = useState({});
   const [activeFilter, setActiveFilter] = useState("All");
+  const [postContent, setPostContent] = useState("");
+  const [postType, setPostType] = useState("Milestone");
+  const [postImage, setPostImage] = useState("");
+  const [showImageInput, setShowImageInput] = useState(false);
+
+  const postTypes = ["Workout", "Challenge", "Milestone", "Nutrition"];
+
+  const handleSubmitPost = () => {
+    if (!postContent.trim()) return;
+    onCreatePost(postContent.trim(), postType, postImage.trim() || null);
+    setPostContent("");
+    setPostType("Milestone");
+    setPostImage("");
+    setShowImageInput(false);
+  };
 
   const categories = ["All", "Workout", "Challenge", "Milestone", "Nutrition"];
 
@@ -182,6 +201,86 @@ export default function SocialHub({
 
   return (
     <div id="social-hub-section" className="space-y-6">
+
+      {/* Create Post Card */}
+      <div className="card p-5">
+        <div className="flex items-start gap-3">
+          <img referrerPolicy="no-referrer" src={currentUser.avatar} alt="" className="w-10 h-10 rounded-full border-2 border-theme-border shrink-0" />
+          <div className="flex-1 min-w-0 space-y-3">
+            <textarea
+              placeholder="What's on your mind? Share your fitness journey..."
+              value={postContent}
+              onChange={(e) => setPostContent(e.target.value)}
+              rows={2}
+              className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-3 text-sm font-body text-theme-primary placeholder-theme-muted resize-none focus:outline-none focus:border-theme-accent transition-colors"
+            />
+
+            {/* Type selector pills */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider">Type:</span>
+              {postTypes.map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setPostType(type)}
+                  className={`px-3 py-1.5 text-[10px] font-display font-bold rounded-xl transition-all cursor-pointer ${
+                    postType === type
+                      ? "bg-theme-accent text-white shadow-sm"
+                      : "bg-theme-border/30 text-theme-secondary hover:bg-theme-border/50"
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+
+            {/* Optional image URL */}
+            {showImageInput && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Paste image URL..."
+                  value={postImage}
+                  onChange={(e) => setPostImage(e.target.value)}
+                  className="flex-1 bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2 text-xs font-body text-theme-primary placeholder-theme-muted focus:outline-none focus:border-theme-accent transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => { setShowImageInput(false); setPostImage(""); }}
+                  className="p-2 text-theme-muted hover:text-theme-primary cursor-pointer"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+
+            {/* Actions row */}
+            <div className="flex items-center justify-between gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowImageInput(!showImageInput)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-display font-bold transition-all cursor-pointer ${
+                  showImageInput
+                    ? "bg-theme-accent-light text-theme-accent"
+                    : "text-theme-muted hover:text-theme-primary hover:bg-theme-border/30"
+                }`}
+              >
+                <Image size={14} />
+                Photo
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmitPost}
+                disabled={!postContent.trim()}
+                className="px-5 py-2 bg-theme-accent hover:bg-theme-accent-hover disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-display font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+              >
+                <PenSquare size={14} />
+                Share Post
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Header */}
       <div className="card flex flex-col md:flex-row items-center justify-between gap-4">

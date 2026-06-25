@@ -21,6 +21,7 @@ import AccountabilityGroups from "./components/AccountabilityGroups";
 import WeeklyChallengeSystem from "./components/WeeklyChallengeSystem";
 import StreakSystem from "./components/StreakSystem";
 import OwnerDashboard from "./components/OwnerDashboard";
+import WelcomePage from "./components/WelcomePage";
 import { 
   Flame, 
   Trophy, 
@@ -74,7 +75,7 @@ const safeStorage = {
 
 export default function App() {
   // Navigation State
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState("welcome");
 
   // Core App States
   const [metrics, setMetrics] = useState(() => {
@@ -429,6 +430,25 @@ export default function App() {
     }));
   };
 
+  // Create a custom user post on the social feed
+  const handleCreatePost = (content, type, image) => {
+    const newPost = {
+      id: `post_user_${Date.now()}`,
+      authorName: user.name,
+      authorAvatar: user.avatar,
+      type: type || "Milestone",
+      content: content,
+      image: image || null,
+      likes: 0,
+      likedByCount: 0,
+      hasLiked: false,
+      timestamp: "Just now",
+      comments: [],
+    };
+    setFeedPosts(prev => [newPost, ...prev]);
+    showToast("Your post has been shared with the community!", "success");
+  };
+
   // Accept a challenge card
   const handleAcceptChallenge = (challengeId) => {
     setChallenges(chals => chals.map(c => {
@@ -671,13 +691,27 @@ export default function App() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* LEFT COLUMN: Visual Navigation tabs & Mini Consistency Widget (3 Grid Columns) */}
-          <section id="sidebar-col" className="lg:col-span-3 space-y-6">
+          {/* LEFT COLUMN: Sidebar Navigation & Widgets */}
+          <section id="sidebar-col" className="lg:col-span-3 space-y-4">
+            <div className="space-y-4 p-4 bg-theme-surface/50 rounded-2xl border border-theme-border/60">
             
-            {/* Visual Navigation + Daily Check-In Combined */}
+            {/* Visual Navigation */}
             <div className="card space-y-1">
               <p className="text-[11px] font-display font-bold uppercase text-theme-muted tracking-widest mb-2 px-1">Navigation</p>
-              
+
+              <button
+                id="view-home-btn"
+                onClick={() => setActiveTab("welcome")}
+                className={`w-full text-left font-display font-bold text-xs py-3 px-4 rounded-xl transition-all flex items-center justify-between ${
+                  activeTab === "welcome"
+                    ? "bg-theme-accent text-white shadow-sm"
+                    : "text-theme-secondary hover:text-theme-primary hover:bg-theme-border/30"
+                }`}
+              >
+                <span>Home</span>
+                <ChevronRight size={14} className={activeTab === "welcome" ? "opacity-100" : "opacity-0"} />
+              </button>
+
               <button
                 id="view-dashboard-btn"
                 onClick={() => setActiveTab("dashboard")}
@@ -768,56 +802,7 @@ export default function App() {
                 <span>Weekly Challenges</span>
                 <ChevronRight size={14} className={activeTab === "weeklyChallenges" ? "opacity-100" : "opacity-0"} />
               </button>
-
-              {/* Divider */}
-              <div className="border-t border-theme-border my-2"></div>
-
-              {/* Daily Check-In inside nav card */}
-              <DailyCheckIn
-                user={user}
-                onCheckIn={handleCheckIn}
-              />
             </div>
-
-            {/* Consistency Track */}
-            <div className="card space-y-3">
-              <div className="flex items-center gap-1.5 text-[11px] font-display font-bold uppercase text-theme-muted tracking-widest">
-                <Compass size={12} className="text-theme-accent" />
-                <span>Consistency Track</span>
-              </div>
-              
-              <div>
-                <div className="flex justify-between items-baseline">
-                  <span className="text-lg font-display font-extrabold text-theme-primary">
-                    {user.routinesCompletedThisMonth} / {user.routineTargetMonth}
-                  </span>
-                  <span className="text-[10px] font-display font-extrabold text-theme-support bg-theme-support-light px-2 py-0.5 rounded-full">
-                    {Math.round((user.routinesCompletedThisMonth / user.routineTargetMonth) * 100)}%
-                  </span>
-                </div>
-                <p className="text-[10px] text-theme-muted font-medium mt-0.5 uppercase tracking-wide">Workouts Completed This Month</p>
-              </div>
-
-              <div className="progress-bar">
-                <div 
-                  className="progress-bar-fill bg-theme-accent"
-                  style={{ width: `${(user.routinesCompletedThisMonth / user.routineTargetMonth) * 100}%` }}
-                ></div>
-              </div>
-
-              <p className="text-[10px] text-theme-secondary font-medium">
-                {user.routinesCompletedThisMonth >= 12 
-                  ? "Silver Tier Coupon unlocked! Climb to Gold to get 30% off!"
-                  : "Complete 5 more routine days to unlock Bronze (10% Off) tier!"}
-              </p>
-            </div>
-
-            {/* Streak Protection System */}
-            <StreakSystem
-              user={user}
-              onBuyFreeze={handleBuyStreakFreeze}
-              onUseFreeze={handleUseStreakFreeze}
-            />
 
             {/* Quick action: Reset simulator */}
             <div className="card text-center">
@@ -831,6 +816,7 @@ export default function App() {
               </button>
             </div>
 
+            </div>
           </section>
 
           {/* RIGHT COLUMN: The Interactive Body View (9 Grid Columns) */}
@@ -844,10 +830,22 @@ export default function App() {
                 transition={{ duration: 0.2 }}
                 className="min-h-500px"
               >
+                {activeTab === "welcome" && (
+                  <WelcomePage
+                    user={user}
+                    onCheckIn={handleCheckIn}
+                    onBuyFreeze={handleBuyStreakFreeze}
+                    onUseFreeze={handleUseStreakFreeze}
+                  />
+                )}
+
                 {activeTab === "dashboard" && (
                   <Dashboard 
                     metrics={metrics}
                     user={user}
+                    challenges={challenges}
+                    badges={badges}
+                    feedPosts={feedPosts}
                     onUpdateMetrics={handleUpdateMetrics}
                     onLogWorkout={handleLogWorkout}
                   />
@@ -867,6 +865,7 @@ export default function App() {
                     onToggleLike={(postId) => handleLikePost(postId)}
                     onAddComment={handleAddComment}
                     onReshare={(postId) => showToast("Post reshared to your network!", "success")}
+                    onCreatePost={handleCreatePost}
                   />
                 )}
 

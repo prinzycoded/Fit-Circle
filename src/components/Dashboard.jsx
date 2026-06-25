@@ -1,55 +1,24 @@
 import React, { useState } from "react";
-import { 
-  Footprints, 
-  Droplet, 
-  Moon, 
-  Dumbbell, 
-  Flame, 
-  Plus, 
-  Minus, 
-  Edit3, 
-  Save, 
-  X, 
-  Sparkles, 
+import {
+  Dumbbell,
+  Plus,
+  Sparkles,
+  Trophy,
+  Flame,
   Target,
-  Trophy
+  Clock,
+  Award,
+  ChevronRight,
+  Zap,
+  Medal,
 } from "lucide-react";
-import { motion } from "motion/react";
 
-export default function Dashboard({ metrics, user, onUpdateMetrics, onLogWorkout }) {
-  const [isEditingGoals, setIsEditingGoals] = useState(false);
-  const [editableGoals, setEditableGoals] = useState({
-    stepGoal: metrics.stepGoal,
-    waterGoal: metrics.waterGoal,
-    sleepGoal: metrics.sleepGoal,
-    activeMinutesGoal: metrics.activeMinutesGoal,
-    caloriesBurnedGoal: metrics.caloriesBurnedGoal,
-  });
-
-  const [logStepsAmount, setLogStepsAmount] = useState(1000);
-  const [logWaterAmount, setLogWaterAmount] = useState(250);
+export default function Dashboard({ metrics, user, challenges, badges, feedPosts, onUpdateMetrics, onLogWorkout }) {
   const [customWorkout, setCustomWorkout] = useState({
     type: "Run",
     duration: 30,
     calories: 250,
   });
-
-  const handleSaveGoals = () => {
-    onUpdateMetrics({ ...metrics, ...editableGoals });
-    setIsEditingGoals(false);
-  };
-
-  const handleAddSteps = (amount) => {
-    onUpdateMetrics({ ...metrics, steps: Math.max(0, metrics.steps + amount) });
-  };
-
-  const handleAddWater = (amount) => {
-    onUpdateMetrics({ ...metrics, water: Math.max(0, metrics.water + amount) });
-  };
-
-  const handleAddSleep = (amount) => {
-    onUpdateMetrics({ ...metrics, sleep: Math.max(0, Math.round((metrics.sleep + amount) * 10) / 10) });
-  };
 
   const submitQuickWorkout = (e) => {
     e.preventDefault();
@@ -61,43 +30,13 @@ export default function Dashboard({ metrics, user, onUpdateMetrics, onLogWorkout
     });
   };
 
-  const stepsPercent = Math.min(100, Math.round((metrics.steps / metrics.stepGoal) * 100));
-  const waterPercent = Math.min(100, Math.round((metrics.water / metrics.waterGoal) * 100));
-  const sleepPercent = Math.min(100, Math.round((metrics.sleep / metrics.sleepGoal) * 100));
-  const activePercent = Math.min(100, Math.round((metrics.activeMinutes / metrics.activeMinutesGoal) * 100));
-  const caloriesPercent = Math.min(100, Math.round((metrics.caloriesBurned / metrics.caloriesBurnedGoal) * 100));
-
-  const MetricCard = ({ label, value, unit, goal, percent, color, icon: Icon, children }) => (
-    <div className="card flex flex-col justify-between relative overflow-hidden card-hover">
-      <div className={`absolute top-0 left-0 w-1 h-full ${color}`}></div>
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] font-display font-bold uppercase tracking-widest text-theme-muted">{label}</span>
-        <div className={`w-8 h-8 rounded-full ${color.replace('bg', 'bg').replace('-500', '/10')} flex items-center justify-center ${color.replace('bg', 'text')}`}>
-          <Icon size={16} />
-        </div>
-      </div>
-      <div className="mt-4">
-        <p className="text-3xl font-display font-extrabold text-theme-primary tracking-tight">
-          {value} <span className="text-sm font-medium text-theme-secondary">{unit}</span>
-        </p>
-        <p className="text-xs font-medium text-theme-muted mt-0.5">Goal: {goal}</p>
-      </div>
-      <div className="mt-4">
-        <div className="flex justify-between items-center text-xs font-display font-bold mb-1.5">
-          <span className="text-theme-secondary">Progress</span>
-          <span className={color.replace('bg', 'text')}>{percent}%</span>
-        </div>
-        <div className="progress-bar h-2">
-          <div className={`progress-bar-fill ${color}`} style={{ width: `${percent}%` }}></div>
-        </div>
-      </div>
-      {children && <div className="mt-4 pt-4 border-t border-theme-border">{children}</div>}
-    </div>
-  );
+  const activeChallenges = challenges.filter(c => c.status === "active" || c.status === "pending");
+  const myWorkouts = feedPosts.filter(p => p.authorName === user.name);
+  const nextBadge = badges.filter(b => !b.unlocked)[0];
 
   return (
     <div id="dashboard-section" className="space-y-6">
-      
+
       {/* Welcome banner */}
       <div id="welcome-card" className="rounded-3xl p-6 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #3D6B8C 0%, #1D202B 100%)' }}>
         <div className="absolute right-0 bottom-0 top-0 opacity-5 flex items-center justify-center p-4">
@@ -136,142 +75,138 @@ export default function Dashboard({ metrics, user, onUpdateMetrics, onLogWorkout
         </div>
       </div>
 
-      {/* Goal management bar */}
-      <div className="card flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-theme-accent-light text-theme-accent rounded-xl">
-            <Target size={20} />
+      {/* Quick Stats Row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="card flex items-center gap-3 py-3 px-4">
+          <div className="p-2 bg-theme-accent-light text-theme-accent rounded-xl">
+            <Zap size={16} />
           </div>
           <div>
-            <h3 className="font-display font-bold text-theme-primary text-sm">Personal Goal Dashboard</h3>
-            <p className="text-xs text-theme-secondary">Tune your fitness targets instantly</p>
+            <p className="text-xs font-display font-extrabold text-theme-primary">{user.points.toLocaleString()}</p>
+            <p className="text-[10px] text-theme-muted">Total Points</p>
           </div>
         </div>
-
-        {isEditingGoals ? (
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <button
-              id="cancel-goals-btn"
-              onClick={() => setIsEditingGoals(false)}
-              className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-display font-bold text-theme-secondary border border-theme-border rounded-xl hover:bg-theme-border/30 transition-all cursor-pointer"
-            >
-              <X size={14} />
-              Cancel
-            </button>
-            <button
-              id="save-goals-btn"
-              onClick={handleSaveGoals}
-              className="flex items-center justify-center gap-1.5 px-4 py-1.5 text-xs font-display font-bold text-white bg-theme-accent hover:bg-theme-accent-hover rounded-xl cursor-pointer"
-            >
-              <Save size={14} />
-              Save Changes
-            </button>
+        <div className="card flex items-center gap-3 py-3 px-4">
+          <div className="p-2 bg-theme-warning-light text-theme-warning rounded-xl">
+            <Flame size={16} />
           </div>
-        ) : (
-          <button
-            id="edit-goals-btn"
-            onClick={() => {
-              setEditableGoals({
-                stepGoal: metrics.stepGoal,
-                waterGoal: metrics.waterGoal,
-                sleepGoal: metrics.sleepGoal,
-                activeMinutesGoal: metrics.activeMinutesGoal,
-                caloriesBurnedGoal: metrics.caloriesBurnedGoal,
-              });
-              setIsEditingGoals(true);
-            }}
-            className="flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-display font-bold text-theme-accent bg-theme-accent-light hover:bg-theme-accent-light/80 rounded-xl transition-all cursor-pointer"
-          >
-            <Edit3 size={14} />
-            Edit Goals & Targets
-          </button>
-        )}
+          <div>
+            <p className="text-xs font-display font-extrabold text-theme-primary">{user.streak}d</p>
+            <p className="text-[10px] text-theme-muted">Streak</p>
+          </div>
+        </div>
+        <div className="card flex items-center gap-3 py-3 px-4">
+          <div className="p-2 bg-theme-support-light text-theme-support rounded-xl">
+            <Dumbbell size={16} />
+          </div>
+          <div>
+            <p className="text-xs font-display font-extrabold text-theme-primary">{user.routinesCompletedThisMonth}</p>
+            <p className="text-[10px] text-theme-muted">Workouts/Month</p>
+          </div>
+        </div>
+        <div className="card flex items-center gap-3 py-3 px-4">
+          <div className="p-2 bg-theme-success-light text-theme-success rounded-xl">
+            <Award size={16} />
+          </div>
+          <div>
+            <p className="text-xs font-display font-extrabold text-theme-primary">{badges.filter(b => b.unlocked).length}</p>
+            <p className="text-[10px] text-theme-muted">Badges Earned</p>
+          </div>
+        </div>
       </div>
 
-      {/* Goals editor */}
-      {isEditingGoals && (
-        <motion.div 
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          id="goals-editor-form"
-          className="bg-theme-support-light border border-theme-border rounded-2xl p-5 grid grid-cols-2 md:grid-cols-5 gap-4"
-        >
-          {[
-            { key: 'stepGoal', label: 'Steps Daily', min: 1000, step: 100 },
-            { key: 'waterGoal', label: 'Water (mL)', min: 500, step: 250 },
-            { key: 'sleepGoal', label: 'Sleep (hrs)', min: 4, step: 0.5 },
-            { key: 'activeMinutesGoal', label: 'Active Mins', min: 10, step: 5 },
-            { key: 'caloriesBurnedGoal', label: 'Calorie Burn', min: 100, step: 50 },
-          ].map(({ key, label, min, step }) => (
-            <div key={key} className="space-y-1">
-              <label className="text-xs font-display font-bold text-theme-support uppercase tracking-wider">{label}</label>
-              <input
-                type="number"
-                step={step}
-                value={editableGoals[key]}
-                onChange={(e) => setEditableGoals({ ...editableGoals, [key]: Math.max(min, parseFloat(e.target.value) || 0) })}
-                className="w-full bg-theme-surface border border-theme-border rounded-xl px-3 py-1.5 text-sm font-bold text-theme-primary focus:outline-none focus:ring-2 focus:ring-theme-accent"
-              />
+      {/* Active Challenges + Next Badge side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+        {/* Active Challenges */}
+        <div className="card">
+          <div className="flex items-center gap-2 mb-4">
+            <Target size={16} className="text-theme-accent" />
+            <h2 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">Active Challenges</h2>
+          </div>
+          {activeChallenges.length === 0 ? (
+            <p className="text-xs text-theme-muted py-2">No active challenges. Head to Social Feed to find one!</p>
+          ) : (
+            <div className="space-y-3">
+              {activeChallenges.slice(0, 3).map(c => {
+                const pct = Math.min(100, Math.round((c.currentValue / c.targetValue) * 100));
+                return (
+                  <div key={c.id}>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-xs font-display font-bold text-theme-primary truncate">{c.title}</span>
+                      <span className="text-[10px] font-bold text-theme-muted">{c.currentValue}/{c.targetValue} {c.metricLabel}</span>
+                    </div>
+                    <div className="progress-bar h-1.5">
+                      <div className="progress-bar-fill bg-theme-accent" style={{ width: `${pct}%` }}></div>
+                    </div>
+                    <div className="flex justify-between mt-0.5">
+                      <span className={`text-[10px] font-medium ${c.status === "pending" ? "text-theme-warning" : "text-theme-success"}`}>
+                        {c.status === "pending" ? "Not started" : "In progress"}
+                      </span>
+                      <span className="text-[10px] text-theme-muted">{c.daysLeft ? `${c.daysLeft}d left` : ""}</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </motion.div>
-      )}
+          )}
+        </div>
 
-      {/* Metrics Grid */}
-      <div id="metrics-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        
-        <MetricCard label="Steps" value={metrics.steps.toLocaleString()} unit="" goal={metrics.stepGoal.toLocaleString()} percent={stepsPercent} color="bg-theme-support" icon={Footprints}>
-          <div className="flex items-center justify-between gap-1">
-            <button onClick={() => handleAddSteps(-500)} className="p-1 text-theme-muted hover:text-theme-support hover:bg-theme-support-light rounded-lg transition-colors cursor-pointer">
-              <Minus size={14} />
-            </button>
-            <span className="text-[10px] font-bold text-theme-muted uppercase tracking-widest text-center flex-1">+/-500 steps</span>
-            <button onClick={() => handleAddSteps(500)} className="p-1 text-theme-muted hover:text-theme-support hover:bg-theme-support-light rounded-lg transition-colors cursor-pointer">
-              <Plus size={14} />
-            </button>
+        {/* Next Badge Preview */}
+        <div className="card">
+          <div className="flex items-center gap-2 mb-4">
+            <Medal size={16} className="text-theme-warning" />
+            <h2 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">Next Badge</h2>
           </div>
-        </MetricCard>
+          {nextBadge ? (
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-theme-border/30 flex items-center justify-center text-2xl">
+                {nextBadge.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-display font-extrabold text-theme-primary">{nextBadge.title}</p>
+                <p className="text-xs text-theme-secondary mt-0.5">{nextBadge.description}</p>
+                <p className="text-[10px] text-theme-muted mt-1">
+                  {nextBadge.requirementText}
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-theme-muted shrink-0" />
+            </div>
+          ) : (
+            <p className="text-xs text-theme-muted py-2">All badges unlocked! You're a legend.</p>
+          )}
+        </div>
 
-        <MetricCard label="Hydration" value={(metrics.water / 1000).toFixed(2)} unit="L" goal={`${(metrics.waterGoal / 1000).toFixed(2)} L`} percent={waterPercent} color="bg-theme-accent" icon={Droplet}>
-          <div className="flex items-center justify-between gap-1">
-            <button onClick={() => handleAddWater(-250)} className="p-1 text-theme-muted hover:text-theme-accent hover:bg-theme-accent-light rounded-lg transition-colors cursor-pointer">
-              <Minus size={14} />
-            </button>
-            <span className="text-[10px] font-bold text-theme-muted uppercase tracking-widest text-center flex-1">+/-250 mL</span>
-            <button onClick={() => handleAddWater(250)} className="p-1 text-theme-muted hover:text-theme-accent hover:bg-theme-accent-light rounded-lg transition-colors cursor-pointer">
-              <Plus size={14} />
-            </button>
+      </div>
+
+      {/* Recent Workout History */}
+      <div className="card">
+        <div className="flex items-center gap-2 mb-4">
+          <Clock size={16} className="text-theme-support" />
+          <h2 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">Recent Workouts</h2>
+        </div>
+        {myWorkouts.length === 0 ? (
+          <p className="text-xs text-theme-muted py-2">No workouts logged yet. Start your journey today!</p>
+        ) : (
+          <div className="space-y-2.5">
+            {myWorkouts.slice(0, 4).map((w, i) => (
+              <div key={w.id || i} className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-theme-accent-light flex items-center justify-center text-theme-accent shrink-0">
+                  <Dumbbell size={15} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-display font-bold text-theme-primary truncate">
+                    {w.workout?.type || "Workout"}
+                  </p>
+                  <p className="text-[10px] text-theme-muted">
+                    {w.workout?.duration || 0} min · {w.workout?.metric || ""}
+                  </p>
+                </div>
+                <span className="text-[10px] text-theme-muted shrink-0">{w.timestamp}</span>
+              </div>
+            ))}
           </div>
-        </MetricCard>
-
-        <MetricCard label="Sleep" value={metrics.sleep} unit="hrs" goal={`${metrics.sleepGoal} hrs`} percent={sleepPercent} color="bg-theme-support" icon={Moon}>
-          <div className="flex items-center justify-between gap-1">
-            <button onClick={() => handleAddSleep(-0.5)} className="p-1 text-theme-muted hover:text-theme-support hover:bg-theme-support-light rounded-lg transition-colors cursor-pointer">
-              <Minus size={14} />
-            </button>
-            <span className="text-[10px] font-bold text-theme-muted uppercase tracking-widest text-center flex-1">+/-0.5 hrs</span>
-            <button onClick={() => handleAddSleep(0.5)} className="p-1 text-theme-muted hover:text-theme-support hover:bg-theme-support-light rounded-lg transition-colors cursor-pointer">
-              <Plus size={14} />
-            </button>
-          </div>
-        </MetricCard>
-
-        <MetricCard label="Gym Time" value={metrics.activeMinutes} unit="mins" goal={`${metrics.activeMinutesGoal} mins`} percent={activePercent} color="bg-theme-success" icon={Dumbbell}>
-          <div className="text-center">
-            <span className="text-[10px] font-display font-bold text-theme-success bg-theme-success-light px-2 py-1 rounded-md inline-block uppercase tracking-wider">
-              {metrics.activeMinutes >= metrics.activeMinutesGoal ? "Complete" : "Keep moving"}
-            </span>
-          </div>
-        </MetricCard>
-
-        <MetricCard label="Burned" value={metrics.caloriesBurned} unit="kcal" goal={`${metrics.caloriesBurnedGoal} kcal`} percent={caloriesPercent} color="bg-theme-warning" icon={Flame}>
-          <div className="text-center">
-            <span className="text-[10px] font-display font-bold text-theme-warning bg-theme-warning-light px-2.5 py-1 rounded-md inline-block uppercase tracking-wider">
-              {caloriesPercent}% Done
-            </span>
-          </div>
-        </MetricCard>
-
+        )}
       </div>
 
       {/* Workout Logger */}
