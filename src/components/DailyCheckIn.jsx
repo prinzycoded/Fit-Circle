@@ -75,7 +75,7 @@ export default function DailyCheckIn({ user, onCheckIn }) {
       </div>
 
       {/* Today's status */}
-      <div className="bg-theme-bg/[0.03] rounded-2xl p-4 border border-theme-border flex items-center justify-between">
+      <div className="bg-theme-bg/0.03 rounded-2xl p-4 border border-theme-border flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-theme-accent-light text-theme-accent rounded-xl">
             <Target size={18} />

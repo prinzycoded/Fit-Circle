@@ -8,6 +8,8 @@ import {
   initialChallenges,
   initialAccountabilityGroups,
   initialWeeklyChallenges,
+  initialGymProfile,
+  initialMemberList,
 } from "./MockData";
 import Dashboard from "./components/Dashboard";
 import DiscountRace from "./components/DiscountRace";
@@ -18,6 +20,7 @@ import DailyCheckIn from "./components/DailyCheckIn";
 import AccountabilityGroups from "./components/AccountabilityGroups";
 import WeeklyChallengeSystem from "./components/WeeklyChallengeSystem";
 import StreakSystem from "./components/StreakSystem";
+import OwnerDashboard from "./components/OwnerDashboard";
 import { 
   Flame, 
   Trophy, 
@@ -151,6 +154,19 @@ export default function App() {
       return initialWeeklyChallenges;
     }
   });
+
+  // Role State: "client" or "owner"
+  const [viewAs, setViewAs] = useState(() => {
+    try {
+      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}role`);
+      return saved || "client";
+    } catch (e) {
+      return "client";
+    }
+  });
+
+  const [gym] = useState(initialGymProfile);
+  const [members] = useState(initialMemberList);
 
   // Dark Mode State
   const [darkMode, setDarkMode] = useState(() => {
@@ -583,6 +599,24 @@ export default function App() {
               <p className="text-[10px] text-theme-muted font-medium uppercase tracking-widest mt-0.5">Gamified Fitness Social</p>
             </div>
             <button
+              id="view-as-toggle-btn"
+              onClick={() => {
+                const next = viewAs === "client" ? "owner" : "client";
+                setViewAs(next);
+                safeStorage.setItem(`${STORAGE_KEY_PREFIX}role`, next);
+                showToast(next === "owner" ? "Switched to Owner Dashboard" : "Switched to Client View", "info");
+              }}
+              className={`ml-2 px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer text-[10px] font-display font-bold ${
+                viewAs === "owner"
+                  ? "bg-theme-accent text-white shadow-sm"
+                  : "bg-theme-border/40 text-theme-muted hover:text-theme-primary hover:bg-theme-border"
+              }`}
+              title={viewAs === "owner" ? "Switch to Client View" : "Switch to Owner Dashboard"}
+            >
+              <Shield size={12} />
+              {viewAs === "owner" ? "Owner" : "Client"}
+            </button>
+            <button
               id="theme-toggle-btn"
               onClick={() => setDarkMode(prev => !prev)}
               className="ml-2 w-8 h-8 rounded-xl flex items-center justify-center bg-theme-border/40 hover:bg-theme-border transition-all text-theme-muted hover:text-theme-primary cursor-pointer"
@@ -627,12 +661,20 @@ export default function App() {
 
       {/* Main Container Layout */}
       <main id="app-main-view" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        {viewAs === "owner" ? (
+          <OwnerDashboard
+            gym={gym}
+            members={members}
+          />
+        ) : (
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* LEFT COLUMN: Visual Navigation tabs & Mini Consistency Widget (3 Grid Columns) */}
           <section id="sidebar-col" className="lg:col-span-3 space-y-6">
             
-            {/* Visual Navigation Cards */}
+            {/* Visual Navigation + Daily Check-In Combined */}
             <div className="card space-y-1">
               <p className="text-[11px] font-display font-bold uppercase text-theme-muted tracking-widest mb-2 px-1">Navigation</p>
               
@@ -726,9 +768,18 @@ export default function App() {
                 <span>Weekly Challenges</span>
                 <ChevronRight size={14} className={activeTab === "weeklyChallenges" ? "opacity-100" : "opacity-0"} />
               </button>
+
+              {/* Divider */}
+              <div className="border-t border-theme-border my-2"></div>
+
+              {/* Daily Check-In inside nav card */}
+              <DailyCheckIn
+                user={user}
+                onCheckIn={handleCheckIn}
+              />
             </div>
 
-            {/* Side summary card: Race mini indicator */}
+            {/* Consistency Track */}
             <div className="card space-y-3">
               <div className="flex items-center gap-1.5 text-[11px] font-display font-bold uppercase text-theme-muted tracking-widest">
                 <Compass size={12} className="text-theme-accent" />
@@ -747,7 +798,6 @@ export default function App() {
                 <p className="text-[10px] text-theme-muted font-medium mt-0.5 uppercase tracking-wide">Workouts Completed This Month</p>
               </div>
 
-              {/* Mini visual bar */}
               <div className="progress-bar">
                 <div 
                   className="progress-bar-fill bg-theme-accent"
@@ -761,12 +811,6 @@ export default function App() {
                   : "Complete 5 more routine days to unlock Bronze (10% Off) tier!"}
               </p>
             </div>
-
-            {/* Daily Check-In Widget */}
-            <DailyCheckIn
-              user={user}
-              onCheckIn={handleCheckIn}
-            />
 
             {/* Streak Protection System */}
             <StreakSystem
@@ -867,6 +911,7 @@ export default function App() {
           </section>
 
         </div>
+        )}
       </main>
 
       {/* Floating global warning-free Toast notification box */}
@@ -939,7 +984,7 @@ export default function App() {
       {/* Client Centered Footer */}
       <footer id="app-footer" className="border-t border-theme-border py-6 text-center text-xs text-theme-muted mt-12">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© 2026 FitCircle Applet • Put yourself at the center of your fitness journey.</p>
+          <p>© 2026 FitCircle {viewAs === "owner" ? "Gym Management" : "Applet"} • {viewAs === "owner" ? "Empowering your gym community." : "Put yourself at the center of your fitness journey."}</p>
           <div className="flex gap-4">
             <span className="hover:text-theme-secondary cursor-pointer">Terms</span>
             <span className="hover:text-theme-secondary cursor-pointer">Privacy</span>
