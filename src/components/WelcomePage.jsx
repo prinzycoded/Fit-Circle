@@ -12,11 +12,19 @@ import {
   Zap,
   Star,
   ArrowRight,
+  LogOut,
 } from "lucide-react";
 import DailyCheckIn from "./DailyCheckIn";
 import StreakSystem from "./StreakSystem";
+import AuthForm from "./AuthForm";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function WelcomePage({ user, onCheckIn, onBuyFreeze, onUseFreeze }) {
+  const { firebaseUser, logout } = useAuth();
+
+  if (!firebaseUser) {
+    return <AuthForm />;
+  }
   const features = [
     { icon: Target, label: "Health Dashboard", desc: "Track workouts, log activity, and monitor your fitness journey." },
     { icon: Compass, label: "Consistency Race", desc: "Complete monthly routines to unlock discount rewards and coupons." },
@@ -68,34 +76,54 @@ export default function WelcomePage({ user, onCheckIn, onBuyFreeze, onUseFreeze 
         </div>
       </div>
 
-      {/* Quick Widgets Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Signed-in User Info */}
+      <div className="card flex items-center justify-between gap-3" style={{ borderRadius: 12, padding: "12px 16px" }}>
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-full bg-theme-accent/20 flex items-center justify-center text-theme-accent font-display font-bold text-xs">
+            {firebaseUser.email?.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <p className="text-xs font-display font-bold text-theme-primary">{firebaseUser.email}</p>
+            <p className="text-[9px] text-theme-muted font-medium uppercase tracking-wider">Signed in</p>
+          </div>
+        </div>
+        <button
+          onClick={logout}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-theme-border/40 hover:bg-theme-border text-theme-muted hover:text-theme-primary text-[10px] font-display font-bold transition-all cursor-pointer"
+        >
+          <LogOut size={12} />
+          Sign Out
+        </button>
+      </div>
 
-        {/* Daily Check-In */}
+      {/* Quick Widgets Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        {/* Daily Check-In (compact) */}
         <DailyCheckIn user={user} onCheckIn={onCheckIn} />
 
-        {/* Consistency Tracker */}
-        <div className="card flex flex-col justify-between">
+        {/* Consistency Tracker (compact) */}
+        <div className="card flex flex-col justify-between" style={{ borderRadius: 12, padding: 16 }}>
           <div>
-            <div className="flex items-center gap-1.5 text-[11px] font-display font-bold uppercase text-theme-muted tracking-widest mb-3">
-              <Compass size={12} className="text-theme-accent" />
+            <div className="flex items-center gap-1.5 text-[10px] font-display font-bold uppercase text-theme-muted tracking-widest mb-2">
+              <Compass size={11} className="text-theme-accent" />
               <span>Consistency Track</span>
             </div>
             <div className="flex justify-between items-baseline">
-              <span className="text-2xl font-display font-extrabold text-theme-primary">
+              <span className="text-xl font-display font-extrabold text-theme-primary">
                 {user.routinesCompletedThisMonth} / {user.routineTargetMonth}
               </span>
-              <span className="text-[10px] font-display font-extrabold text-theme-support bg-theme-support-light px-2 py-0.5 rounded-full">
+              <span className="text-[9px] font-display font-extrabold text-theme-support bg-theme-support-light px-2 py-0.5 rounded-full">
                 {routinesPct}%
               </span>
             </div>
-            <p className="text-[10px] text-theme-muted font-medium mt-0.5 uppercase tracking-wide">Workouts Completed This Month</p>
+            <p className="text-[9px] text-theme-muted font-medium mt-0.5 uppercase tracking-wide">Workouts Completed This Month</p>
           </div>
-          <div className="mt-4">
+          <div className="mt-3">
             <div className="progress-bar">
               <div className="progress-bar-fill bg-theme-accent" style={{ width: `${routinesPct}%` }}></div>
             </div>
-            <p className="text-[10px] text-theme-secondary font-medium mt-2">
+            <p className="text-[9px] text-theme-secondary font-medium mt-1.5">
               {user.routinesCompletedThisMonth >= 12
                 ? "Silver Tier Coupon unlocked! Climb to Gold to get 30% off!"
                 : "Complete 5 more routine days to unlock Bronze (10% Off) tier!"}
@@ -103,10 +131,10 @@ export default function WelcomePage({ user, onCheckIn, onBuyFreeze, onUseFreeze 
           </div>
         </div>
 
-        {/* Streak Protection */}
-        <StreakSystem user={user} onBuyFreeze={onBuyFreeze} onUseFreeze={onUseFreeze} />
-
       </div>
+
+      {/* Streak Protection (rectangle - full width) */}
+      <StreakSystem user={user} onBuyFreeze={onBuyFreeze} onUseFreeze={onUseFreeze} />
 
       {/* Features Grid */}
       <div>

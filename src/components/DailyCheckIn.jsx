@@ -36,55 +36,55 @@ export default function DailyCheckIn({ user, onCheckIn }) {
   const doneCount = lastWeek.filter(d => d.done).length;
 
   return (
-    <div id="daily-checkin-widget" className="card card-hover">
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-theme-success-light text-theme-success rounded-lg">
-            <CheckCircle2 size={16} />
+    <div id="daily-checkin-widget" className="card card-hover" style={{ borderRadius: 12, padding: 16 }}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-1.5">
+          <div className="p-1 bg-theme-success-light text-theme-success rounded-lg">
+            <CheckCircle2 size={13} />
           </div>
-          <h3 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">
+          <h3 className="text-xs font-display font-extrabold text-theme-primary tracking-tight">
             Daily Check-In
           </h3>
         </div>
         {checkedInToday ? (
-          <span className="text-[10px] font-display font-bold text-theme-success bg-theme-success-light px-2.5 py-1 rounded-full flex items-center gap-1">
-            <Sparkles size={11} />
+          <span className="text-[9px] font-display font-bold text-theme-success bg-theme-success-light px-2 py-0.5 rounded-full flex items-center gap-1">
+            <Sparkles size={9} />
             Checked In
           </span>
         ) : (
-          <span className="text-[10px] font-display font-bold text-theme-warning bg-theme-warning-light px-2.5 py-1 rounded-full">
+          <span className="text-[9px] font-display font-bold text-theme-warning bg-theme-warning-light px-2 py-0.5 rounded-full">
             Pending
           </span>
         )}
       </div>
 
       {/* Weekly mini grid */}
-      <div className="grid grid-cols-7 gap-1.5 mb-4">
+      <div className="grid grid-cols-7 gap-1 mb-3">
         {lastWeek.map((day) => (
-          <div key={day.date} className="flex flex-col items-center gap-1">
-            <span className="text-[9px] font-bold text-theme-muted uppercase tracking-wider">{day.day}</span>
-            <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
+          <div key={day.date} className="flex flex-col items-center gap-0.5">
+            <span className="text-[8px] font-bold text-theme-muted uppercase tracking-wider">{day.day}</span>
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${
               day.done
                 ? 'bg-theme-success text-white shadow-sm'
                 : 'bg-theme-border/30 text-theme-muted'
             }`}>
-              {day.done ? <CheckCircle2 size={12} /> : <Circle size={12} />}
+              {day.done ? <CheckCircle2 size={10} /> : <Circle size={10} />}
             </div>
           </div>
         ))}
       </div>
 
       {/* Today's status */}
-      <div className="bg-theme-bg/0.03 rounded-2xl p-4 border border-theme-border flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-theme-accent-light text-theme-accent rounded-xl">
-            <Target size={18} />
+      <div className="bg-theme-bg/0.03 rounded-xl p-3 border border-theme-border flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-theme-accent-light text-theme-accent rounded-lg">
+            <Target size={14} />
           </div>
           <div>
-            <p className="text-xs font-display font-bold text-theme-primary">
+            <p className="text-[11px] font-display font-bold text-theme-primary">
               {checkedInToday ? "Today's check-in complete" : "Check in for today"}
             </p>
-            <p className="text-[10px] text-theme-secondary font-body mt-0.5">
+            <p className="text-[9px] text-theme-secondary font-body mt-0.5">
               {checkedInToday 
                 ? `${user.points?.toLocaleString() || 0} points earned` 
                 : `${doneCount}/7 days this week`
@@ -97,9 +97,9 @@ export default function DailyCheckIn({ user, onCheckIn }) {
           <button
             id="check-in-btn"
             onClick={onCheckIn}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-display font-bold text-white bg-theme-accent hover:bg-theme-accent-hover rounded-xl transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-display font-bold text-white bg-theme-accent hover:bg-theme-accent-hover rounded-lg transition-all cursor-pointer"
           >
-            <Play size={12} />
+            <Play size={10} />
             Check In
           </button>
         )}

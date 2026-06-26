@@ -9,101 +9,80 @@ export default function StreakSystem({ user, onBuyFreeze, onUseFreeze }) {
   const freezeAvailable = user.streakFreezes || 0;
 
   return (
-    <div id="streak-widget" className="card card-hover">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-theme-warning-light text-theme-warning rounded-lg">
-            <Flame size={16} />
+    <div id="streak-widget" className="card card-hover" style={{ borderRadius: 12, padding: 16 }}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-1.5">
+          <div className="p-1 bg-theme-warning-light text-theme-warning rounded-lg">
+            <Flame size={13} />
           </div>
-          <h3 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">
+          <h3 className="text-xs font-display font-extrabold text-theme-primary tracking-tight">
             Streak Protection
           </h3>
         </div>
-        <button className="text-theme-muted hover:text-theme-primary cursor-pointer">
-          <Shield size={15} />
-        </button>
+        <span className="text-[9px] font-display font-bold text-theme-warning bg-theme-warning-light px-2 py-0.5 rounded-full">
+          {user.streak || 0}d
+        </span>
       </div>
 
-      {/* Count */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="p-2.5 bg-gradient-to-br from-theme-warning to-theme-accent rounded-2xl text-white">
-          <Flame size={24} />
+      {/* Count + Freeze row */}
+      <div className="flex items-center gap-4 mb-3">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-gradient-to-br from-theme-warning to-theme-accent rounded-xl text-white">
+            <Flame size={18} />
+          </div>
+          <div>
+            <p className="text-lg font-display font-extrabold text-theme-primary leading-none">
+              {user.streak || 0}
+            </p>
+            <p className="text-[9px] text-theme-secondary font-medium">Day Streak</p>
+          </div>
         </div>
-        <div>
-          <p className="text-2xl font-display font-extrabold text-theme-primary leading-none">
-            {user.streak || 0}
-          </p>
-          <p className="text-xs text-theme-secondary font-medium font-body">Day Streak</p>
-        </div>
-      </div>
-
-      {/* Freeze protections */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs">
-          <span className="font-display font-bold text-theme-primary">Freeze Protections</span>
-          <span className="font-display font-extrabold text-theme-primary">{freezeAvailable} left</span>
-        </div>
-        <div className="flex gap-1">
-          {[1, 2, 3].map((slot) => (
-            <div
-              key={slot}
-              className={`flex-1 h-8 rounded-xl border flex items-center justify-center text-xs font-display font-extrabold transition-colors ${
-                slot <= freezeAvailable
-                  ? 'bg-theme-support-light border-theme-support text-theme-support shadow-sm'
-                  : 'bg-theme-border/20 border-theme-border/30 text-theme-muted'
-              }`}
-            >
-              {slot <= freezeAvailable ? (
-                <Shield size={14} className="fill-theme-support text-theme-support" />
-              ) : (
-                <Shield size={14} />
-              )}
-            </div>
-          ))}
+        <div className="flex-1 space-y-1">
+          <div className="flex items-center justify-between text-[9px]">
+            <span className="font-display font-bold text-theme-muted">Freeze</span>
+            <span className="font-display font-extrabold text-theme-primary">{freezeAvailable}/3</span>
+          </div>
+          <div className="flex gap-0.5">
+            {[1, 2, 3].map((slot) => (
+              <div key={slot}
+                className={`flex-1 h-5 rounded-md border flex items-center justify-center text-xs font-display font-extrabold transition-colors ${
+                  slot <= freezeAvailable
+                    ? 'bg-theme-support-light border-theme-support text-theme-support'
+                    : 'bg-theme-border/20 border-theme-border/30 text-theme-muted'
+                }`}
+              >
+                {slot <= freezeAvailable ? <Shield size={10} className="fill-theme-support text-theme-support" /> : <Shield size={10} />}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Info text */}
-      <div className="flex items-start gap-2 mt-4 p-3 bg-theme-border/20 rounded-xl">
-        <AlertTriangle size={14} className="text-theme-warning flex-shrink-0 mt-0.5" />
-        <p className="text-[10px] text-theme-secondary leading-relaxed font-body">
-          Miss a day and your streak stays safe. Freeze tokens renew monthly and keep your consistency rewards intact.
+      {/* Info + Actions row */}
+      <div className="flex items-start gap-2 p-2.5 bg-theme-border/10 rounded-xl mb-3">
+        <AlertTriangle size={11} className="text-theme-warning shrink-0 mt-0.5" />
+        <p className="text-[9px] text-theme-secondary leading-relaxed flex-1">
+          Miss a day and your streak stays safe. Freeze tokens renew monthly.
         </p>
-      </div>
-
-      {/* Buy / Use freeze */}
-      <div className="mt-4 pt-4 border-t border-theme-border space-y-2">
-        <p className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-widest mb-2">Actions</p>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            id="buy-freeze-btn"
-            onClick={onBuyFreeze}
-            className="py-2 px-3 text-[10px] font-display font-bold text-theme-support bg-theme-support-light hover:bg-theme-support-light/80 rounded-xl transition-all cursor-pointer"
-          >
-            Buy Freeze (500 pts)
+        <div className="flex gap-1.5 shrink-0">
+          <button onClick={onBuyFreeze} className="px-2.5 py-1 text-[9px] font-display font-bold text-theme-support bg-theme-support-light hover:bg-theme-support-light/80 rounded-lg transition-all cursor-pointer">
+            Buy (500)
           </button>
-          <button
-            id="use-freeze-btn"
-            onClick={onUseFreeze}
-            className="py-2 px-3 text-[10px] font-display font-bold text-theme-accent bg-theme-accent-light hover:bg-theme-accent-light/80 rounded-xl transition-all cursor-pointer"
-          >
-            Use Freeze
+          <button onClick={onUseFreeze} className="px-2.5 py-1 text-[9px] font-display font-bold text-theme-accent bg-theme-accent-light hover:bg-theme-accent-light/80 rounded-lg transition-all cursor-pointer">
+            Use
           </button>
         </div>
       </div>
 
       {/* Milestone preview */}
-      <div className="mt-4 pt-4 border-t border-theme-border">
-        <p className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-widest mb-2">Upcoming Milestones</p>
-        <div className="flex items-center justify-between text-xs">
-          <div className="flex items-center gap-1.5">
-            <span className="text-theme-muted font-body">Next freeze at</span>
-            <span className="font-display font-extrabold text-theme-primary">7 days</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-theme-muted font-body">Streak badge at</span>
-            <span className="font-display font-extrabold text-theme-primary">30 days</span>
-          </div>
+      <div className="pt-3 border-t border-theme-border flex items-center justify-between text-[9px]">
+        <div className="flex items-center gap-1">
+          <span className="text-theme-muted">Next freeze at</span>
+          <span className="font-display font-extrabold text-theme-primary">7 days</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-theme-muted">Streak badge at</span>
+          <span className="font-display font-extrabold text-theme-primary">30 days</span>
         </div>
       </div>
     </div>

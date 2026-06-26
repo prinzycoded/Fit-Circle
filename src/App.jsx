@@ -1,16 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { 
-  initialDailyMetrics, 
-  initialUserProfile, 
-  initialFriends, 
-  initialFeedPosts, 
-  initialBadges, 
-  initialChallenges,
-  initialAccountabilityGroups,
-  initialWeeklyChallenges,
-  initialGymProfile,
-  initialMemberList,
-} from "./MockData";
+import { useAuth } from "./contexts/AuthContext";
 import Dashboard from "./components/Dashboard";
 import DiscountRace from "./components/DiscountRace";
 import SocialHub from "./components/SocialHub";
@@ -41,7 +30,8 @@ import {
   UserCheck,
   Target,
   Sun,
-  Moon
+  Moon,
+  LogOut,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -73,7 +63,83 @@ const safeStorage = {
   }
 };
 
+const initialDailyMetrics = {
+  steps: 7420, stepGoal: 10000, water: 1400, waterGoal: 2500,
+  sleep: 6.8, sleepGoal: 8.0, activeMinutes: 35, activeMinutesGoal: 45,
+  caloriesBurned: 380, caloriesBurnedGoal: 550, weight: 74.5,
+};
+
+const initialUserProfile = {
+  id: "me",
+  name: "You (Alex)",
+  avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+  points: 14200, streak: 5, routinesCompletedThisMonth: 14, routineTargetMonth: 20,
+  unlockedBadges: ["early-bird", "water-master"], streakFreezes: 2, longestStreak: 14,
+  lastCheckIn: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+  checkInStreak: 5, weeklyCheckIns: 4,
+};
+
+const initialFriends = [
+  { id: "liam", name: "Liam Carter", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80", points: { today: 1850, week: 11200, month: 18950 }, streak: 12, status: "online", lastActive: "Active now" },
+  { id: "noah", name: "Noah Reynolds", avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80", points: { today: 1420, week: 9800, month: 17430 }, streak: 8, status: "offline", lastActive: "15m ago" },
+  { id: "jessica", name: "Jessica Vance", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80", points: { today: 1680, week: 10400, month: 16880 }, streak: 9, status: "online", lastActive: "Active now" },
+  { id: "ava", name: "Ava Mitchell", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80", points: { today: 1210, week: 7650, month: 15120 }, streak: 4, status: "online", lastActive: "Active 5m ago" },
+  { id: "chloe", name: "Chloe Bennett", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80", points: { today: 950, week: 8900, month: 14760 }, streak: 15, status: "offline", lastActive: "1h ago" },
+  { id: "daniel", name: "Daniel Craig", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80", points: { today: 1300, week: 7900, month: 13920 }, streak: 6, status: "online", lastActive: "Active now" },
+];
+
+const initialFeedPosts = [
+  { id: "post1", authorName: "Liam Carter", authorAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80", content: "Smashed out a solid morning run around Sydney Harbour! The weather was absolute perfection today. Who's hitting their active minutes goal?", workout: { type: "Run", duration: 45, metric: "7.2 km (420 kcal)" }, likes: 12, likedByCount: 12, hasLiked: false, timestamp: "2 hours ago", comments: [{ id: "c1", authorName: "Jessica Vance", content: "Killing it! Setting a high bar for the weekly leaderboard index!", timestamp: "1 hour ago" }] },
+  { id: "post2", authorName: "Jessica Vance", authorAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80", content: "Just finished an intense HIIT session! Sweat level 100. Feel amazing now! 🧘‍♀️💦", workout: { type: "HIIT", duration: 30, metric: "350 kcal" }, likes: 8, likedByCount: 8, hasLiked: false, timestamp: "4 hours ago", comments: [] },
+  { id: "post3", authorName: "Ava Mitchell", authorAvatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80", content: "Unwinding after a busy day with 20 minutes of gentle yoga. Mindset re-centered.", workout: { type: "Yoga", duration: 20, metric: "Gentle Flow (110 kcal)" }, likes: 5, likedByCount: 5, hasLiked: false, timestamp: "Yesterday", comments: [{ id: "c2", authorName: "Noah Reynolds", content: "Yoga is so underrated. I need to add that to my routine!", timestamp: "Yesterday" }] },
+];
+
+const initialBadges = [
+  { id: "early-bird", title: "Rising Star", description: "Logged a workout before 8:00 AM.", icon: "🌅", category: "Activity", requirementText: "Complete a workout before 8 AM", unlocked: true },
+  { id: "water-master", title: "Aqua Champion", description: "Exceeded daily hydration target for three consecutive days.", icon: "💧", category: "Hydration", requirementText: "Hit water goal 3 days in a row", unlocked: true },
+  { id: "streak-master", title: "Unstoppable", description: "Maintained an active habit streak of 5 days or more.", icon: "🔥", category: "Consistency", requirementText: "Maintain a 5-day streak", unlocked: false },
+  { id: "social-butterfly", title: "Squad Captain", description: "Invited friends or shared, and finished 2 group fitness challenges.", icon: "👑", category: "Social", requirementText: "Complete 2 group challenges", unlocked: false },
+  { id: "century-club", title: "10K Stepper", description: "Walked 10,000+ steps in a single day.", icon: "👣", category: "Activity", requirementText: "Reach 10,000 steps in one day", unlocked: false },
+  { id: "discount-racer", title: "Value Champion", description: "Unlocked the top 30% monthly fitness discount code.", icon: "🏷️", category: "Consistency", requirementText: "Complete 20 routines in a month", unlocked: false },
+];
+
+const initialChallenges = [
+  { id: "chal1", title: "Active Minutes Sprinter", description: "Let's log 150 minutes of high intensity workouts together before Sunday!", type: "duration", targetValue: 150, currentValue: 35, metricLabel: "min logged", daysLeft: 3, invitedBy: "Liam Carter", status: "pending", rewardPoints: 250 },
+  { id: "chal2", title: "Stepping into Summer", description: "Challenge to reach 30,000 steps over 3 days! Keep moving!", type: "steps", targetValue: 30000, currentValue: 7420, metricLabel: "steps walked", daysLeft: 2, status: "active", rewardPoints: 400 },
+  { id: "chal3", title: "Consistently hydrated", description: "Drink at least 2.0 Liters of water every day for 5 days.", type: "frequency", targetValue: 5, currentValue: 3, metricLabel: "days compliant", daysLeft: 1, status: "active", rewardPoints: 200 },
+];
+
+const initialAccountabilityGroups = [
+  { id: "group1", name: "Morning Movers", description: "Early birds who crush workouts before 8 AM. Daily check-in required!", members: [{ id: "liam", name: "Liam Carter", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80", weeklyMinutes: 210, lastActive: "Active now", status: "online" }, { id: "jessica", name: "Jessica Vance", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80", weeklyMinutes: 180, lastActive: "Active now", status: "online" }, { id: "me", name: "You (Alex)", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80", weeklyMinutes: 150, lastActive: "Active now", status: "online" }, { id: "noah", name: "Noah Reynolds", avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80", weeklyMinutes: 90, lastActive: "15m ago", status: "offline" }], groupChallenge: { title: "500 Minutes Together", target: 500, current: 420, unit: "min", deadline: "Sunday" }, weeklyRanking: [{ id: "liam", name: "Liam Carter", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80", points: 3200 }, { id: "jessica", name: "Jessica Vance", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80", points: 2800 }, { id: "me", name: "You (Alex)", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80", points: 2100 }, { id: "noah", name: "Noah Reynolds", avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80", points: 1200 }] },
+  { id: "group2", name: "Weekend Warriors", description: "We go hard on weekends! Join us for Saturday HIIT and Sunday long runs.", members: [{ id: "ava", name: "Ava Mitchell", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80", weeklyMinutes: 160, lastActive: "Active 5m ago", status: "online" }, { id: "chloe", name: "Chloe Bennett", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80", weeklyMinutes: 200, lastActive: "1h ago", status: "offline" }], groupChallenge: { title: "Weekend 10K Steps Each Day", target: 60000, current: 32000, unit: "steps", deadline: "Monday" }, weeklyRanking: [{ id: "chloe", name: "Chloe Bennett", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80", points: 1800 }, { id: "ava", name: "Ava Mitchell", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80", points: 1500 }] },
+];
+
+const initialWeeklyChallenges = [
+  { id: "wc1", title: "Step Surge", description: "Walk 50,000 steps this week! Break it down to ~7,100 daily.", type: "steps", targetValue: 50000, currentValue: 12400, metricLabel: "steps", rewardPoints: 600, weekStart: "2026-06-22", weekEnd: "2026-06-28", status: "active", streakBonus: 1 },
+  { id: "wc2", title: "HIIT x3", description: "Complete 3 HIIT sessions this week. Intensity matters!", type: "frequency", targetValue: 3, currentValue: 1, metricLabel: "sessions", rewardPoints: 450, weekStart: "2026-06-22", weekEnd: "2026-06-28", status: "active", streakBonus: 1 },
+  { id: "wc3", title: "Hydration Hero", description: "Drink 2L+ water for 5 days this week.", type: "frequency", targetValue: 5, currentValue: 5, metricLabel: "days", rewardPoints: 350, weekStart: "2026-06-22", weekEnd: "2026-06-28", status: "completed", streakBonus: 1 },
+];
+
+const initialGymProfile = {
+  id: "gym-1", name: "Fit Circle Gym", ownerName: "Marcus Chen",
+  ownerAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+  totalMembers: 48, activeToday: 31, totalPointsDistributed: 847500, avgMemberStreak: 6.2,
+  monthlyRevenue: 12450, memberGoal: 75, monthlyActiveGoal: 40, since: "2024-09",
+  plans: [{ name: "Basic", members: 18, price: 29 }, { name: "Standard", members: 22, price: 49 }, { name: "Premium", members: 8, price: 79 }],
+};
+
+const initialMemberList = [
+  { id: "liam", name: "Liam Carter", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80", email: "liam.c@fitcircle.com", plan: "Premium", joined: "2025-11-03", points: 18950, streak: 12, checkInsThisMonth: 18, lastActive: "Active now", status: "online", metrics: { steps: 8450, water: 1900, activeMinutes: 42, caloriesBurned: 410 }, goals: { stepGoal: 10000, waterGoal: 2500, activeMinutesGoal: 45 } },
+  { id: "noah", name: "Noah Reynolds", avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80", email: "noah.r@fitcircle.com", plan: "Standard", joined: "2025-12-14", points: 17430, streak: 8, checkInsThisMonth: 14, lastActive: "15m ago", status: "offline", metrics: { steps: 6200, water: 1600, activeMinutes: 30, caloriesBurned: 290 }, goals: { stepGoal: 10000, waterGoal: 2500, activeMinutesGoal: 45 } },
+  { id: "jessica", name: "Jessica Vance", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80", email: "jessica.v@fitcircle.com", plan: "Premium", joined: "2025-10-20", points: 16880, streak: 9, checkInsThisMonth: 20, lastActive: "Active now", status: "online", metrics: { steps: 9200, water: 2100, activeMinutes: 55, caloriesBurned: 520 }, goals: { stepGoal: 10000, waterGoal: 2500, activeMinutesGoal: 60 } },
+  { id: "ava", name: "Ava Mitchell", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80", email: "ava.m@fitcircle.com", plan: "Standard", joined: "2026-01-08", points: 15120, streak: 4, checkInsThisMonth: 10, lastActive: "Active 5m ago", status: "online", metrics: { steps: 5100, water: 1400, activeMinutes: 25, caloriesBurned: 210 }, goals: { stepGoal: 10000, waterGoal: 2500, activeMinutesGoal: 45 } },
+  { id: "chloe", name: "Chloe Bennett", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80", email: "chloe.b@fitcircle.com", plan: "Basic", joined: "2026-02-19", points: 14760, streak: 15, checkInsThisMonth: 22, lastActive: "1h ago", status: "offline", metrics: { steps: 11000, water: 2400, activeMinutes: 60, caloriesBurned: 580 }, goals: { stepGoal: 12000, waterGoal: 3000, activeMinutesGoal: 60 } },
+  { id: "daniel", name: "Daniel Craig", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80", email: "daniel.c@fitcircle.com", plan: "Standard", joined: "2026-03-01", points: 13920, streak: 6, checkInsThisMonth: 13, lastActive: "Active now", status: "online", metrics: { steps: 7300, water: 1800, activeMinutes: 35, caloriesBurned: 340 }, goals: { stepGoal: 10000, waterGoal: 2500, activeMinutesGoal: 45 } },
+];
+
 export default function App() {
+  const { firebaseUser, logout } = useAuth();
+
   // Navigation State
   const [activeTab, setActiveTab] = useState("welcome");
 
@@ -737,6 +803,16 @@ export default function App() {
               <img referrerPolicy="no-referrer" src={user.avatar} alt="Me" className="w-full h-full object-cover" />
             </div>
 
+            {firebaseUser && (
+              <button
+                onClick={logout}
+                className="w-8 h-8 rounded-xl flex items-center justify-center bg-theme-border/40 hover:bg-theme-border transition-all text-theme-muted hover:text-theme-primary cursor-pointer"
+                title="Sign Out"
+              >
+                <LogOut size={14} />
+              </button>
+            )}
+
           </div>
 
         </div>
@@ -763,130 +839,67 @@ export default function App() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* LEFT COLUMN: Sidebar Navigation & Widgets */}
-          <section id="sidebar-col" className="lg:col-span-3 space-y-4">
-            <div className="space-y-4 p-4 bg-theme-surface/50 rounded-2xl border border-theme-border/60">
-            
-            {/* Visual Navigation */}
-            <div className="card space-y-1">
-              <p className="text-[11px] font-display font-bold uppercase text-theme-muted tracking-widest mb-2 px-1">Navigation</p>
+          {/* LEFT COLUMN: Sidebar Navigation Panel */}
+          <section id="sidebar-col" className="lg:col-span-3">
+            <div className="sticky top-24 space-y-4">
 
-              <button
-                id="view-home-btn"
-                onClick={() => setActiveTab("welcome")}
-                className={`w-full text-left font-display font-bold text-xs py-3 px-4 rounded-xl transition-all flex items-center justify-between ${
-                  activeTab === "welcome"
-                    ? "bg-theme-accent text-white shadow-sm"
-                    : "text-theme-secondary hover:text-theme-primary hover:bg-theme-border/30"
-                }`}
-              >
-                <span>Home</span>
-                <ChevronRight size={14} className={activeTab === "welcome" ? "opacity-100" : "opacity-0"} />
-              </button>
+              {/* User Profile Card */}
+              <div className="rounded-2xl p-5 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #D95C42 0%, #1D202B 100%)' }}>
+                <div className="absolute right-0 top-0 bottom-0 opacity-10">
+                  <Dumbbell size={80} className="rotate-45" />
+                </div>
+                <div className="relative z-10 flex items-center gap-3">
+                  <img referrerPolicy="no-referrer" src={user.avatar} alt="" className="w-11 h-11 rounded-xl border-2 border-white/30 shadow-sm" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-display font-bold truncate">{user.name}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <Trophy size={11} className="text-theme-warning" />
+                      <span className="text-[10px] text-white/80 font-medium">{user.points.toLocaleString()} pts</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-              <button
-                id="view-dashboard-btn"
-                onClick={() => setActiveTab("dashboard")}
-                className={`w-full text-left font-display font-bold text-xs py-3 px-4 rounded-xl transition-all flex items-center justify-between ${
-                  activeTab === "dashboard"
-                    ? "bg-theme-accent text-white shadow-sm"
-                    : "text-theme-secondary hover:text-theme-primary hover:bg-theme-border/30"
-                }`}
-              >
-                <span>Health Dashboard</span>
-                <ChevronRight size={14} className={activeTab === "dashboard" ? "opacity-100" : "opacity-0"} />
-              </button>
+              {/* Navigation */}
+              <nav className="rounded-2xl overflow-hidden border border-theme-border bg-theme-surface/60 backdrop-blur-sm">
+                {[
+                  { tab: "welcome", label: "Home", icon: Compass },
+                  { tab: "dashboard", label: "Health Dashboard", icon: Heart },
+                  { tab: "race", label: "Consistency Race", icon: Target },
+                  { tab: "social", label: "Social Feed", icon: Users },
+                  { tab: "leaderboard", label: "Leaderboard", icon: Trophy },
+                  { tab: "badges", label: "Achievement Badges", icon: Award },
+                  { tab: "groups", label: "Accountability Groups", icon: Shield },
+                  { tab: "weeklyChallenges", label: "Weekly Challenges", icon: Calendar },
+                ].map(({ tab, label, icon: Icon }) => (
+                  <button
+                    key={tab}
+                    id={`view-${tab}-btn`}
+                    onClick={() => setActiveTab(tab)}
+                    className={`w-full text-left font-display font-bold text-xs py-3 px-4 transition-all flex items-center gap-3 cursor-pointer ${
+                      activeTab === tab
+                        ? "bg-theme-accent text-white shadow-sm"
+                        : "text-theme-secondary hover:text-theme-primary hover:bg-theme-border/20"
+                    }`}
+                  >
+                    <Icon size={16} className={activeTab === tab ? "text-white" : "text-theme-muted"} />
+                    <span className="flex-1">{label}</span>
+                    {activeTab === tab && <ChevronRight size={14} className="text-white/70" />}
+                  </button>
+                ))}
+              </nav>
 
-              <button
-                id="view-race-btn"
-                onClick={() => setActiveTab("race")}
-                className={`w-full text-left font-display font-bold text-xs py-3 px-4 rounded-xl transition-all flex items-center justify-between ${
-                  activeTab === "race"
-                    ? "bg-theme-accent text-white shadow-sm"
-                    : "text-theme-secondary hover:text-theme-primary hover:bg-theme-border/30"
-                }`}
-              >
-                <span>Consistency Race</span>
-                <ChevronRight size={14} className={activeTab === "race" ? "opacity-100" : "opacity-0"} />
-              </button>
-
-              <button
-                id="view-social-btn"
-                onClick={() => setActiveTab("social")}
-                className={`w-full text-left font-display font-bold text-xs py-3 px-4 rounded-xl transition-all flex items-center justify-between ${
-                  activeTab === "social"
-                    ? "bg-theme-accent text-white shadow-sm"
-                    : "text-theme-secondary hover:text-theme-primary hover:bg-theme-border/30"
-                }`}
-              >
-                <span>Social Feed & Challenges</span>
-                <ChevronRight size={14} className={activeTab === "social" ? "opacity-100" : "opacity-0"} />
-              </button>
-
-              <button
-                id="view-leaderboard-btn"
-                onClick={() => setActiveTab("leaderboard")}
-                className={`w-full text-left font-display font-bold text-xs py-3 px-4 rounded-xl transition-all flex items-center justify-between ${
-                  activeTab === "leaderboard"
-                    ? "bg-theme-accent text-white shadow-sm"
-                    : "text-theme-secondary hover:text-theme-primary hover:bg-theme-border/30"
-                }`}
-              >
-                <span>Competitor Leaderboard</span>
-                <ChevronRight size={14} className={activeTab === "leaderboard" ? "opacity-100" : "opacity-0"} />
-              </button>
-
-              <button
-                id="view-badges-btn"
-                onClick={() => setActiveTab("badges")}
-                className={`w-full text-left font-display font-bold text-xs py-3 px-4 rounded-xl transition-all flex items-center justify-between ${
-                  activeTab === "badges"
-                    ? "bg-theme-accent text-white shadow-sm"
-                    : "text-theme-secondary hover:text-theme-primary hover:bg-theme-border/30"
-                }`}
-              >
-                <span>Achievement Badges</span>
-                <ChevronRight size={14} className={activeTab === "badges" ? "opacity-100" : "opacity-0"} />
-              </button>
-
-              <button
-                id="view-groups-btn"
-                onClick={() => setActiveTab("groups")}
-                className={`w-full text-left font-display font-bold text-xs py-3 px-4 rounded-xl transition-all flex items-center justify-between ${
-                  activeTab === "groups"
-                    ? "bg-theme-accent text-white shadow-sm"
-                    : "text-theme-secondary hover:text-theme-primary hover:bg-theme-border/30"
-                }`}
-              >
-                <span>Accountability Groups</span>
-                <ChevronRight size={14} className={activeTab === "groups" ? "opacity-100" : "opacity-0"} />
-              </button>
-
-              <button
-                id="view-weekly-chals-btn"
-                onClick={() => setActiveTab("weeklyChallenges")}
-                className={`w-full text-left font-display font-bold text-xs py-3 px-4 rounded-xl transition-all flex items-center justify-between ${
-                  activeTab === "weeklyChallenges"
-                    ? "bg-theme-accent text-white shadow-sm"
-                    : "text-theme-secondary hover:text-theme-primary hover:bg-theme-border/30"
-                }`}
-              >
-                <span>Weekly Challenges</span>
-                <ChevronRight size={14} className={activeTab === "weeklyChallenges" ? "opacity-100" : "opacity-0"} />
-              </button>
-            </div>
-
-            {/* Quick action: Reset simulator */}
-            <div className="card text-center">
-              <p className="text-[10px] font-medium text-theme-muted">Need a fresh start?</p>
-              <button
-                id="reset-demo-btn"
-                onClick={handleResetData}
-                className="mt-2 text-[10px] font-display font-bold text-theme-accent hover:text-theme-accent-hover underline-offset-2 underline cursor-pointer"
-              >
-                Reset Simulator Data
-              </button>
-            </div>
+              {/* Quick action: Reset simulator */}
+              <div className="rounded-2xl border border-theme-border bg-theme-surface/40 backdrop-blur-sm p-4 text-center">
+                <p className="text-[10px] font-medium text-theme-muted">Need a fresh start?</p>
+                <button
+                  id="reset-demo-btn"
+                  onClick={handleResetData}
+                  className="mt-2 text-[10px] font-display font-bold text-theme-accent hover:text-theme-accent-hover underline-offset-2 underline cursor-pointer"
+                >
+                  Reset Simulator Data
+                </button>
+              </div>
 
             </div>
           </section>
