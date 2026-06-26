@@ -27,7 +27,7 @@ export default function StreakSystem({ user, onBuyFreeze, onUseFreeze }) {
       {/* Count + Freeze row */}
       <div className="flex items-center gap-4 mb-3">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-gradient-to-br from-theme-warning to-theme-accent rounded-xl text-white">
+          <div className="p-1.5 bg-linear-to-br from-theme-warning to-theme-accent rounded-xl text-white">
             <Flame size={18} />
           </div>
           <div>

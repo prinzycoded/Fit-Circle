@@ -16,7 +16,7 @@ import {
 import DailyCheckIn from "./DailyCheckIn";
 import StreakSystem from "./StreakSystem";
 
-export default function WelcomePage({ user, onCheckIn, onBuyFreeze, onUseFreeze }) {
+export default function WelcomePage({ user, badges, onCheckIn, onBuyFreeze, onUseFreeze }) {
   const features = [
     { icon: Target, label: "Health Dashboard", desc: "Track workouts, log activity, and monitor your fitness journey." },
     { icon: Compass, label: "Consistency Race", desc: "Complete monthly routines to unlock discount rewards and coupons." },
@@ -31,39 +31,70 @@ export default function WelcomePage({ user, onCheckIn, onBuyFreeze, onUseFreeze 
   return (
     <div className="space-y-8">
 
-      {/* Hero Section */}
-      <div className="rounded-3xl p-8 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #D95C42 0%, #1D202B 100%)' }}>
-        <div className="absolute right-0 top-0 bottom-0 opacity-5 flex items-center p-4">
-          <Dumbbell size={180} />
-        </div>
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+      {/* Welcome Hero */}
+      <div className="rounded-3xl text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #D95C42 0%, #1D202B 100%)' }}>
+        <div className="absolute inset-0 opacity-40" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23fff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}></div>
+        <div className="absolute -right-16 -top-16 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
+        <div className="absolute -left-8 bottom-0 w-48 h-48 bg-theme-warning/10 rounded-full blur-2xl"></div>
+        
+        <div className="relative z-10 px-8 pt-8 pb-10">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center ring-2 ring-white/10">
               <Dumbbell size={20} className="rotate-45" />
             </div>
             <span className="text-xl font-display font-extrabold tracking-tight">FitCircle</span>
+            <span className="ml-2 px-2.5 py-0.5 bg-theme-warning/20 text-theme-warning text-[9px] font-bold rounded-full uppercase tracking-wider">v2.0</span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-display font-extrabold tracking-tight mt-2 max-w-2xl">
-            Your fitness journey, gamified.
-          </h1>
-          <p className="text-white/70 text-sm md:text-base mt-3 max-w-xl font-body leading-relaxed">
-            FitCircle is a social fitness platform that turns your daily workouts into a game. 
-            Earn points, build streaks, unlock badges, compete on leaderboards, and win real 
-            discounts — all while staying accountable with friends and your gym community.
-          </p>
-          <div className="flex flex-wrap items-center gap-3 mt-5">
-            <span className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-full px-3.5 py-1.5 text-xs font-bold">
-              <Flame size={13} className="text-theme-warning" />
-              Streak Tracking
-            </span>
-            <span className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-full px-3.5 py-1.5 text-xs font-bold">
-              <Trophy size={13} className="text-theme-warning" />
-              Reward System
-            </span>
-            <span className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-full px-3.5 py-1.5 text-xs font-bold">
-              <Users size={13} className="text-theme-warning" />
-              Community
-            </span>
+
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
+            <div className="lg:col-span-3">
+              <h1 className="text-3xl md:text-4xl font-display font-extrabold tracking-tight leading-tight">
+                Your fitness journey,{" "}
+                <span className="text-transparent bg-clip-text bg-linear-to-r from-theme-warning to-yellow-300">
+                  gamified.
+                </span>
+              </h1>
+              <p className="text-white/70 text-sm md:text-base mt-3 max-w-xl font-body leading-relaxed">
+                FitCircle transforms every workout into a quest. Earn{" "}
+                <span className="text-white font-bold">XP points</span>, ignite{" "}
+                <span className="text-white font-bold">streaks</span>, collect{" "}
+                <span className="text-white font-bold">badges</span>, and climb the{" "}
+                <span className="text-white font-bold">leaderboards</span> — all while 
+                staying accountable with your gym community.
+              </p>
+              
+              <div className="flex flex-wrap items-center gap-2 mt-5">
+                {[
+                  { icon: Flame, label: "Streak Tracking", color: "text-orange-300" },
+                  { icon: Trophy, label: "Reward System", color: "text-yellow-300" },
+                  { icon: Users, label: "Community", color: "text-blue-300" },
+                  { icon: Zap, label: "Live Challenges", color: "text-purple-300" },
+                  { icon: Award, label: "Achievements", color: "text-emerald-300" },
+                ].map(({ icon: Icon, label, color }) => (
+                  <span key={label} className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5 text-[10px] font-bold border border-white/10 hover:bg-white/20 transition-all">
+                    <Icon size={12} className={color} />
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="lg:col-span-2 hidden lg:flex items-center justify-center">
+              <div className="grid grid-cols-2 gap-3 w-full max-w-xs">
+                {[
+                  { value: user.points.toLocaleString(), label: "Points Earned", icon: Trophy },
+                  { value: `${user.streak}`, label: "Day Streak", icon: Flame },
+                  { value: `${user.routinesCompletedThisMonth}`, label: "Workouts Done", icon: Zap },
+                  { value: `${(badges || []).filter(b => b.unlocked).length}`, label: "Badges Unlocked", icon: Award },
+                ].map(({ value, label, icon: Icon }) => (
+                  <div key={label} className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center border border-white/10">
+                    <Icon size={20} className="mx-auto text-theme-warning mb-1.5" />
+                    <p className="text-xl font-display font-extrabold">{value}</p>
+                    <p className="text-[9px] text-white/60 font-medium uppercase tracking-wider mt-0.5">{label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>

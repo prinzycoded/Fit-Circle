@@ -7,21 +7,21 @@
 @theme {
   --font-display: 'Sora', 'Inter', system-ui, sans-serif;
   --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
-  --color-theme-bg: var(--color-theme-bg);
-  --color-theme-surface: var(--color-theme-surface);
-  --color-theme-border: var(--color-theme-border);
-  --color-theme-primary: var(--color-theme-primary);
-  --color-theme-secondary: var(--color-theme-secondary);
-  --color-theme-muted: var(--color-theme-muted);
-  --color-theme-accent: var(--color-theme-accent);
-  --color-theme-accent-hover: var(--color-theme-accent-hover);
-  --color-theme-accent-light: var(--color-theme-accent-light);
-  --color-theme-support: var(--color-theme-support);
-  --color-theme-support-light: var(--color-theme-support-light);
-  --color-theme-success: var(--color-theme-success);
-  --color-theme-success-light: var(--color-theme-success-light);
-  --color-theme-warning: var(--color-theme-warning);
-  --color-theme-warning-light: var(--color-theme-warning-light);
+  --color-theme-bg: #F5F6FA;
+  --color-theme-surface: #FFFFFF;
+  --color-theme-border: #E8EAF0;
+  --color-theme-primary: #1D202B;
+  --color-theme-secondary: #5C6170;
+  --color-theme-muted: #8E93A0;
+  --color-theme-accent: #D95C42;
+  --color-theme-accent-hover: #C44E36;
+  --color-theme-accent-light: #FDF0EC;
+  --color-theme-support: #3D6B8C;
+  --color-theme-support-light: #F0F4F8;
+  --color-theme-success: #2D8A6E;
+  --color-theme-success-light: #EDF7F3;
+  --color-theme-warning: #C4973A;
+  --color-theme-warning-light: #FDF6E8;
 }
 
 :root {

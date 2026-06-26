@@ -22,7 +22,7 @@ export default function DiscountRace({ user, onIncrementRoutine }) {
 
   const currentCount = user.routinesCompletedThisMonth;
   const targetCount = user.routineTargetMonth;
-  const totalPercentage = Math.min(100, Math.round((currentCount / targetCount) * 100));
+  const totalPercentage = targetCount > 0 ? Math.min(100, Math.round((currentCount / targetCount) * 100)) : 0;
 
   const copyToClipboard = (code) => {
     try {

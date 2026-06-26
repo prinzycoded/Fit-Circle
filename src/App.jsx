@@ -139,7 +139,7 @@ const initialMemberList = [
 ];
 
 export default function App() {
-  const { firebaseUser, logout } = useAuth();
+  const { firebaseUser, loading, logout } = useAuth();
 
   // Navigation State
   const [activeTab, setActiveTab] = useState("welcome");
@@ -414,26 +414,25 @@ export default function App() {
     setFeedPosts(prev => [newPost, ...prev]);
 
     // 3. Update active challenge values if applicable
+    let challengeCompleted = false;
     const updatedChallenges = challenges.map(c => {
       if (c.status !== "active") return c;
 
       if (c.type === "duration" && c.title.toLowerCase().includes("minutes")) {
         const nextVal = Math.min(c.targetValue, c.currentValue + duration);
         if (nextVal >= c.targetValue && c.currentValue < c.targetValue) {
-          // Grant reward points upon completion
           setUser(p => ({ ...p, points: p.points + c.rewardPoints }));
-          showToast(`Challenge Complete: "${c.title}"! Joined rewards: +${c.rewardPoints} pts`, "success");
+          challengeCompleted = true;
           return { ...c, currentValue: nextVal, status: "completed" };
         }
         return { ...c, currentValue: nextVal };
       }
       
       if (c.type === "frequency" && c.title.toLowerCase().includes("hydrated")) {
-        // Log hydration completes another day
         const nextVal = Math.min(c.targetValue, c.currentValue + 1);
         if (nextVal >= c.targetValue && c.currentValue < c.targetValue) {
           setUser(p => ({ ...p, points: p.points + c.rewardPoints }));
-          showToast(`Hydration Sprint Complete! +${c.rewardPoints} pts`, "success");
+          challengeCompleted = true;
           return { ...c, currentValue: nextVal, status: "completed" };
         }
         return { ...c, currentValue: nextVal };
@@ -443,7 +442,9 @@ export default function App() {
     });
 
     setChallenges(updatedChallenges);
-    showToast(`Shared workout progress to Feed! +${pointsGained} points added.`);
+    if (!challengeCompleted) {
+      showToast(`Shared workout progress to Feed! +${pointsGained} points added.`);
+    }
   };
 
   // Handler for completing a consistency racetrack routine checkoff directly
@@ -752,6 +753,17 @@ export default function App() {
     window.location.reload();
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-theme-bg flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-2 border-theme-accent border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-xs text-theme-muted font-medium">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!firebaseUser) {
     return <LoginPage />;
   }
@@ -925,6 +937,7 @@ export default function App() {
                 {activeTab === "welcome" && (
                   <WelcomePage
                     user={user}
+                    badges={badges}
                     onCheckIn={handleCheckIn}
                     onBuyFreeze={handleBuyStreakFreeze}
                     onUseFreeze={handleUseStreakFreeze}

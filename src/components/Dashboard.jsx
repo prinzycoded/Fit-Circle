@@ -129,7 +129,7 @@ export default function Dashboard({ metrics, user, challenges, badges, feedPosts
           ) : (
             <div className="space-y-3">
               {activeChallenges.slice(0, 3).map(c => {
-                const pct = Math.min(100, Math.round((c.currentValue / c.targetValue) * 100));
+                const pct = c.targetValue > 0 ? Math.min(100, Math.round((c.currentValue / c.targetValue) * 100)) : 0;
                 return (
                   <div key={c.id}>
                     <div className="flex justify-between items-center mb-1">
