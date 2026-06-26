@@ -3,7 +3,7 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithP
 import { auth, googleProvider } from "../firebase";
 import { Dumbbell, Mail, Lock, Globe, Loader2, Shield } from "lucide-react";
 
-export default function AuthForm({ role = "member" }) {
+export default function AuthForm({ role = "client" }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

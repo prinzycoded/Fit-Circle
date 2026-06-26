@@ -770,26 +770,8 @@ export default function App() {
             </div>
             <div>
               <span className="text-base font-display font-extrabold tracking-tight text-theme-primary">FitCircle</span>
-              <p className="text-[10px] text-theme-muted font-medium uppercase tracking-widest mt-0.5">Gamified Fitness Social</p>
+              <p className="text-[10px] text-theme-muted font-medium uppercase tracking-widest mt-0.5">{viewAs === "owner" ? "Gym Management" : "Gamified Fitness Social"}</p>
             </div>
-            <button
-              id="view-as-toggle-btn"
-              onClick={() => {
-                const next = viewAs === "client" ? "owner" : "client";
-                setViewAs(next);
-                safeStorage.setItem(`${STORAGE_KEY_PREFIX}role`, next);
-                showToast(next === "owner" ? "Switched to Owner Dashboard" : "Switched to Client View", "info");
-              }}
-              className={`ml-2 px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer text-[10px] font-display font-bold ${
-                viewAs === "owner"
-                  ? "bg-theme-accent text-white shadow-sm"
-                  : "bg-theme-border/40 text-theme-muted hover:text-theme-primary hover:bg-theme-border"
-              }`}
-              title={viewAs === "owner" ? "Switch to Client View" : "Switch to Owner Dashboard"}
-            >
-              <Shield size={12} />
-              {viewAs === "owner" ? "Owner" : "Client"}
-            </button>
             <button
               id="theme-toggle-btn"
               onClick={() => setDarkMode(prev => !prev)}

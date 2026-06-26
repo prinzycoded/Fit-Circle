@@ -21,7 +21,7 @@ const ownerFeatures = [
 ];
 
 export default function LoginPage() {
-  const [role, setRole] = useState("member");
+  const [role, setRole] = useState("client");
   const features = role === "owner" ? ownerFeatures : memberFeatures;
 
   return (
@@ -78,9 +78,9 @@ export default function LoginPage() {
             {/* Role toggle */}
             <div className="flex rounded-xl overflow-hidden border border-theme-border bg-theme-surface/60">
               <button
-                onClick={() => setRole("member")}
+                onClick={() => setRole("client")}
                 className={`flex-1 py-2.5 text-xs font-display font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                  role === "member"
+                  role === "client"
                     ? "bg-theme-accent text-white shadow-sm"
                     : "text-theme-secondary hover:text-theme-primary"
                 }`}
