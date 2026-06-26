@@ -12,19 +12,11 @@ import {
   Zap,
   Star,
   ArrowRight,
-  LogOut,
 } from "lucide-react";
 import DailyCheckIn from "./DailyCheckIn";
 import StreakSystem from "./StreakSystem";
-import AuthForm from "./AuthForm";
-import { useAuth } from "../contexts/AuthContext";
 
 export default function WelcomePage({ user, onCheckIn, onBuyFreeze, onUseFreeze }) {
-  const { firebaseUser, logout } = useAuth();
-
-  if (!firebaseUser) {
-    return <AuthForm />;
-  }
   const features = [
     { icon: Target, label: "Health Dashboard", desc: "Track workouts, log activity, and monitor your fitness journey." },
     { icon: Compass, label: "Consistency Race", desc: "Complete monthly routines to unlock discount rewards and coupons." },
@@ -74,26 +66,6 @@ export default function WelcomePage({ user, onCheckIn, onBuyFreeze, onUseFreeze 
             </span>
           </div>
         </div>
-      </div>
-
-      {/* Signed-in User Info */}
-      <div className="card flex items-center justify-between gap-3" style={{ borderRadius: 12, padding: "12px 16px" }}>
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-theme-accent/20 flex items-center justify-center text-theme-accent font-display font-bold text-xs">
-            {firebaseUser.email?.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <p className="text-xs font-display font-bold text-theme-primary">{firebaseUser.email}</p>
-            <p className="text-[9px] text-theme-muted font-medium uppercase tracking-wider">Signed in</p>
-          </div>
-        </div>
-        <button
-          onClick={logout}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-theme-border/40 hover:bg-theme-border text-theme-muted hover:text-theme-primary text-[10px] font-display font-bold transition-all cursor-pointer"
-        >
-          <LogOut size={12} />
-          Sign Out
-        </button>
       </div>
 
       {/* Quick Widgets Row */}

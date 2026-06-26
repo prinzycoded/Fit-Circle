@@ -1,19 +1,28 @@
 import { useState } from "react";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../firebase";
-import { Dumbbell, Mail, Lock, Globe, Loader2 } from "lucide-react";
+import { Dumbbell, Mail, Lock, Globe, Loader2, Shield } from "lucide-react";
 
-export default function AuthForm() {
+export default function AuthForm({ role = "member" }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const saveRole = () => {
+    try {
+      localStorage.setItem("fitcircle_role", role);
+    } catch (e) {
+      console.warn("localStorage write denied", e);
+    }
+  };
+
   const handleEmailAuth = async (e) => {
     e.preventDefault();
     setError("");
     setSubmitting(true);
+    saveRole();
     try {
       if (isSignUp) {
         await createUserWithEmailAndPassword(auth, email, password);
@@ -30,6 +39,7 @@ export default function AuthForm() {
   const handleGoogleAuth = async () => {
     setError("");
     setSubmitting(true);
+    saveRole();
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (err) {
@@ -52,6 +62,8 @@ export default function AuthForm() {
     return messages[code] || "Something went wrong. Please try again.";
   };
 
+  const isOwner = role === "owner";
+
   return (
     <div className="rounded-3xl p-8 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #D95C42 0%, #1D202B 100%)' }}>
       <div className="absolute right-0 top-0 bottom-0 opacity-5 flex items-center p-4">
@@ -59,19 +71,21 @@ export default function AuthForm() {
       </div>
       <div className="relative z-10 max-w-md mx-auto">
         <div className="flex items-center gap-2 mb-6">
-          <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-            <Dumbbell size={20} className="rotate-45" />
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isOwner ? "bg-theme-warning text-[#1D202B]" : "bg-white/20"}`}>
+            {isOwner ? <Shield size={20} /> : <Dumbbell size={20} className="rotate-45" />}
           </div>
           <span className="text-xl font-display font-extrabold tracking-tight">FitCircle</span>
         </div>
 
         <h2 className="text-2xl font-display font-extrabold tracking-tight">
-          {isSignUp ? "Create your account" : "Welcome back"}
+          {isSignUp
+            ? isOwner ? "Register your gym" : "Create your account"
+            : isOwner ? "Owner sign in" : "Welcome back"}
         </h2>
         <p className="text-white/70 text-sm mt-1 font-body">
           {isSignUp
-            ? "Sign up to start your gamified fitness journey."
-            : "Sign in to track your progress and compete."}
+            ? isOwner ? "Set up your gym management dashboard." : "Sign up to start your gamified fitness journey."
+            : isOwner ? "Access your gym management panel." : "Sign in to track your progress and compete."}
         </p>
 
         <form onSubmit={handleEmailAuth} className="mt-6 space-y-3">

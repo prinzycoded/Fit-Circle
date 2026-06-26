@@ -11,6 +11,7 @@ import WeeklyChallengeSystem from "./components/WeeklyChallengeSystem";
 import StreakSystem from "./components/StreakSystem";
 import OwnerDashboard from "./components/OwnerDashboard";
 import WelcomePage from "./components/WelcomePage";
+import LoginPage from "./components/LoginPage";
 import { 
   Flame, 
   Trophy, 
@@ -290,6 +291,26 @@ export default function App() {
   useEffect(() => {
     safeStorage.setItem(`${STORAGE_KEY_PREFIX}weeklyChals`, JSON.stringify(weeklyChallenges));
   }, [weeklyChallenges]);
+
+  // Sync Firebase user info into the app user state on login
+  useEffect(() => {
+    if (firebaseUser) {
+      const displayName = firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "User";
+      setUser(prev => ({
+        ...prev,
+        name: displayName,
+        email: firebaseUser.email || prev.email,
+        avatar: firebaseUser.photoURL || prev.avatar,
+      }));
+      // Sync role from localStorage (set by AuthForm before login)
+      try {
+        const savedRole = localStorage.getItem(`${STORAGE_KEY_PREFIX}role`);
+        if (savedRole === "owner" || savedRole === "client") {
+          setViewAs(savedRole);
+        }
+      } catch (e) { /* ignore */ }
+    }
+  }, [firebaseUser?.uid]);
 
   // Secondary evaluation after logging or changing metrics to see if badges trigger
   useEffect(() => {
@@ -730,6 +751,10 @@ export default function App() {
     safeStorage.removeItem(`${STORAGE_KEY_PREFIX}weeklyChals`);
     window.location.reload();
   };
+
+  if (!firebaseUser) {
+    return <LoginPage />;
+  }
 
   return (
     <div id="applet-viewport" className="min-h-screen bg-theme-bg text-theme-primary antialiased font-body bg-mesh">
