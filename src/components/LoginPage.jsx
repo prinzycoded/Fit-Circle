@@ -3,21 +3,21 @@ import AuthForm from "./AuthForm";
 import { Dumbbell, Trophy, Users, Target, Compass, Award, Shield, Star, Flame, Zap, BarChart3, Megaphone, UserCheck, DollarSign } from "lucide-react";
 
 const memberFeatures = [
-  { icon: Target, label: "Health Dashboard", desc: "Track workouts, log activity, and monitor your fitness journey." },
-  { icon: Compass, label: "Consistency Race", desc: "Complete monthly routines to unlock discount rewards and coupons." },
-  { icon: Users, label: "Social Feed", desc: "Share progress, challenge friends, and stay motivated together." },
-  { icon: Trophy, label: "Leaderboards", desc: "Compete with members and climb the rankings every week." },
-  { icon: Award, label: "Achievement Badges", desc: "Earn badges by hitting milestones and completing challenges." },
-  { icon: Shield, label: "Accountability Groups", desc: "Join groups, nudge members, and crush team goals." },
+  { icon: Target, label: "Health Dashboard", desc: "Log runs, lifts, and yoga sessions. See weekly trends and earn XP for every active minute." },
+  { icon: Compass, label: "Consistency Race", desc: "Complete 20 monthly routines and unlock discount codes for real gear and supplements." },
+  { icon: Users, label: "Social Feed", desc: "Post workout selfies, comment on friends' PRs, and reshare your wins to the gym feed." },
+  { icon: Trophy, label: "Leaderboards", desc: "Rank against members in your gym by steps, active minutes, and streak length." },
+  { icon: Award, label: "Achievement Badges", desc: "Hit 10K steps in a day, maintain a 5-day streak — badges pop automatically." },
+  { icon: Shield, label: "Accountability Groups", desc: "Join morning-run crews or weekend warrior squads. Nudge members who fall behind." },
 ];
 
 const ownerFeatures = [
-  { icon: BarChart3, label: "Gym Dashboard", desc: "Overview of member activity, revenue, and engagement metrics." },
-  { icon: Users, label: "Member Management", desc: "View member profiles, plans, and activity stats." },
-  { icon: Megaphone, label: "Announcements", desc: "Send announcements and shoutouts to all members." },
-  { icon: Shield, label: "Challenges", desc: "Create gym-wide challenges to boost member motivation." },
-  { icon: DollarSign, label: "Revenue Insights", desc: "Track plans, pricing tiers, and monthly revenue." },
-  { icon: UserCheck, label: "Engagement", desc: "Monitor check-ins, streaks, and active member count." },
+  { icon: BarChart3, label: "Gym Dashboard", desc: "See active members, today's check-ins, and month-over-month revenue at a glance." },
+  { icon: Users, label: "Member Management", desc: "Browse member profiles, membership plans, and individual activity history." },
+  { icon: Megaphone, label: "Announcements", desc: "Broadcast class schedule changes, promotions, or shoutout top performers." },
+  { icon: Shield, label: "Challenges", desc: "Launch gym-wide step or hydration challenges with reward points you set." },
+  { icon: DollarSign, label: "Revenue Insights", desc: "Track Basic, Standard, Premium plan adoption and monthly recurring revenue." },
+  { icon: UserCheck, label: "Engagement", desc: "Monitor daily active rate, average streak, and members at risk of churn." },
 ];
 
 export default function LoginPage() {
@@ -28,9 +28,9 @@ export default function LoginPage() {
     <div className="min-h-screen bg-theme-bg text-theme-primary antialiased font-body bg-mesh">
       <div className="bg-noise"></div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen flex items-center">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start w-full">
           {/* Left: Brand / Features */}
-          <div className="space-y-8">
+          <div className="space-y-10">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-linear-to-br from-theme-accent to-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-theme-accent/20">
                 {role === "owner" ? <Shield size={24} /> : <Dumbbell size={24} className="rotate-45" />}
@@ -49,7 +49,7 @@ export default function LoginPage() {
               <div className="absolute -right-20 -top-20 w-72 h-72 bg-white/5 rounded-full blur-3xl"></div>
               <div className="absolute -left-10 bottom-0 w-56 h-56 bg-theme-warning/10 rounded-full blur-2xl"></div>
               
-              <div className="relative z-10 px-8 pt-8 pb-10">
+              <div className="relative z-10 px-8 pt-10 pb-12">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-9 h-9 bg-white/15 backdrop-blur-sm rounded-xl flex items-center justify-center ring-2 ring-white/10">
                     {role === "owner" ? <Shield size={18} /> : <Flame size={18} className="text-theme-warning" />}
@@ -120,7 +120,7 @@ export default function LoginPage() {
             </div>
 
             {/* Role toggle */}
-            <div className="flex rounded-xl overflow-hidden border border-theme-border bg-theme-surface/60 backdrop-blur-sm p-0.5">
+            <div className="flex rounded-xl overflow-hidden border border-theme-border bg-theme-surface/60 backdrop-blur-sm p-1">
               <button
                 onClick={() => setRole("client")}
                 className={`flex-1 py-2.5 text-xs font-display font-bold transition-all cursor-pointer flex items-center justify-center gap-2 rounded-lg ${
@@ -146,18 +146,17 @@ export default function LoginPage() {
             </div>
 
             {/* Features Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {features.map(({ icon: Icon, label, desc }, i) => (
-                <div key={label} className="card flex items-start gap-3 card-hover group relative overflow-hidden">
-                  <div className="absolute inset-0 bg-linear-to-br from-theme-accent/0 to-theme-accent/[0.02] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="relative z-10 p-0.5 bg-linear-to-br from-theme-accent/20 to-transparent rounded-xl">
-                    <div className="p-2 bg-theme-accent-light text-theme-accent rounded-lg shrink-0">
+                <div key={label} className="group relative overflow-hidden rounded-xl border border-theme-border bg-theme-surface/40 backdrop-blur-sm p-4 hover:bg-theme-surface hover:border-theme-accent/20 hover:shadow-sm transition-all">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2.5 rounded-lg bg-theme-accent-light text-theme-accent shrink-0 shadow-xs">
                       <Icon size={16} />
                     </div>
-                  </div>
-                  <div className="relative z-10">
-                    <p className="text-xs font-display font-bold text-theme-primary">{label}</p>
-                    <p className="text-[10px] text-theme-secondary mt-0.5 leading-relaxed">{desc}</p>
+                    <div className="min-w-0">
+                      <p className="text-sm font-display font-bold text-theme-primary leading-tight">{label}</p>
+                      <p className="text-[11px] text-theme-secondary mt-1 leading-relaxed">{desc}</p>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -165,7 +164,7 @@ export default function LoginPage() {
           </div>
 
           {/* Right: Auth Form */}
-          <div>
+          <div className="lg:mt-8">
             <AuthForm role={role} />
           </div>
         </div>

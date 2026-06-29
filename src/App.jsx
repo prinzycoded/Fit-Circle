@@ -938,9 +938,11 @@ export default function App() {
                   <WelcomePage
                     user={user}
                     badges={badges}
+                    accountabilityGroups={accountabilityGroups}
                     onCheckIn={handleCheckIn}
                     onBuyFreeze={handleBuyStreakFreeze}
                     onUseFreeze={handleUseStreakFreeze}
+                    onRescueStreak={handleNudgeGroupMember}
                   />
                 )}
 

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   MessageCircle,
-  ThumbsUp,
   MoreVertical,
   Send,
   Repeat2,
@@ -12,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { motion } from "motion/react";
+import HypeButton from "./HypeButton";
 
 export default function SocialHub({ 
   feed, 
@@ -129,13 +129,11 @@ export default function SocialHub({
         {/* Actions bar */}
         <div className="px-5 py-3 border-t border-theme-border flex items-center justify-between">
           <div className="flex items-center gap-4 text-theme-muted text-xs">
-            <button
-              onClick={() => onToggleLike(post.id)}
-              className={`flex items-center gap-1.5 transition-colors cursor-pointer ${post.hasLiked ? 'text-theme-accent' : 'hover:text-theme-primary'}`}
-            >
-              <ThumbsUp size={14} className={post.hasLiked ? 'fill-current' : ''} />
-              <span className="font-bold">{post.likes}</span>
-            </button>
+            <HypeButton
+              liked={post.hasLiked}
+              count={post.likes}
+              onToggle={() => onToggleLike(post.id)}
+            />
             <div className="flex items-center gap-1.5">
               <MessageCircle size={14} />
               <span className="font-bold">{post.comments?.length || 0}</span>

@@ -12,11 +12,17 @@ import {
   Zap,
   Star,
   ArrowRight,
+  Gift,
+  Clock,
+  Medal,
+  TrendingUp,
 } from "lucide-react";
 import DailyCheckIn from "./DailyCheckIn";
 import StreakSystem from "./StreakSystem";
+import StreakRescueAlert from "./StreakRescueAlert";
+import SyndicateDashboardCard from "./SyndicateDashboardCard";
 
-export default function WelcomePage({ user, badges, onCheckIn, onBuyFreeze, onUseFreeze }) {
+export default function WelcomePage({ user, badges, onCheckIn, onBuyFreeze, onUseFreeze, accountabilityGroups, onRescueStreak }) {
   const features = [
     { icon: Target, label: "Health Dashboard", desc: "Track workouts, log activity, and monitor your fitness journey." },
     { icon: Compass, label: "Consistency Race", desc: "Complete monthly routines to unlock discount rewards and coupons." },
@@ -105,32 +111,149 @@ export default function WelcomePage({ user, badges, onCheckIn, onBuyFreeze, onUs
         {/* Daily Check-In (compact) */}
         <DailyCheckIn user={user} onCheckIn={onCheckIn} />
 
-        {/* Consistency Tracker (compact) */}
-        <div className="card flex flex-col justify-between" style={{ borderRadius: 12, padding: 16 }}>
+        {/* Consistency Tracker (compact) - Contest Edition */}
+        <div className="card flex flex-col justify-between relative overflow-hidden" style={{ borderRadius: 12, padding: 16 }}>
+          <div className="absolute -right-6 -top-6 w-16 h-16 bg-theme-accent/5 rounded-full blur-xl"></div>
           <div>
             <div className="flex items-center gap-1.5 text-[10px] font-display font-bold uppercase text-theme-muted tracking-widest mb-2">
               <Compass size={11} className="text-theme-accent" />
-              <span>Consistency Track</span>
+              <span>Consistency Race</span>
             </div>
             <div className="flex justify-between items-baseline">
               <span className="text-xl font-display font-extrabold text-theme-primary">
                 {user.routinesCompletedThisMonth} / {user.routineTargetMonth}
               </span>
-              <span className="text-[9px] font-display font-extrabold text-theme-support bg-theme-support-light px-2 py-0.5 rounded-full">
-                {routinesPct}%
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1 text-[9px] font-display font-bold text-theme-success bg-theme-success-light px-2 py-0.5 rounded-full">
+                  <Gift size={9} />
+                  <span>Prize Pool: 30% Off</span>
+                </span>
+                <span className="text-[9px] font-display font-extrabold text-theme-support bg-theme-support-light px-2 py-0.5 rounded-full">
+                  {routinesPct}%
+                </span>
+              </div>
             </div>
             <p className="text-[9px] text-theme-muted font-medium mt-0.5 uppercase tracking-wide">Workouts Completed This Month</p>
           </div>
           <div className="mt-3">
-            <div className="progress-bar">
-              <div className="progress-bar-fill bg-theme-accent" style={{ width: `${routinesPct}%` }}></div>
+            <div className="relative">
+              <div className="progress-bar">
+                <div className="progress-bar-fill bg-theme-accent" style={{ width: `${routinesPct}%` }}></div>
+              </div>
+              {/* Tier markers */}
+              <div className="flex justify-between mt-1 px-0.5">
+                {[
+                  { at: 25, label: "🥉 Bronze", pct: "10%" },
+                  { at: 60, label: "🥈 Silver", pct: "20%" },
+                  { at: 100, label: "🥇 Gold", pct: "30%" },
+                ].map((tier) => (
+                  <span key={tier.at} className={`text-[7px] font-display font-bold px-1 py-0.5 rounded ${
+                    routinesPct >= tier.at
+                      ? "text-theme-success bg-theme-success-light"
+                      : "text-theme-muted bg-theme-border/30"
+                  }`}>
+                    {tier.label} {tier.pct}
+                  </span>
+                ))}
+              </div>
             </div>
-            <p className="text-[9px] text-theme-secondary font-medium mt-1.5">
-              {user.routinesCompletedThisMonth >= 12
-                ? "Silver Tier Coupon unlocked! Climb to Gold to get 30% off!"
-                : "Complete 5 more routine days to unlock Bronze (10% Off) tier!"}
+            <p className="text-[9px] text-theme-secondary font-medium mt-1.5 flex items-center gap-1">
+              <Trophy size={9} className="text-theme-warning shrink-0" />
+              {user.routinesCompletedThisMonth >= 20
+                ? "Gold tier achieved! 🎉 Use code FITGOLD30 at checkout."
+                : user.routinesCompletedThisMonth >= 12
+                ? "Silver unlocked! 6 more workouts to Gold (30% Off)!"
+                : `${20 - user.routinesCompletedThisMonth} more workouts to unlock Gold tier!`}
             </p>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Streak Rescue Alert */}
+      <StreakRescueAlert
+        groups={accountabilityGroups || []}
+        currentUserId={user.id}
+        onRescue={onRescueStreak}
+      />
+
+      {/* Active Contests Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        {/* Daily Quest */}
+        <div className="card overflow-hidden relative" style={{ borderRadius: 12, padding: 0 }}>
+          <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-theme-accent to-theme-warning"></div>
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-1.5 text-[10px] font-display font-bold uppercase text-theme-muted tracking-widest">
+                <Zap size={11} className="text-theme-warning" />
+                <span>Daily Quest</span>
+              </div>
+              <span className="flex items-center gap-1 text-[9px] font-display font-bold text-theme-accent bg-theme-accent-light px-2 py-0.5 rounded-full">
+                <Clock size={9} />
+                <span>11h 24m left</span>
+              </span>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-theme-warning-light text-theme-warning rounded-xl shrink-0">
+                <Target size={16} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-display font-bold text-theme-primary leading-snug">Burn 500 active calories today</p>
+                <p className="text-[10px] text-theme-secondary mt-0.5">Log high-intensity workouts to earn bonus XP.</p>
+                <div className="flex items-center gap-3 mt-2.5">
+                  <div className="flex-1">
+                    <div className="progress-bar">
+                      <div className="progress-bar-fill bg-theme-warning" style={{ width: "68%" }}></div>
+                    </div>
+                    <div className="flex justify-between mt-1">
+                      <span className="text-[9px] font-display font-bold text-theme-primary">340 / 500 cal</span>
+                      <span className="text-[9px] font-display font-bold text-theme-muted">68%</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 text-theme-success shrink-0">
+                    <Gift size={11} />
+                    <span className="text-[9px] font-display font-extrabold">+150 XP</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Weekly Showdown - Mini Leaderboard */}
+        <div className="card overflow-hidden relative" style={{ borderRadius: 12, padding: 0 }}>
+          <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-theme-support to-theme-accent"></div>
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-1.5 text-[10px] font-display font-bold uppercase text-theme-muted tracking-widest">
+                <Medal size={11} className="text-theme-support" />
+                <span>Weekly Showdown</span>
+              </div>
+              <span className="text-[9px] font-display font-bold text-theme-support bg-theme-support-light px-2 py-0.5 rounded-full">
+                <TrendingUp size={9} className="inline mr-0.5" />
+                6 days left
+              </span>
+            </div>
+            <div className="space-y-2">
+              {[
+                { rank: 1, name: "Liam Carter", points: 11200, avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop&q=80", color: "text-yellow-500", bg: "bg-yellow-50 dark:bg-yellow-900/20" },
+                { rank: 2, name: "Jessica Vance", points: 10400, avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&auto=format&fit=crop&q=80", color: "text-gray-400", bg: "bg-gray-50 dark:bg-gray-800/30" },
+                { rank: 3, name: "Ava Mitchell", points: 7650, avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&auto=format&fit=crop&q=80", color: "text-amber-700", bg: "bg-amber-50 dark:bg-amber-900/20" },
+              ].map(({ rank, name, points, avatar, color, bg }) => (
+                <div key={rank} className={`flex items-center gap-2.5 p-2 rounded-xl ${bg} transition-all`}>
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-display font-extrabold ${color} ${rank === 1 ? 'bg-yellow-100 dark:bg-yellow-900/30' : rank === 2 ? 'bg-gray-100 dark:bg-gray-700/30' : 'bg-amber-100 dark:bg-amber-900/30'}`}>
+                    {rank}
+                  </span>
+                  <img src={avatar} alt={name} className="w-6 h-6 rounded-full object-cover ring-1 ring-white/20" />
+                  <span className="flex-1 text-[11px] font-display font-bold text-theme-primary truncate">{name}</span>
+                  <span className="text-[10px] font-display font-bold text-theme-muted">{points.toLocaleString()} pts</span>
+                </div>
+              ))}
+            </div>
+            <button className="mt-2.5 w-full py-1.5 text-[9px] font-display font-bold text-theme-accent hover:text-white hover:bg-theme-accent rounded-lg transition-all text-center border border-theme-border hover:border-theme-accent">
+              View Full Leaderboard →
+            </button>
           </div>
         </div>
 
@@ -138,6 +261,17 @@ export default function WelcomePage({ user, badges, onCheckIn, onBuyFreeze, onUs
 
       {/* Streak Protection (rectangle - full width) */}
       <StreakSystem user={user} onBuyFreeze={onBuyFreeze} onUseFreeze={onUseFreeze} />
+
+      {/* Syndicate Ascent Dashboard */}
+      <SyndicateDashboardCard
+        team={[
+          { id: "liam", name: "Liam Carter", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80", streak: 12, points: 18950, checkInStatus: "done" },
+          { id: "jessica", name: "Jessica Vance", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80", streak: 9, points: 16880, checkInStatus: "done" },
+          { id: "me", name: user.name, avatar: user.avatar, streak: user.streak, points: user.points, checkInStatus: user.lastCheckIn === new Date().toISOString().split('T')[0] ? "done" : "pending" },
+          { id: "noah", name: "Noah Reynolds", avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=120&auto=format&fit=crop&q=80", streak: 8, points: 17430, checkInStatus: "pending" },
+        ]}
+        onRescue={(member) => onRescueStreak && onRescueStreak("group1", member.name)}
+      />
 
       {/* Features Grid */}
       <div>
