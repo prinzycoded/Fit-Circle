@@ -11,9 +11,21 @@ import {
   ChevronRight,
   Zap,
   Medal,
+  X,
+  Send,
 } from "lucide-react";
 
-export default function Dashboard({ metrics, user, challenges, badges, feedPosts, onUpdateMetrics, onLogWorkout }) {
+export default function Dashboard({ metrics, user, challenges, badges, feedPosts, onUpdateMetrics, onLogWorkout, onCreateChallenge }) {
+  const [showCreateChallenge, setShowCreateChallenge] = useState(false);
+  const [challengeForm, setChallengeForm] = useState({
+    title: "",
+    description: "",
+    type: "duration",
+    targetValue: 60,
+    metricLabel: "min",
+    daysLeft: 7,
+    rewardPoints: 200,
+  });
   const [customWorkout, setCustomWorkout] = useState({
     type: "Run",
     duration: 30,
@@ -120,12 +132,104 @@ export default function Dashboard({ metrics, user, challenges, badges, feedPosts
 
         {/* Active Challenges */}
         <div className="card">
-          <div className="flex items-center gap-2 mb-4">
-            <Target size={16} className="text-theme-accent" />
-            <h2 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">Active Challenges</h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Target size={16} className="text-theme-accent" />
+              <h2 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">Active Challenges</h2>
+            </div>
+            <button
+              onClick={() => setShowCreateChallenge(true)}
+              className="flex items-center gap-1 text-[10px] font-display font-bold text-white bg-theme-accent hover:bg-theme-accent-hover px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+            >
+              <Plus size={12} />
+              Create
+            </button>
           </div>
-          {activeChallenges.length === 0 ? (
-            <p className="text-xs text-theme-muted py-2">No active challenges. Head to Social Feed to find one!</p>
+
+          {/* Create Challenge Form */}
+          {showCreateChallenge && (
+            <div className="mb-4 p-3 rounded-xl bg-theme-border/20 border border-theme-border space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-display font-bold text-theme-primary uppercase tracking-wider">New Challenge</span>
+                <button onClick={() => setShowCreateChallenge(false)} className="p-1 text-theme-muted hover:text-theme-primary cursor-pointer">
+                  <X size={14} />
+                </button>
+              </div>
+              <input
+                type="text"
+                placeholder="Challenge title"
+                value={challengeForm.title}
+                onChange={(e) => setChallengeForm({ ...challengeForm, title: e.target.value })}
+                className="w-full bg-theme-surface border border-theme-border rounded-lg px-3 py-2 text-xs font-bold text-theme-primary placeholder-theme-muted focus:outline-none focus:border-theme-accent"
+              />
+              <input
+                type="text"
+                placeholder="Short description"
+                value={challengeForm.description}
+                onChange={(e) => setChallengeForm({ ...challengeForm, description: e.target.value })}
+                className="w-full bg-theme-surface border border-theme-border rounded-lg px-3 py-2 text-xs font-bold text-theme-primary placeholder-theme-muted focus:outline-none focus:border-theme-accent"
+              />
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="text-[8px] font-display font-bold text-theme-muted uppercase tracking-wider">Target</label>
+                  <input
+                    type="number" min="1"
+                    value={challengeForm.targetValue}
+                    onChange={(e) => setChallengeForm({ ...challengeForm, targetValue: Math.max(1, parseInt(e.target.value) || 0) })}
+                    className="w-full bg-theme-surface border border-theme-border rounded-lg px-2 py-1.5 text-xs font-bold text-theme-primary focus:outline-none focus:border-theme-accent"
+                  />
+                </div>
+                <div>
+                  <label className="text-[8px] font-display font-bold text-theme-muted uppercase tracking-wider">Unit</label>
+                  <input
+                    type="text"
+                    value={challengeForm.metricLabel}
+                    onChange={(e) => setChallengeForm({ ...challengeForm, metricLabel: e.target.value })}
+                    className="w-full bg-theme-surface border border-theme-border rounded-lg px-2 py-1.5 text-xs font-bold text-theme-primary focus:outline-none focus:border-theme-accent"
+                  />
+                </div>
+                <div>
+                  <label className="text-[8px] font-display font-bold text-theme-muted uppercase tracking-wider">Days</label>
+                  <input
+                    type="number" min="1" max="30"
+                    value={challengeForm.daysLeft}
+                    onChange={(e) => setChallengeForm({ ...challengeForm, daysLeft: Math.max(1, parseInt(e.target.value) || 1) })}
+                    className="w-full bg-theme-surface border border-theme-border rounded-lg px-2 py-1.5 text-xs font-bold text-theme-primary focus:outline-none focus:border-theme-accent"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <select
+                  value={challengeForm.type}
+                  onChange={(e) => setChallengeForm({ ...challengeForm, type: e.target.value })}
+                  className="flex-1 bg-theme-surface border border-theme-border rounded-lg px-2 py-1.5 text-[10px] font-bold text-theme-primary focus:outline-none focus:border-theme-accent"
+                >
+                  <option value="duration">Duration</option>
+                  <option value="steps">Steps</option>
+                  <option value="frequency">Frequency</option>
+                </select>
+                <button
+                  onClick={() => {
+                    if (!challengeForm.title.trim()) return;
+                    onCreateChallenge({
+                      ...challengeForm,
+                      title: challengeForm.title.trim(),
+                      description: challengeForm.description.trim() || `Complete ${challengeForm.targetValue} ${challengeForm.metricLabel}`,
+                    });
+                    setChallengeForm({ title: "", description: "", type: "duration", targetValue: 60, metricLabel: "min", daysLeft: 7, rewardPoints: 200 });
+                    setShowCreateChallenge(false);
+                  }}
+                  className="flex items-center gap-1 text-[10px] font-display font-bold text-white bg-theme-accent hover:bg-theme-accent-hover px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+                >
+                  <Send size={11} />
+                  Go
+                </button>
+              </div>
+            </div>
+          )}
+
+          {activeChallenges.length === 0 && !showCreateChallenge ? (
+            <p className="text-xs text-theme-muted py-2">No active challenges. Create one above!</p>
           ) : (
             <div className="space-y-3">
               {activeChallenges.slice(0, 3).map(c => {

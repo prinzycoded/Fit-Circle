@@ -600,6 +600,25 @@ export default function App() {
     showToast(`Challenge "${title}" created and sent to all members!`, "success");
   };
 
+  // Create a personal challenge (client)
+  const handleCreateClientChallenge = (form) => {
+    const newChallenge = {
+      id: `client_chal_${Date.now()}`,
+      title: form.title,
+      description: form.description,
+      type: form.type,
+      targetValue: form.targetValue,
+      currentValue: 0,
+      metricLabel: form.metricLabel,
+      daysLeft: form.daysLeft,
+      invitedBy: user.name,
+      status: "active",
+      rewardPoints: form.rewardPoints,
+    };
+    setChallenges(prev => [newChallenge, ...prev]);
+    showToast(`Challenge "${form.title}" created! Start working on it.`, "success");
+  };
+
   // Accept a challenge card
   const handleAcceptChallenge = (challengeId) => {
     setChallenges(chals => chals.map(c => {
@@ -955,6 +974,7 @@ export default function App() {
                     feedPosts={feedPosts}
                     onUpdateMetrics={handleUpdateMetrics}
                     onLogWorkout={handleLogWorkout}
+                    onCreateChallenge={handleCreateClientChallenge}
                   />
                 )}
 
