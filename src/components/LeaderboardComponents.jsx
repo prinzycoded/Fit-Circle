@@ -87,7 +87,7 @@ export default function LeaderboardComponents({ leaderboardData, currentUserId }
             <TrendingUp size={16} className="text-theme-accent" />
             <h3 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">Top Performers</h3>
           </div>
-          <div className="flex items-end justify-center gap-4 py-3">
+          <div className="flex items-end justify-center gap-2 sm:gap-4 py-3 flex-wrap">
             {second && (
               <div className="text-center flex flex-col items-center">
                 <img referrerPolicy="no-referrer" src={second.avatar} alt="" className="w-10 h-10 rounded-full border-2 border-theme-support shadow-md" />

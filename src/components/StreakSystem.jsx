@@ -45,7 +45,7 @@ export default function StreakSystem({ user, onBuyFreeze, onUseFreeze }) {
           <div className="flex gap-0.5">
             {[1, 2, 3].map((slot) => (
               <div key={slot}
-                className={`flex-1 h-5 rounded-md border flex items-center justify-center text-xs font-display font-extrabold transition-colors ${
+                className={`flex-1 min-w-[22px] h-5 rounded-md border flex items-center justify-center text-xs font-display font-extrabold transition-colors ${
                   slot <= freezeAvailable
                     ? 'bg-theme-support-light border-theme-support text-theme-support'
                     : 'bg-theme-border/20 border-theme-border/30 text-theme-muted'

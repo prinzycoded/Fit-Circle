@@ -88,7 +88,7 @@ export default function Dashboard({ metrics, user, challenges, badges, feedPosts
       </div>
 
       {/* Quick Stats Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="card flex items-center gap-3 py-3 px-4">
           <div className="p-2 bg-theme-accent-light text-theme-accent rounded-xl">
             <Zap size={16} />
@@ -169,9 +169,9 @@ export default function Dashboard({ metrics, user, challenges, badges, feedPosts
                 onChange={(e) => setChallengeForm({ ...challengeForm, description: e.target.value })}
                 className="w-full bg-theme-surface border border-theme-border rounded-lg px-3 py-2 text-xs font-bold text-theme-primary placeholder-theme-muted focus:outline-none focus:border-theme-accent"
               />
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div>
-                  <label className="text-[8px] font-display font-bold text-theme-muted uppercase tracking-wider">Target</label>
+                  <label className="text-[8px] sm:text-[9px] font-display font-bold text-theme-muted uppercase tracking-wider">Target</label>
                   <input
                     type="number" min="1"
                     value={challengeForm.targetValue}

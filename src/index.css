@@ -238,6 +238,14 @@ a:not(:disabled):hover,
   background-color: var(--color-theme-surface);
   border: 1px solid var(--color-theme-border);
   border-radius: 16px;
-  padding: 24px;
+  padding: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+@media (max-width: 640px) {
+  .card { padding: 16px; }
+}
+
+/* Touch-friendly interactive elements */
+button, a, [role="button"], select, input, textarea {
+  touch-action: manipulation;
 }

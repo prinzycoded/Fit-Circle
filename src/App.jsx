@@ -816,7 +816,7 @@ export default function App() {
           {/* Quick Realtime Multi-Status Header widget */}
           <div className="flex items-center gap-3">
             
-            <div className="hidden sm:flex items-center gap-2.5 bg-theme-support-light border border-theme-border rounded-xl px-3 py-1.5 text-theme-support">
+            <div className="hidden lg:flex items-center gap-2.5 bg-theme-support-light border border-theme-border rounded-xl px-3 py-1.5 text-theme-support">
               <Trophy size={14} className="text-theme-accent" />
               <div className="text-left">
                 <p className="text-[9px] font-bold uppercase tracking-widest leading-none text-theme-muted">Your points</p>
@@ -857,7 +857,7 @@ export default function App() {
       </header>
 
       {/* Main Container Layout */}
-      <main id="app-main-view" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main id="app-main-view" className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
 
         {viewAs === "owner" ? (
           <OwnerDashboard
@@ -873,12 +873,39 @@ export default function App() {
             onCreateChallenge={handleCreateOwnerChallenge}
             onNudgeGroup={handleNudgeGroupMember}
           />
-        ) : (
+        ) : (<>
+          {/* Mobile bottom nav bar */}
+          <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-theme-surface/95 backdrop-blur-lg border-t border-theme-border" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+            <div className="flex items-center justify-around max-w-lg mx-auto">
+              {[
+                { tab: "welcome", label: "Home", icon: Compass },
+                { tab: "dashboard", label: "Dash", icon: Heart },
+                { tab: "race", label: "Race", icon: Target },
+                { tab: "social", label: "Feed", icon: Users },
+                { tab: "leaderboard", label: "Top", icon: Trophy },
+                { tab: "badges", label: "More", icon: Award },
+              ].map(({ tab, label, icon: Icon }) => {
+                const isActive = activeTab === tab || (tab === "badges" && (activeTab === "groups" || activeTab === "weeklyChallenges" || activeTab === "badges"));
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`flex flex-col items-center gap-0 py-1.5 px-0.5 transition-all flex-1 min-w-0 ${
+                      isActive ? "text-theme-accent" : "text-theme-muted hover:text-theme-secondary"
+                    }`}
+                  >
+                    <Icon size={18} className={isActive ? "text-theme-accent" : ""} />
+                    <span className={`text-[7px] font-display font-bold mt-0 leading-tight ${isActive ? "text-theme-accent" : ""}`}>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* LEFT COLUMN: Sidebar Navigation Panel */}
-          <section id="sidebar-col" className="lg:col-span-3">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8 pb-20 lg:pb-0">
+
+          {/* LEFT COLUMN: Sidebar Navigation Panel (hidden on mobile, shown on lg+) */}
+          <section id="sidebar-col" className="hidden lg:block lg:col-span-3">
             <div className="sticky top-24 space-y-4">
 
               {/* User Profile Card */}
@@ -951,7 +978,7 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -12 }}
                 transition={{ duration: 0.2 }}
-                className="min-h-500px"
+                className="min-h-[300px] sm:min-h-[500px]"
               >
                 {activeTab === "welcome" && (
                   <WelcomePage
@@ -1037,7 +1064,7 @@ export default function App() {
           </section>
 
         </div>
-        )}
+        </>)}
       </main>
 
       {/* Floating global warning-free Toast notification box */}

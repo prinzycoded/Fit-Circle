@@ -121,7 +121,7 @@ export default function SocialHub({
           )}
           {post.image && (
             <div className="mt-3 rounded-2xl overflow-hidden border border-theme-border">
-              <img referrerPolicy="no-referrer" src={post.image} alt="Post visual" className="w-full h-48 object-cover" />
+              <img referrerPolicy="no-referrer" src={post.image} alt="Post visual" className="w-full h-40 sm:h-48 object-cover" />
             </div>
           )}
         </div>

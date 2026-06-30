@@ -267,7 +267,7 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
       </div>
 
       {/* Overview Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map(({ label, value, icon: Icon, color, bg, change }) => (
           <div key={label} className="card flex items-start gap-3 card-hover">
             <div className={`p-2.5 rounded-xl ${bg} ${color}`}>
@@ -414,6 +414,11 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
                     <p className="text-xs font-display font-extrabold text-theme-support">{member.checkInsThisMonth}</p>
                     <p className="text-[10px] text-theme-muted">check-ins</p>
                   </div>
+                </div>
+                {/* Mobile: compact inline stats */}
+                <div className="flex sm:hidden items-center gap-2">
+                  <span className="text-[9px] font-display font-bold text-theme-primary">{member.points.toLocaleString()}p</span>
+                  <span className="text-[9px] font-display font-bold text-theme-warning">{member.streak}d</span>
                 </div>
 
                 <button
@@ -694,7 +699,7 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Type</label>
                   <select

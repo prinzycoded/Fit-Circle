@@ -74,7 +74,7 @@ export default function DiscountRace({ user, onIncrementRoutine }) {
           </p>
         </div>
 
-        <div className="bg-theme-support-light border border-theme-border rounded-2xl p-5 text-center flex flex-col items-center justify-center min-w-[180px] self-stretch md:self-auto">
+        <div className="bg-theme-support-light border border-theme-border rounded-2xl p-5 text-center flex flex-col items-center justify-center min-w-0 w-full md:w-auto md:min-w-[180px] self-stretch md:self-auto">
           <p className="text-xs font-display font-bold text-theme-support uppercase tracking-widest">Routine Progress</p>
           <span className="text-4xl font-display font-extrabold text-theme-primary my-1">
             {currentCount} / {targetCount}
@@ -106,24 +106,24 @@ export default function DiscountRace({ user, onIncrementRoutine }) {
           <p className="text-xs font-display font-bold text-theme-accent">{totalPercentage}% Complete</p>
         </div>
 
-        <div id="racetrack-lane" className="relative z-10 py-12 px-4 bg-black/30 border border-theme-border/20 rounded-2xl md:my-4">
+        <div id="racetrack-lane" className="relative z-10 py-8 sm:py-12 px-2 sm:px-4 bg-black/30 border border-theme-border/20 rounded-2xl md:my-4 min-h-[200px] sm:min-h-[240px]">
           
-          <div className="absolute left-10 right-10 top-1/2 -translate-y-1/2 h-2.5 bg-theme-border/10 rounded-full overflow-hidden">
+          <div className="absolute left-6 sm:left-10 right-6 sm:right-10 top-1/2 -translate-y-1/2 h-2 bg-theme-border/10 rounded-full overflow-hidden">
             <div 
               className="h-full rounded-full transition-all duration-1000" 
               style={{ width: `${totalPercentage}%`, background: 'linear-gradient(90deg, #3D6B8C, #D95C42)' }}
             ></div>
           </div>
 
-          <div className="absolute left-10 right-10 top-1/2 -translate-y-1/2 h-2.5 flex justify-between pointer-events-none">
+          <div className="absolute left-6 sm:left-10 right-6 sm:right-10 top-1/2 -translate-y-1/2 h-2 flex justify-between pointer-events-none">
             {[...Array(11)].map((_, i) => (
-              <div key={i} className="w-px h-2.5 bg-white/10"></div>
+              <div key={i} className="w-px h-2 bg-white/10"></div>
             ))}
           </div>
 
           <div 
             className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-all duration-1000 ease-out z-20"
-            style={{ left: `calc(40px + ${totalPercentage * 0.82}%)` }}
+            style={{ left: totalPercentage > 95 ? '95%' : `calc(12% + ${totalPercentage * 0.76}%)` }}
           >
             <motion.div 
               animate={{ y: [0, -4, 0] }}
@@ -131,14 +131,14 @@ export default function DiscountRace({ user, onIncrementRoutine }) {
               className="flex flex-col items-center"
             >
               <div className="relative">
-                <div className="w-10 h-10 rounded-full border-2 border-theme-accent overflow-hidden shadow-lg" style={{ backgroundColor: '#3D6B8C' }}>
+                <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-full border-2 border-theme-accent overflow-hidden shadow-lg" style={{ backgroundColor: '#3D6B8C' }}>
                   <img referrerPolicy="no-referrer" src={user.avatar} alt="You" className="w-full h-full object-cover" />
                 </div>
-                <div className="absolute -top-1.5 -right-1.5 bg-theme-accent text-white text-[9px] font-display font-extrabold rounded-full w-5 h-5 flex items-center justify-center shadow">
-                  <Flame size={10} />
+                <div className="absolute -top-1.5 -right-1.5 bg-theme-accent text-white text-[9px] font-display font-extrabold rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center shadow">
+                  <Flame size={8} />
                 </div>
               </div>
-              <span className="bg-black/60 text-[10px] font-display font-bold px-1.5 py-0.5 rounded border border-white/10 text-white mt-1 whitespace-nowrap shadow-md">
+              <span className="bg-black/60 text-[8px] sm:text-[10px] font-display font-bold px-1.5 py-0.5 rounded border border-white/10 text-white mt-1 whitespace-nowrap shadow-md">
                 You ({currentCount}d)
               </span>
             </motion.div>
@@ -147,19 +147,20 @@ export default function DiscountRace({ user, onIncrementRoutine }) {
           {milestones.map((m) => {
             const milestonePercent = (m.target / targetCount) * 100;
             const isPassed = currentCount >= m.target;
+            const leftPos = milestonePercent > 85 ? '85%' : `calc(8% + ${milestonePercent * 0.84}%)`;
             return (
               <div 
                 key={m.id}
                 className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 flex flex-col items-center"
-                style={{ left: `calc(10% + ${milestonePercent * 0.8}%)` }}
+                style={{ left: leftPos }}
               >
-                <div className={`p-1.5 rounded-full ${isPassed ? "bg-theme-accent text-white" : "bg-theme-border/20 text-theme-muted"} border-2 shadow-md`} style={{ borderColor: isPassed ? '#D95C42' : '#2A2E3A' }}>
-                  {isPassed ? <Unlock size={12} /> : <Lock size={12} />}
+                <div className={`p-1 sm:p-1.5 rounded-full ${isPassed ? "bg-theme-accent text-white" : "bg-theme-border/20 text-theme-muted"} border-2 shadow-md`} style={{ borderColor: isPassed ? '#D95C42' : '#2A2E3A' }}>
+                  {isPassed ? <Unlock size={10} /> : <Lock size={10} />}
                 </div>
-                <span className={`text-[10px] font-display font-extrabold mt-1.5 px-1 py-0.5 rounded shadow whitespace-nowrap ${isPassed ? "text-theme-accent bg-black/40" : "text-theme-muted bg-black/20"}`}>
+                <span className={`text-[9px] sm:text-[10px] font-display font-extrabold mt-1 px-1 py-0.5 rounded shadow whitespace-nowrap ${isPassed ? "text-theme-accent bg-black/40" : "text-theme-muted bg-black/20"}`}>
                   {m.discount}
                 </span>
-                <span className="text-[8px] font-bold text-theme-muted uppercase mt-0.5">{m.target} Days</span>
+                <span className="text-[7px] sm:text-[8px] font-bold text-theme-muted uppercase mt-0.5">{m.target} Days</span>
               </div>
             );
           })}
