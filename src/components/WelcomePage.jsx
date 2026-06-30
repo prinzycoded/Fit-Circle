@@ -33,52 +33,76 @@ export default function WelcomePage({ user, badges, onCheckIn, onBuyFreeze, onUs
   ];
 
   const routinesPct = Math.min(100, Math.round((user.routinesCompletedThisMonth / user.routineTargetMonth) * 100));
+  const arenaRank = Math.max(1, Math.min(50, 50 - Math.floor(user.points / 300)));
 
   return (
     <div className="space-y-8">
 
-      {/* Welcome Hero */}
-      <div className="rounded-3xl text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #D95C42 0%, #1D202B 100%)' }}>
-        <div className="absolute inset-0 opacity-40" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23fff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}></div>
-        <div className="absolute -right-16 -top-16 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
-        <div className="absolute -left-8 bottom-0 w-48 h-48 bg-theme-warning/10 rounded-full blur-2xl"></div>
+      {/* Arena Contest Hero */}
+      <div className="rounded-2xl text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #D95C42 0%, #7C2D12 50%, #1D202B 100%)' }}>
+        <div className="absolute inset-0 opacity-30" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23fff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}></div>
+        <div className="absolute -right-16 -top-16 w-48 h-48 bg-theme-warning/10 rounded-full blur-3xl"></div>
+        <div className="absolute -left-8 -bottom-8 w-36 h-36 bg-orange-500/10 rounded-full blur-2xl"></div>
         
-        <div className="relative z-10 px-8 pt-8 pb-10">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center ring-2 ring-white/10">
-              <Dumbbell size={20} className="rotate-45" />
+        <div className="relative z-10">
+          <div className="flex items-center justify-between px-5 pt-4 pb-1">
+            <div className="flex items-center gap-1.5">
+              <div className="w-7 h-7 bg-theme-warning/20 backdrop-blur-sm rounded-lg flex items-center justify-center ring-2 ring-theme-warning/20">
+                <Trophy size={14} className="text-theme-warning" />
+              </div>
+              <span className="text-sm font-display font-extrabold tracking-tight">FitCircle Arena</span>
+              <span className="ml-1 px-1.5 py-0.5 bg-theme-warning text-black text-[7px] font-bold rounded uppercase tracking-wider">LIVE</span>
             </div>
-            <span className="text-xl font-display font-extrabold tracking-tight">FitCircle</span>
-            <span className="ml-2 px-2.5 py-0.5 bg-theme-warning/20 text-theme-warning text-[9px] font-bold rounded-full uppercase tracking-wider">v2.0</span>
+            <div className="flex items-center gap-1.5 bg-black/20 backdrop-blur-sm rounded-full px-3 py-1 border border-white/10">
+              <Medal size={10} className="text-yellow-300" />
+              <span className="text-[8px] font-display font-bold text-white/80">Prize Pool:</span>
+              <span className="text-[10px] font-display font-extrabold text-theme-warning">$2,400</span>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-center px-5 pt-1 pb-6">
             <div className="lg:col-span-3">
-              <h1 className="text-3xl md:text-4xl font-display font-extrabold tracking-tight leading-tight">
-                Your fitness journey,{" "}
+              <div className="flex items-center gap-1.5 mb-2">
+                <span className="px-1.5 py-0.5 bg-theme-warning/20 text-theme-warning text-[8px] font-bold rounded uppercase tracking-wider border border-theme-warning/20">Season 2</span>
+                <span className="px-1.5 py-0.5 bg-white/10 text-white/80 text-[8px] font-bold rounded uppercase tracking-wider">Ends in 6d</span>
+              </div>
+              <h1 className="text-xl md:text-2xl font-display font-extrabold tracking-tight leading-tight">
+                The Contest Arena{" "}
                 <span className="text-transparent bg-clip-text bg-linear-to-r from-theme-warning to-yellow-300">
-                  gamified.
+                  awaits.
                 </span>
               </h1>
-              <p className="text-white/70 text-sm md:text-base mt-3 max-w-xl font-body leading-relaxed">
-                FitCircle transforms every workout into a quest. Earn{" "}
-                <span className="text-white font-bold">XP points</span>, ignite{" "}
-                <span className="text-white font-bold">streaks</span>, collect{" "}
-                <span className="text-white font-bold">badges</span>, and climb the{" "}
-                <span className="text-white font-bold">leaderboards</span> — all while 
-                staying accountable with your gym community.
+              <p className="text-white/70 text-xs md:text-sm mt-1.5 max-w-xl font-body leading-relaxed">
+                Every rep, step, and streak earns you Arena Points. Climb ranks, unlock prize tiers, and battle for the $2,400 Grand Prize.
               </p>
               
-              <div className="flex flex-wrap items-center gap-2 mt-5">
+              {/* Contest progress */}
+              <div className="mt-3 bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[9px] font-display font-bold uppercase tracking-wider text-white/60">Your Arena Score</span>
+                  <span className="text-[11px] font-display font-extrabold text-theme-warning">{user.points.toLocaleString()} pts</span>
+                </div>
+                <div className="relative">
+                  <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-full bg-linear-to-r from-theme-warning to-yellow-300 rounded-full" style={{ width: `${Math.min(100, (user.points / 25000) * 100)}%` }}></div>
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <span className="text-[7px] text-white/50 font-medium">🥉 5K</span>
+                    <span className="text-[7px] text-white/50 font-medium">🥈 15K</span>
+                    <span className="text-[7px] text-white/50 font-medium">🥇 25K</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-1.5 mt-3">
                 {[
-                  { icon: Flame, label: "Streak Tracking", color: "text-orange-300" },
-                  { icon: Trophy, label: "Reward System", color: "text-yellow-300" },
-                  { icon: Users, label: "Community", color: "text-blue-300" },
-                  { icon: Zap, label: "Live Challenges", color: "text-purple-300" },
-                  { icon: Award, label: "Achievements", color: "text-emerald-300" },
+                  { icon: Trophy, label: "Grand Prize $2,400", color: "text-yellow-300" },
+                  { icon: Medal, label: "Top 3 Payout", color: "text-orange-300" },
+                  { icon: Zap, label: "Bonus Challenges", color: "text-purple-300" },
+                  { icon: Flame, label: "Streak Multiplier", color: "text-red-300" },
                 ].map(({ icon: Icon, label, color }) => (
-                  <span key={label} className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5 text-[10px] font-bold border border-white/10 hover:bg-white/20 transition-all">
-                    <Icon size={12} className={color} />
+                  <span key={label} className="flex items-center gap-1 bg-white/10 backdrop-blur-sm rounded-full px-2 py-1 text-[8px] font-bold border border-white/10 hover:bg-white/20 transition-all">
+                    <Icon size={10} className={color} />
                     {label}
                   </span>
                 ))}
@@ -86,17 +110,17 @@ export default function WelcomePage({ user, badges, onCheckIn, onBuyFreeze, onUs
             </div>
 
             <div className="lg:col-span-2 hidden lg:flex items-center justify-center">
-              <div className="grid grid-cols-2 gap-3 w-full max-w-xs">
+              <div className="grid grid-cols-2 gap-2 w-full max-w-xs">
                 {[
-                  { value: user.points.toLocaleString(), label: "Points Earned", icon: Trophy },
-                  { value: `${user.streak}`, label: "Day Streak", icon: Flame },
-                  { value: `${user.routinesCompletedThisMonth}`, label: "Workouts Done", icon: Zap },
-                  { value: `${(badges || []).filter(b => b.unlocked).length}`, label: "Badges Unlocked", icon: Award },
-                ].map(({ value, label, icon: Icon }) => (
-                  <div key={label} className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center border border-white/10">
-                    <Icon size={20} className="mx-auto text-theme-warning mb-1.5" />
-                    <p className="text-xl font-display font-extrabold">{value}</p>
-                    <p className="text-[9px] text-white/60 font-medium uppercase tracking-wider mt-0.5">{label}</p>
+                  { value: `#${arenaRank}`, label: "Your Rank", icon: Medal, accent: "text-yellow-300" },
+                  { value: `${user.streak}`, label: "Day Streak", icon: Flame, accent: "text-orange-300" },
+                  { value: `${user.routinesCompletedThisMonth}`, label: "Workouts Season", icon: Zap, accent: "text-purple-300" },
+                  { value: `${(badges || []).filter(b => b.unlocked).length}`, label: "Medals Earned", icon: Award, accent: "text-emerald-300" },
+                ].map(({ value, label, icon: Icon, accent }) => (
+                  <div key={label} className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center border border-white/10 hover:bg-white/15 transition-all">
+                    <Icon size={16} className={`mx-auto ${accent} mb-1`} />
+                    <p className="text-base font-display font-extrabold">{value}</p>
+                    <p className="text-[8px] text-white/60 font-medium uppercase tracking-wider mt-0.5">{label}</p>
                   </div>
                 ))}
               </div>
