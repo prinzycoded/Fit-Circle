@@ -140,6 +140,7 @@ const initialMemberList = [
 
 export default function App() {
   const { firebaseUser, loading, logout } = useAuth();
+  const [authEntryDone, setAuthEntryDone] = useState(false);
 
   // Navigation State
   const [activeTab, setActiveTab] = useState("welcome");
@@ -418,7 +419,7 @@ export default function App() {
     const updatedChallenges = challenges.map(c => {
       if (c.status !== "active") return c;
 
-      if (c.type === "duration" && c.title.toLowerCase().includes("minutes")) {
+      if (c.type === "duration") {
         const nextVal = Math.min(c.targetValue, c.currentValue + duration);
         if (nextVal >= c.targetValue && c.currentValue < c.targetValue) {
           setUser(p => ({ ...p, points: p.points + c.rewardPoints }));
@@ -428,8 +429,19 @@ export default function App() {
         return { ...c, currentValue: nextVal };
       }
       
-      if (c.type === "frequency" && c.title.toLowerCase().includes("hydrated")) {
+      if (c.type === "frequency") {
         const nextVal = Math.min(c.targetValue, c.currentValue + 1);
+        if (nextVal >= c.targetValue && c.currentValue < c.targetValue) {
+          setUser(p => ({ ...p, points: p.points + c.rewardPoints }));
+          challengeCompleted = true;
+          return { ...c, currentValue: nextVal, status: "completed" };
+        }
+        return { ...c, currentValue: nextVal };
+      }
+
+      if (c.type === "steps") {
+        const stepsEstimate = type.toLowerCase().includes("run") || type.toLowerCase().includes("walk") ? duration * 120 : duration * 60;
+        const nextVal = Math.min(c.targetValue, c.currentValue + stepsEstimate);
         if (nextVal >= c.targetValue && c.currentValue < c.targetValue) {
           setUser(p => ({ ...p, points: p.points + c.rewardPoints }));
           challengeCompleted = true;
@@ -726,6 +738,24 @@ export default function App() {
     showToast("You're already a member of all available groups!", "info");
   };
 
+  // === OWNER CHALLENGES ===
+  const handleJoinOwnerChallenge = (challengeId) => {
+    setChallenges(prev => prev.map(c => {
+      if (c.id === challengeId && c.createdByOwner) {
+        const participants = c.participants || [];
+        const alreadyJoined = participants.some(p => p.id === user.id);
+        if (alreadyJoined) return c;
+        return {
+          ...c,
+          participants: [...participants, { id: user.id, name: user.name, avatar: user.avatar, progress: 0 }],
+          status: "active",
+        };
+      }
+      return c;
+    }));
+    showToast("You joined the coach's challenge! Start working toward the goal.", "success");
+  };
+
   // === WEEKLY CHALLENGES ===
   const handleClaimWeeklyReward = (wcId) => {
     setWeeklyChallenges(prev => prev.map(wc => {
@@ -772,19 +802,12 @@ export default function App() {
     window.location.reload();
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-theme-bg flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-2 border-theme-accent border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-xs text-theme-muted font-medium">Loading...</p>
-        </div>
-      </div>
-    );
+  if (!authEntryDone) {
+    return <LoginPage onLoginSuccess={() => setAuthEntryDone(true)} />;
   }
 
   if (!firebaseUser) {
-    return <LoginPage />;
+    return <LoginPage onLoginSuccess={() => setAuthEntryDone(true)} />;
   }
 
   return (
@@ -1000,12 +1023,15 @@ export default function App() {
                     metrics={metrics}
                     user={user}
                     challenges={challenges}
+                    weeklyChallenges={weeklyChallenges}
+                    ownerChallenges={challenges.filter(c => c.createdByOwner)}
                     badges={badges}
                     feedPosts={feedPosts}
                     accountabilityGroups={accountabilityGroups}
                     onUpdateMetrics={handleUpdateMetrics}
                     onLogWorkout={handleLogWorkout}
                     onCreateChallenge={handleCreateClientChallenge}
+                    onJoinOwnerChallenge={handleJoinOwnerChallenge}
                     onNavigate={setActiveTab}
                   />
                 )}
@@ -1059,8 +1085,10 @@ export default function App() {
                 {activeTab === "weeklyChallenges" && (
                   <WeeklyChallengeSystem
                     challenges={weeklyChallenges}
+                    ownerChallenges={challenges.filter(c => c.createdByOwner)}
                     currentUser={user}
                     onJoinChallenge={(wcId) => showToast("Joined the challenge!", "success")}
+                    onJoinOwnerChallenge={handleJoinOwnerChallenge}
                     onClaimReward={handleClaimWeeklyReward}
                   />
                 )}

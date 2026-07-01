@@ -20,7 +20,7 @@ const ownerFeatures = [
   { icon: UserCheck, label: "Engagement", desc: "Monitor daily active rate, average streak, and members at risk of churn." },
 ];
 
-export default function LoginPage() {
+export default function LoginPage({ onLoginSuccess }) {
   const [role, setRole] = useState("client");
   const features = role === "owner" ? ownerFeatures : memberFeatures;
 
@@ -134,7 +134,7 @@ export default function LoginPage() {
 
           {/* Right: Auth Form — takes 2 of 5 cols */}
           <div className="lg:col-span-2">
-            <AuthForm role={role} />
+            <AuthForm role={role} onLoginSuccess={onLoginSuccess} />
           </div>
         </div>
       </div>

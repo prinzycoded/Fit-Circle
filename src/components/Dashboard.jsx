@@ -15,9 +15,10 @@ import {
   Send,
   Users,
   Shield,
+  Calendar,
 } from "lucide-react";
 
-export default function Dashboard({ metrics, user, challenges, badges, feedPosts, accountabilityGroups = [], onUpdateMetrics, onLogWorkout, onCreateChallenge, onNavigate }) {
+export default function Dashboard({ metrics, user, challenges, weeklyChallenges = [], ownerChallenges = [], badges, feedPosts, accountabilityGroups = [], onUpdateMetrics, onLogWorkout, onCreateChallenge, onJoinOwnerChallenge, onNavigate }) {
   const [showCreateChallenge, setShowCreateChallenge] = useState(false);
   const [challengeForm, setChallengeForm] = useState({
     title: "",
@@ -27,6 +28,17 @@ export default function Dashboard({ metrics, user, challenges, badges, feedPosts
     metricLabel: "min",
     daysLeft: 7,
     rewardPoints: 200,
+  });
+
+  const normalizeChallenge = (c) => ({
+    ...c,
+    participants: c.participants || c.members || [],
+    progress: c.progress ?? c.currentValue ?? 0,
+    goal: c.goal ?? c.targetValue ?? 100,
+    claimedBy: c.claimedBy || [],
+    category: c.category || "General",
+    reward: c.reward || (c.rewardPoints ? `${c.rewardPoints} pts` : null),
+    daysLeft: c.daysLeft ?? (c.weekEnd ? Math.max(1, Math.ceil((new Date(c.weekEnd) - new Date()) / (1000 * 60 * 60 * 24))) : 7),
   });
   const [customWorkout, setCustomWorkout] = useState({
     type: "Run",
@@ -158,112 +170,212 @@ export default function Dashboard({ metrics, user, challenges, badges, feedPosts
         </div>
       )}
 
-      {/* Active Challenges + Next Badge side by side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-        {/* Active Challenges */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Target size={16} className="text-theme-accent" />
-              <h2 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">Active Challenges</h2>
-            </div>
-            <button
-              onClick={() => setShowCreateChallenge(true)}
-              className="flex items-center gap-1 text-[10px] font-display font-bold text-white bg-theme-accent hover:bg-theme-accent-hover px-3 py-1.5 rounded-lg transition-all cursor-pointer"
-            >
-              <Plus size={12} />
-              Create
-            </button>
+      {/* Challenges Section */}
+      <div className="card">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Target size={16} className="text-theme-accent" />
+            <h2 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">Challenges</h2>
           </div>
+          <button
+            onClick={() => setShowCreateChallenge(true)}
+            className="flex items-center gap-1 text-[10px] font-display font-bold text-white bg-theme-accent hover:bg-theme-accent-hover px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+          >
+            <Plus size={12} />
+            Create
+          </button>
+        </div>
 
-          {/* Create Challenge Form */}
-          {showCreateChallenge && (
-            <div className="mb-4 p-3 rounded-xl bg-theme-border/20 border border-theme-border space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-display font-bold text-theme-primary uppercase tracking-wider">New Challenge</span>
-                <button onClick={() => setShowCreateChallenge(false)} className="p-1 text-theme-muted hover:text-theme-primary cursor-pointer">
-                  <X size={14} />
-                </button>
+        {/* Create Challenge Form */}
+        {showCreateChallenge && (
+          <div className="mb-4 p-3 rounded-xl bg-theme-border/20 border border-theme-border space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-display font-bold text-theme-primary uppercase tracking-wider">New Challenge</span>
+              <button onClick={() => setShowCreateChallenge(false)} className="p-1 text-theme-muted hover:text-theme-primary cursor-pointer">
+                <X size={14} />
+              </button>
+            </div>
+            <input
+              type="text"
+              placeholder="Challenge title"
+              value={challengeForm.title}
+              onChange={(e) => setChallengeForm({ ...challengeForm, title: e.target.value })}
+              className="w-full bg-theme-surface border border-theme-border rounded-lg px-3 py-2 text-xs font-bold text-theme-primary placeholder-theme-muted focus:outline-none focus:border-theme-accent"
+            />
+            <input
+              type="text"
+              placeholder="Short description"
+              value={challengeForm.description}
+              onChange={(e) => setChallengeForm({ ...challengeForm, description: e.target.value })}
+              className="w-full bg-theme-surface border border-theme-border rounded-lg px-3 py-2 text-xs font-bold text-theme-primary placeholder-theme-muted focus:outline-none focus:border-theme-accent"
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div>
+                <label className="text-[8px] sm:text-[9px] font-display font-bold text-theme-muted uppercase tracking-wider">Target</label>
+                <input
+                  type="number" min="1"
+                  value={challengeForm.targetValue}
+                  onChange={(e) => setChallengeForm({ ...challengeForm, targetValue: Math.max(1, parseInt(e.target.value) || 0) })}
+                  className="w-full bg-theme-surface border border-theme-border rounded-lg px-2 py-1.5 text-xs font-bold text-theme-primary focus:outline-none focus:border-theme-accent"
+                />
               </div>
-              <input
-                type="text"
-                placeholder="Challenge title"
-                value={challengeForm.title}
-                onChange={(e) => setChallengeForm({ ...challengeForm, title: e.target.value })}
-                className="w-full bg-theme-surface border border-theme-border rounded-lg px-3 py-2 text-xs font-bold text-theme-primary placeholder-theme-muted focus:outline-none focus:border-theme-accent"
-              />
-              <input
-                type="text"
-                placeholder="Short description"
-                value={challengeForm.description}
-                onChange={(e) => setChallengeForm({ ...challengeForm, description: e.target.value })}
-                className="w-full bg-theme-surface border border-theme-border rounded-lg px-3 py-2 text-xs font-bold text-theme-primary placeholder-theme-muted focus:outline-none focus:border-theme-accent"
-              />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <div>
-                  <label className="text-[8px] sm:text-[9px] font-display font-bold text-theme-muted uppercase tracking-wider">Target</label>
-                  <input
-                    type="number" min="1"
-                    value={challengeForm.targetValue}
-                    onChange={(e) => setChallengeForm({ ...challengeForm, targetValue: Math.max(1, parseInt(e.target.value) || 0) })}
-                    className="w-full bg-theme-surface border border-theme-border rounded-lg px-2 py-1.5 text-xs font-bold text-theme-primary focus:outline-none focus:border-theme-accent"
-                  />
-                </div>
-                <div>
-                  <label className="text-[8px] font-display font-bold text-theme-muted uppercase tracking-wider">Unit</label>
-                  <input
-                    type="text"
-                    value={challengeForm.metricLabel}
-                    onChange={(e) => setChallengeForm({ ...challengeForm, metricLabel: e.target.value })}
-                    className="w-full bg-theme-surface border border-theme-border rounded-lg px-2 py-1.5 text-xs font-bold text-theme-primary focus:outline-none focus:border-theme-accent"
-                  />
-                </div>
-                <div>
-                  <label className="text-[8px] font-display font-bold text-theme-muted uppercase tracking-wider">Days</label>
-                  <input
-                    type="number" min="1" max="30"
-                    value={challengeForm.daysLeft}
-                    onChange={(e) => setChallengeForm({ ...challengeForm, daysLeft: Math.max(1, parseInt(e.target.value) || 1) })}
-                    className="w-full bg-theme-surface border border-theme-border rounded-lg px-2 py-1.5 text-xs font-bold text-theme-primary focus:outline-none focus:border-theme-accent"
-                  />
-                </div>
+              <div>
+                <label className="text-[8px] font-display font-bold text-theme-muted uppercase tracking-wider">Unit</label>
+                <input
+                  type="text"
+                  value={challengeForm.metricLabel}
+                  onChange={(e) => setChallengeForm({ ...challengeForm, metricLabel: e.target.value })}
+                  className="w-full bg-theme-surface border border-theme-border rounded-lg px-2 py-1.5 text-xs font-bold text-theme-primary focus:outline-none focus:border-theme-accent"
+                />
               </div>
-              <div className="flex gap-2">
-                <select
-                  value={challengeForm.type}
-                  onChange={(e) => setChallengeForm({ ...challengeForm, type: e.target.value })}
-                  className="flex-1 bg-theme-surface border border-theme-border rounded-lg px-2 py-1.5 text-[10px] font-bold text-theme-primary focus:outline-none focus:border-theme-accent"
-                >
-                  <option value="duration">Duration</option>
-                  <option value="steps">Steps</option>
-                  <option value="frequency">Frequency</option>
-                </select>
-                <button
-                  onClick={() => {
-                    if (!challengeForm.title.trim()) return;
-                    onCreateChallenge({
-                      ...challengeForm,
-                      title: challengeForm.title.trim(),
-                      description: challengeForm.description.trim() || `Complete ${challengeForm.targetValue} ${challengeForm.metricLabel}`,
-                    });
-                    setChallengeForm({ title: "", description: "", type: "duration", targetValue: 60, metricLabel: "min", daysLeft: 7, rewardPoints: 200 });
-                    setShowCreateChallenge(false);
-                  }}
-                  className="flex items-center gap-1 text-[10px] font-display font-bold text-white bg-theme-accent hover:bg-theme-accent-hover px-3 py-1.5 rounded-lg transition-all cursor-pointer"
-                >
-                  <Send size={11} />
-                  Go
-                </button>
+              <div>
+                <label className="text-[8px] font-display font-bold text-theme-muted uppercase tracking-wider">Days</label>
+                <input
+                  type="number" min="1" max="30"
+                  value={challengeForm.daysLeft}
+                  onChange={(e) => setChallengeForm({ ...challengeForm, daysLeft: Math.max(1, parseInt(e.target.value) || 1) })}
+                  className="w-full bg-theme-surface border border-theme-border rounded-lg px-2 py-1.5 text-xs font-bold text-theme-primary focus:outline-none focus:border-theme-accent"
+                />
               </div>
             </div>
-          )}
+            <div className="flex gap-2">
+              <select
+                value={challengeForm.type}
+                onChange={(e) => setChallengeForm({ ...challengeForm, type: e.target.value })}
+                className="flex-1 bg-theme-surface border border-theme-border rounded-lg px-2 py-1.5 text-[10px] font-bold text-theme-primary focus:outline-none focus:border-theme-accent"
+              >
+                <option value="duration">Duration</option>
+                <option value="steps">Steps</option>
+                <option value="frequency">Frequency</option>
+              </select>
+              <button
+                onClick={() => {
+                  if (!challengeForm.title.trim()) return;
+                  onCreateChallenge({
+                    ...challengeForm,
+                    title: challengeForm.title.trim(),
+                    description: challengeForm.description.trim() || `Complete ${challengeForm.targetValue} ${challengeForm.metricLabel}`,
+                  });
+                  setChallengeForm({ title: "", description: "", type: "duration", targetValue: 60, metricLabel: "min", daysLeft: 7, rewardPoints: 200 });
+                  setShowCreateChallenge(false);
+                }}
+                className="flex items-center gap-1 text-[10px] font-display font-bold text-white bg-theme-accent hover:bg-theme-accent-hover px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+              >
+                <Send size={11} />
+                Go
+              </button>
+            </div>
+          </div>
+        )}
 
-          {activeChallenges.length === 0 && !showCreateChallenge ? (
-            <p className="text-xs text-theme-muted py-2">No active challenges. Create one above!</p>
+        {/* Weekly Challenges */}
+        {weeklyChallenges.length > 0 && (
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Calendar size={14} className="text-theme-warning" />
+              <span className="text-[11px] font-display font-bold text-theme-primary">Weekly Challenges</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {weeklyChallenges.map((raw) => {
+                const c = normalizeChallenge(raw);
+                const pct = c.goal > 0 ? Math.min(100, Math.round((c.progress / c.goal) * 100)) : 0;
+                const joined = c.participants.some(p => p.id === user.id);
+                const done = c.progress >= c.goal;
+                return (
+                  <div key={c.id} className="rounded-xl border border-theme-border bg-theme-surface/40 p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-xs font-display font-bold text-theme-primary">{c.title}</h4>
+                      {done ? (
+                        <span className="text-[9px] font-bold text-theme-success bg-theme-success-light px-2 py-0.5 rounded-full">Done</span>
+                      ) : joined ? (
+                        <span className="text-[9px] font-bold text-theme-accent bg-theme-accent-light px-2 py-0.5 rounded-full">Active</span>
+                      ) : null}
+                    </div>
+                    <div className="flex items-center gap-3 text-[9px] text-theme-secondary mb-2">
+                      <span>{c.participants.length} joined</span>
+                      <span>{c.daysLeft || 7}d left</span>
+                    </div>
+                    <div className="progress-bar h-1.5 mb-2">
+                      <div className={`progress-bar-fill ${done ? 'bg-theme-success' : 'bg-theme-accent'}`} style={{ width: `${pct}%` }}></div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[9px] text-theme-muted">{c.progress}/{c.goal}</span>
+                      {!joined && !done && (
+                        <button
+                          onClick={() => {}}
+                          className="text-[9px] font-bold text-theme-accent hover:text-theme-accent-hover cursor-pointer"
+                        >
+                          Join
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Coach Challenges */}
+        {ownerChallenges.length > 0 && (
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Shield size={14} className="text-purple-500" />
+              <span className="text-[11px] font-display font-bold text-theme-primary">Coach Challenges</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {ownerChallenges.map((raw) => {
+                const c = normalizeChallenge(raw);
+                const pct = c.goal > 0 ? Math.min(100, Math.round((c.progress / c.goal) * 100)) : 0;
+                const joined = c.participants.some(p => p.id === user.id);
+                const done = c.progress >= c.goal;
+                return (
+                  <div key={c.id} className="rounded-xl border border-purple-200/30 bg-purple-50/20 p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-xs font-display font-bold text-theme-primary">{c.title}</h4>
+                      {done ? (
+                        <span className="text-[9px] font-bold text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">Done</span>
+                      ) : joined ? (
+                        <span className="text-[9px] font-bold text-purple-500 bg-purple-50 px-2 py-0.5 rounded-full">Active</span>
+                      ) : null}
+                    </div>
+                    <p className="text-[9px] text-theme-secondary mb-2">{c.description}</p>
+                    <div className="flex items-center gap-3 text-[9px] text-theme-secondary mb-2">
+                      <span>{c.participants.length} joined</span>
+                      <span>{c.daysLeft || 7}d left</span>
+                    </div>
+                    <div className="progress-bar h-1.5 mb-2">
+                      <div className={`progress-bar-fill ${done ? 'bg-purple-500' : 'bg-purple-400'}`} style={{ width: `${pct}%` }}></div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[9px] text-theme-muted">{c.progress}/{c.goal}</span>
+                      {!joined && !done && (
+                        <button
+                          onClick={() => onJoinOwnerChallenge(c.id)}
+                          className="text-[9px] font-bold text-purple-500 hover:text-purple-700 cursor-pointer"
+                        >
+                          Join
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Your Active Challenges */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <Zap size={14} className="text-theme-accent" />
+            <span className="text-[11px] font-display font-bold text-theme-primary">Your Challenges</span>
+          </div>
+          {activeChallenges.length === 0 ? (
+            <p className="text-xs text-theme-muted py-2">No personal challenges yet. Create one above!</p>
           ) : (
             <div className="space-y-3">
-              {activeChallenges.slice(0, 3).map(c => {
+              {activeChallenges.map(c => {
                 const pct = c.targetValue > 0 ? Math.min(100, Math.round((c.currentValue / c.targetValue) * 100)) : 0;
                 return (
                   <div key={c.id}>
@@ -286,8 +398,10 @@ export default function Dashboard({ metrics, user, challenges, badges, feedPosts
             </div>
           )}
         </div>
+      </div>
 
-        {/* Next Badge Preview */}
+      {/* Next Badge Preview */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="card">
           <div className="flex items-center gap-2 mb-4">
             <Medal size={16} className="text-theme-warning" />
@@ -311,7 +425,6 @@ export default function Dashboard({ metrics, user, challenges, badges, feedPosts
             <p className="text-xs text-theme-muted py-2">All badges unlocked! You're a legend.</p>
           )}
         </div>
-
       </div>
 
       {/* Recent Workout History */}

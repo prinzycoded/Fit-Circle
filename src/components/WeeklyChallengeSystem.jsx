@@ -7,10 +7,11 @@ import {
   Zap,
   CheckCircle2,
   Flame,
-  Gift
+  Gift,
+  Shield
 } from "lucide-react";
 
-export default function WeeklyChallengeSystem({ challenges, currentUser, onJoinChallenge, onClaimReward }) {
+export default function WeeklyChallengeSystem({ challenges, ownerChallenges = [], currentUser, onJoinChallenge, onJoinOwnerChallenge, onClaimReward }) {
   const [expandedChallenge, setExpandedChallenge] = useState(null);
 
   const normalizeChallenge = (c) => ({
@@ -59,7 +60,7 @@ export default function WeeklyChallengeSystem({ challenges, currentUser, onJoinC
         </span>
       </div>
 
-      {/* Challenge cards */}
+      {/* Weekly Challenge cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {challenges.map((raw) => {
           const challenge = normalizeChallenge(raw);
@@ -209,6 +210,149 @@ export default function WeeklyChallengeSystem({ challenges, currentUser, onJoinC
           );
         })}
       </div>
+
+      {/* Coach Challenges section */}
+      {ownerChallenges.length > 0 && (
+        <div className="space-y-4">
+          <div className="card flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-purple-100 text-purple-600 rounded-xl">
+                <Shield size={20} />
+              </div>
+              <div>
+                <h2 className="text-base font-display font-extrabold text-theme-primary tracking-tight">Coach Challenges</h2>
+                <p className="text-xs text-theme-secondary font-body">{ownerChallenges.length} challenge{(ownerChallenges.length > 1 ? 's' : '')} from your coach</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {ownerChallenges.map((raw) => {
+              const challenge = normalizeChallenge(raw);
+              const { participants, progress, goal } = challenge;
+              const progressPercent = Math.min(100, Math.round((progress / goal) * 100));
+              const isJoined = participants.some(p => p.id === currentUser?.id);
+              const isCompleted = progress >= goal;
+
+              return (
+                <div key={challenge.id} className={`card flex flex-col overflow-hidden relative ${isCompleted ? 'border-purple-400/30' : ''}`}>
+                  {/* Top accent */}
+                  <div className={`absolute top-0 left-0 right-0 h-1 ${isCompleted ? 'bg-purple-500' : 'bg-purple-400'}`}></div>
+
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className={`p-2 rounded-xl flex items-center justify-center ${isCompleted ? 'bg-purple-100 text-purple-600' : 'bg-purple-50 text-purple-500'}`}>
+                        <Shield size={18} />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-display font-bold text-theme-primary">{challenge.title}</h3>
+                        <p className="text-[10px] text-theme-secondary font-medium font-body">{challenge.invitedBy ? `by ${challenge.invitedBy}` : 'Coach'}</p>
+                      </div>
+                    </div>
+
+                    {isCompleted ? (
+                      <span className="text-[10px] font-display font-bold text-purple-600 bg-purple-100 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                        <CheckCircle2 size={11} />
+                        Complete
+                      </span>
+                    ) : isJoined ? (
+                      <span className="text-[10px] font-display font-bold text-purple-500 bg-purple-50 px-2.5 py-0.5 rounded-full">
+                        Active
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-xs text-theme-secondary mb-4 font-body">{challenge.description}</p>
+
+                  {/* Stats row */}
+                  <div className="flex items-center gap-4 text-xs mb-4">
+                    <div className="flex items-center gap-1.5">
+                      <Users size={12} className="text-theme-muted" />
+                      <span className="text-theme-primary font-bold">{participants.length}</span>
+                      <span className="text-theme-muted">joined</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Timer size={12} className="text-theme-muted" />
+                      <span className="text-theme-primary font-bold">{challenge.daysLeft || 7}d</span>
+                      <span className="text-theme-muted">left</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Flame size={12} className="text-theme-warning" />
+                      <span className="text-theme-primary font-bold">{progress}</span>
+                      <span className="text-theme-muted">/ {goal}</span>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="mb-4">
+                    <div className="flex justify-between items-center text-[10px] font-display font-bold mb-1">
+                      <span className="text-theme-muted">Progress</span>
+                      <span className={isCompleted ? 'text-purple-600' : 'text-purple-500'}>{progressPercent}%</span>
+                    </div>
+                    <div className="progress-bar h-2.5">
+                      <div className={`progress-bar-fill ${isCompleted ? 'bg-purple-500' : 'bg-purple-400'}`} style={{ width: `${progressPercent}%` }}></div>
+                    </div>
+                  </div>
+
+                  {/* Reward */}
+                  {challenge.reward && (
+                    <div className="bg-purple-50/50 border border-dashed border-purple-300/30 rounded-xl p-3 mb-4 flex items-center gap-3">
+                      <div className="p-1.5 bg-purple-100 text-purple-600 rounded-lg">
+                        <Gift size={16} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-display font-bold text-theme-primary">Reward: {challenge.reward}</p>
+                        <p className="text-[10px] text-theme-secondary font-body">Claim this when you reach the goal</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action button */}
+                  {isCompleted ? (
+                    <div className="w-full py-2.5 text-xs font-display font-bold text-purple-600 bg-purple-100 rounded-xl text-center flex items-center justify-center gap-1.5">
+                      <CheckCircle2 size={14} />
+                      Goal Reached
+                    </div>
+                  ) : isJoined ? (
+                    <button
+                      onClick={() => setExpandedChallenge(expandedChallenge === challenge.id ? null : challenge.id)}
+                      className="w-full py-2.5 text-xs font-display font-bold text-purple-500 bg-purple-50 hover:bg-purple-100 rounded-xl transition-all cursor-pointer"
+                    >
+                      View Progress
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => onJoinOwnerChallenge(challenge.id)}
+                      className="w-full py-2.5 text-xs font-display font-bold text-white bg-purple-500 hover:bg-purple-600 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Zap size={14} />
+                      Join Challenge
+                    </button>
+                  )}
+
+                  {/* Expanded progress detail */}
+                  {expandedChallenge === challenge.id && isJoined && (
+                    <div className="mt-3 pt-3 border-t border-theme-border space-y-2">
+                      <p className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-widest">Participant Progress</p>
+                      {participants.map((p, idx) => (
+                        <div key={idx} className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2">
+                            <img referrerPolicy="no-referrer" src={p.avatar} alt="" className="w-5 h-5 rounded-full" />
+                            <span className="font-display font-bold text-theme-primary">{p.name}</span>
+                          </div>
+                          <span className="font-bold text-theme-muted">{p.progress || 0}/{goal}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

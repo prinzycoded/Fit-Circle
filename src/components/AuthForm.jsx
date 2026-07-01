@@ -3,7 +3,7 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithP
 import { auth, googleProvider } from "../firebase";
 import { Dumbbell, Mail, Lock, Globe, Loader2, Shield } from "lucide-react";
 
-export default function AuthForm({ role = "client" }) {
+export default function AuthForm({ role = "client", onLoginSuccess }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,6 +29,7 @@ export default function AuthForm({ role = "client" }) {
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }
+      onLoginSuccess?.();
     } catch (err) {
       setError(getErrorMessage(err.code));
     } finally {
@@ -42,6 +43,7 @@ export default function AuthForm({ role = "client" }) {
     saveRole();
     try {
       await signInWithPopup(auth, googleProvider);
+      onLoginSuccess?.();
     } catch (err) {
       setError(getErrorMessage(err.code));
     } finally {
