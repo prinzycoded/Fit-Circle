@@ -872,6 +872,8 @@ export default function App() {
             onCreateShoutout={handleCreateShoutout}
             onCreateChallenge={handleCreateOwnerChallenge}
             onNudgeGroup={handleNudgeGroupMember}
+            onNavigate={setActiveTab}
+            onAddComment={handleAddComment}
           />
         ) : (<>
           {/* Mobile bottom nav bar */}
@@ -989,6 +991,7 @@ export default function App() {
                     onBuyFreeze={handleBuyStreakFreeze}
                     onUseFreeze={handleUseStreakFreeze}
                     onRescueStreak={handleNudgeGroupMember}
+                    onNavigate={setActiveTab}
                   />
                 )}
 
@@ -999,9 +1002,11 @@ export default function App() {
                     challenges={challenges}
                     badges={badges}
                     feedPosts={feedPosts}
+                    accountabilityGroups={accountabilityGroups}
                     onUpdateMetrics={handleUpdateMetrics}
                     onLogWorkout={handleLogWorkout}
                     onCreateChallenge={handleCreateClientChallenge}
+                    onNavigate={setActiveTab}
                   />
                 )}
 

@@ -22,7 +22,7 @@ import StreakSystem from "./StreakSystem";
 import StreakRescueAlert from "./StreakRescueAlert";
 import SyndicateDashboardCard from "./SyndicateDashboardCard";
 
-export default function WelcomePage({ user, badges, onCheckIn, onBuyFreeze, onUseFreeze, accountabilityGroups, onRescueStreak }) {
+export default function WelcomePage({ user, badges, onCheckIn, onBuyFreeze, onUseFreeze, accountabilityGroups, onRescueStreak, onNavigate }) {
   const features = [
     { icon: Target, label: "Health Dashboard", desc: "Track workouts, log activity, and monitor your fitness journey." },
     { icon: Compass, label: "Consistency Race", desc: "Complete monthly routines to unlock discount rewards and coupons." },
@@ -34,6 +34,9 @@ export default function WelcomePage({ user, badges, onCheckIn, onBuyFreeze, onUs
 
   const routinesPct = Math.min(100, Math.round((user.routinesCompletedThisMonth / user.routineTargetMonth) * 100));
   const arenaRank = Math.max(1, Math.min(50, 50 - Math.floor(user.points / 300)));
+  const avgMonthlySpend = 200;
+  const savingsRate = user.routinesCompletedThisMonth >= 20 ? 0.3 : user.routinesCompletedThisMonth >= 12 ? 0.2 : user.routinesCompletedThisMonth >= 5 ? 0.1 : 0;
+  const totalSaved = Math.round(avgMonthlySpend * savingsRate);
 
   return (
     <div className="space-y-4 sm:space-y-8">
@@ -97,6 +100,7 @@ export default function WelcomePage({ user, badges, onCheckIn, onBuyFreeze, onUs
                   { icon: Medal, label: "Top 3 Payout", color: "text-orange-300" },
                   { icon: Zap, label: "Bonus Challenges", color: "text-purple-300" },
                   { icon: Flame, label: "Streak Multiplier", color: "text-red-300" },
+                  { icon: Trophy, label: `You've saved $${totalSaved}`, color: "text-emerald-300" },
                 ].map(({ icon: Icon, label, color }) => (
                   <span key={label} className="flex items-center gap-0.5 bg-white/10 backdrop-blur-sm rounded-full px-1.5 py-0.5 text-[7px] sm:text-[8px] font-bold border border-white/10">
                     <Icon size={7} className={color} />
@@ -109,12 +113,12 @@ export default function WelcomePage({ user, badges, onCheckIn, onBuyFreeze, onUs
             <div className="lg:col-span-2 flex items-center justify-center mt-1 sm:mt-0">
               <div className="grid grid-cols-2 gap-1.5 sm:gap-2 w-full max-w-xs">
                 {[
-                  { value: `#${arenaRank}`, label: "Your Rank", icon: Medal, accent: "text-yellow-300" },
-                  { value: `${user.streak}`, label: "Day Streak", icon: Flame, accent: "text-orange-300" },
-                  { value: `${user.routinesCompletedThisMonth}`, label: "Workouts Season", icon: Zap, accent: "text-purple-300" },
-                  { value: `${(badges || []).filter(b => b.unlocked).length}`, label: "Medals Earned", icon: Award, accent: "text-emerald-300" },
-                ].map(({ value, label, icon: Icon, accent }) => (
-                  <div key={label} className="bg-white/10 backdrop-blur-sm rounded-lg sm:rounded-xl px-2 sm:px-3 py-2 sm:py-3 text-center border border-white/10">
+                  { value: `#${arenaRank}`, label: "Your Rank", icon: Medal, accent: "text-yellow-300", nav: "leaderboard" },
+                  { value: `${user.streak}`, label: "Day Streak", icon: Flame, accent: "text-orange-300", nav: "welcome" },
+                  { value: `${user.routinesCompletedThisMonth}`, label: "Workouts Season", icon: Zap, accent: "text-purple-300", nav: "dashboard" },
+                  { value: `${(badges || []).filter(b => b.unlocked).length}`, label: "Medals Earned", icon: Award, accent: "text-emerald-300", nav: "badges" },
+                ].map(({ value, label, icon: Icon, accent, nav }) => (
+                  <div key={label} onClick={() => onNavigate?.(nav)} className="bg-white/10 backdrop-blur-sm rounded-lg sm:rounded-xl px-2 sm:px-3 py-2 sm:py-3 text-center border border-white/10 hover:bg-white/20 transition-all cursor-pointer">
                     <Icon size={12} className={`mx-auto ${accent} mb-0.5`} />
                     <p className="text-xs sm:text-base font-display font-extrabold">{value}</p>
                     <p className="text-[7px] sm:text-[8px] text-white/60 font-medium uppercase tracking-wider mt-0.5">{label}</p>

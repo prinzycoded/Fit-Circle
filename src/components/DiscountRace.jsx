@@ -14,15 +14,19 @@ import { motion } from "motion/react";
 export default function DiscountRace({ user, onIncrementRoutine }) {
   const [copiedCoupon, setCopiedCoupon] = useState(null);
 
+  const avgMonthlySpend = 200;
+
   const milestones = [
-    { target: 5, discount: "10% OFF", code: "FITBRONZE10", desc: "Bronze Tier - FitCircle Shop", id: "bronze" },
-    { target: 12, discount: "20% OFF", code: "FITSILVER20", desc: "Silver Tier - Premium Partners", id: "silver" },
-    { target: 20, discount: "30% OFF", code: "FITGOLD30", desc: "Gold Tier - Everything Free", id: "gold" }
+    { target: 5, discount: "10% OFF", code: "FITBRONZE10", desc: "Bronze Tier - FitCircle Shop", id: "bronze", savings: Math.round(avgMonthlySpend * 0.1) },
+    { target: 12, discount: "20% OFF", code: "FITSILVER20", desc: "Silver Tier - Premium Partners", id: "silver", savings: Math.round(avgMonthlySpend * 0.2) },
+    { target: 20, discount: "30% OFF", code: "FITGOLD30", desc: "Gold Tier - Everything Free", id: "gold", savings: Math.round(avgMonthlySpend * 0.3) }
   ];
 
   const currentCount = user.routinesCompletedThisMonth;
   const targetCount = user.routineTargetMonth;
   const totalPercentage = targetCount > 0 ? Math.min(100, Math.round((currentCount / targetCount) * 100)) : 0;
+  const currentSavingsRate = currentCount >= 20 ? 0.3 : currentCount >= 12 ? 0.2 : currentCount >= 5 ? 0.1 : 0;
+  const totalSaved = Math.round(avgMonthlySpend * currentSavingsRate);
 
   const copyToClipboard = (code) => {
     try {
@@ -59,6 +63,22 @@ export default function DiscountRace({ user, onIncrementRoutine }) {
   return (
     <div id="discount-race-section" className="space-y-6">
       
+      {/* Savings Dashboard */}
+      {totalSaved > 0 && (
+        <div className="bg-gradient-to-r from-emerald-900/40 to-teal-900/30 border border-emerald-500/20 rounded-2xl p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+              <span className="text-emerald-400 text-lg font-display font-extrabold">$</span>
+            </div>
+            <div>
+              <p className="text-[10px] font-display font-bold text-emerald-400 uppercase tracking-widest">Total Savings This Month</p>
+              <p className="text-2xl font-display font-extrabold text-white">${totalSaved}</p>
+            </div>
+          </div>
+          <span className="text-[10px] font-display font-bold text-emerald-400/60 uppercase">{(currentSavingsRate * 100)}% off base</span>
+        </div>
+      )}
+
       {/* Intro header */}
       <div className="card flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="space-y-2 max-w-lg text-center md:text-left">
@@ -101,7 +121,7 @@ export default function DiscountRace({ user, onIncrementRoutine }) {
             <span className="bg-theme-support/20 text-theme-support border border-theme-support/30 text-[10px] font-display font-extrabold uppercase px-2 py-0.5 rounded-md">
               Race Arena
             </span>
-            <span className="text-xs font-bold text-theme-muted">Progress: steady</span>
+            <span className="text-xs font-display font-bold text-theme-muted">{(currentSavingsRate * 100)}% off unlocked</span>
           </div>
           <p className="text-xs font-display font-bold text-theme-accent">{totalPercentage}% Complete</p>
         </div>
@@ -161,6 +181,7 @@ export default function DiscountRace({ user, onIncrementRoutine }) {
                   {m.discount}
                 </span>
                 <span className="text-[7px] sm:text-[8px] font-bold text-theme-muted uppercase mt-0.5">{m.target} Days</span>
+                <span className="text-[7px] font-extrabold text-emerald-400">~${m.savings}</span>
               </div>
             );
           })}
@@ -194,6 +215,7 @@ export default function DiscountRace({ user, onIncrementRoutine }) {
                   </div>
                   
                   <h4 className="text-xl font-display font-extrabold text-theme-primary mt-2 leading-none">{m.discount}</h4>
+                  <p className="text-emerald-400 text-xs font-display font-bold mt-0.5">Save ~${m.savings}/mo</p>
                   <p className="text-xs text-theme-secondary mt-1 font-body">{m.desc}</p>
                 </div>
 
@@ -214,8 +236,11 @@ export default function DiscountRace({ user, onIncrementRoutine }) {
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-theme-border/30 rounded-xl p-2.5 text-center text-xs text-theme-muted font-bold">
-                      {m.target - currentCount} more days needed
+                    <div>
+                      <div className="bg-theme-border/30 rounded-xl p-2.5 text-center text-xs text-theme-muted font-bold">
+                        {m.target - currentCount} more days needed
+                      </div>
+                      <p className="text-[9px] text-center text-emerald-400/50 font-display font-bold mt-1">Unlock ~${m.savings}/mo savings</p>
                     </div>
                   )}
                 </div>

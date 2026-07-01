@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Users,
   TrendingUp,
@@ -32,9 +32,10 @@ import {
   Timer,
   Gift,
   UserPlus,
+  Send,
 } from "lucide-react";
 
-export default function OwnerDashboard({ gym, members, feedPosts, challenges, accountabilityGroups, currentUser, onRemovePost, onCreateAnnouncement, onCreateShoutout, onCreateChallenge, onNudgeGroup }) {
+export default function OwnerDashboard({ gym, members, feedPosts, challenges, accountabilityGroups, currentUser, onRemovePost, onCreateAnnouncement, onCreateShoutout, onCreateChallenge, onNudgeGroup, onNavigate, onAddComment }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewingMember, setViewingMember] = useState(null);
   const [sortBy, setSortBy] = useState("points");
@@ -46,6 +47,17 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
   const [challengeForm, setChallengeForm] = useState({
     title: "", description: "", type: "duration", targetValue: 60, metricLabel: "min", daysLeft: 7, rewardPoints: 300
   });
+
+  const memberRef = useRef(null);
+  const [commentTexts, setCommentTexts] = useState({});
+
+  const handleAdminComment = (postId) => {
+    const text = (commentTexts[postId] || "").trim();
+    if (text && onAddComment) {
+      onAddComment(postId, text);
+      setCommentTexts(prev => ({ ...prev, [postId]: "" }));
+    }
+  };
 
   // Generate activity timeline from existing data
   const [timelineActivities] = useState(() => {
@@ -115,11 +127,13 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
       return 0;
     });
 
+  const scrollToMembers = () => memberRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+
   const stats = [
-    { label: "Total Members", value: gym.totalMembers, icon: Users, color: "text-theme-support", bg: "bg-theme-support-light", change: "+12% this quarter" },
-    { label: "Active Today", value: gym.activeToday, icon: Activity, color: "text-theme-success", bg: "bg-theme-success-light", change: `${Math.round(gym.activeToday / gym.totalMembers * 100)}% engagement` },
-    { label: "Avg Streak", value: `${gym.avgMemberStreak}d`, icon: Flame, color: "text-theme-warning", bg: "bg-theme-warning-light", change: "Across all members" },
-    { label: "Monthly Revenue", value: `$${gym.monthlyRevenue.toLocaleString()}`, icon: DollarSign, color: "text-theme-accent", bg: "bg-theme-accent-light", change: "From membership plans" },
+    { label: "Total Members", value: gym.totalMembers, icon: Users, color: "text-theme-support", bg: "bg-theme-support-light", change: "+12% this quarter", onClick: scrollToMembers },
+    { label: "Active Today", value: gym.activeToday, icon: Activity, color: "text-theme-success", bg: "bg-theme-success-light", change: `${Math.round(gym.activeToday / gym.totalMembers * 100)}% engagement`, nav: "leaderboard" },
+    { label: "Avg Streak", value: `${gym.avgMemberStreak}d`, icon: Flame, color: "text-theme-warning", bg: "bg-theme-warning-light", change: "Across all members", nav: "welcome" },
+    { label: "Monthly Revenue", value: `$${gym.monthlyRevenue.toLocaleString()}`, icon: DollarSign, color: "text-theme-accent", bg: "bg-theme-accent-light", change: "From membership plans", nav: null },
   ];
 
   const MemberDetailModal = ({ member, onClose }) => (
@@ -268,8 +282,8 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
 
       {/* Overview Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map(({ label, value, icon: Icon, color, bg, change }) => (
-          <div key={label} className="card flex items-start gap-3 card-hover">
+        {stats.map(({ label, value, icon: Icon, color, bg, change, nav, onClick }) => (
+          <div key={label} onClick={onClick || (nav ? () => onNavigate?.(nav) : undefined)} className={`card flex items-start gap-3 ${onClick || nav ? "hover:bg-theme-border/20 cursor-pointer" : ""} transition-all`}>
             <div className={`p-2.5 rounded-xl ${bg} ${color}`}>
               <Icon size={18} />
             </div>
@@ -339,7 +353,7 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
       </div>
 
       {/* Member Management */}
-      <div className="card p-0 overflow-hidden">
+      <div ref={memberRef} className="card p-0 overflow-hidden">
         <div className="px-5 py-4 border-b border-theme-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Award size={16} className="text-theme-accent" />
@@ -486,33 +500,53 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
             <div className="px-5 py-8 text-center text-sm text-theme-muted">No posts yet.</div>
           ) : (
             [...feedPosts].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)).slice(0, 15).map((post) => (
-              <div key={post.id} className="flex items-center justify-between px-5 py-3 hover:bg-theme-border/10 transition-colors">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <img referrerPolicy="no-referrer" src={post.authorAvatar} alt="" className="w-8 h-8 rounded-lg border border-theme-border shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-display font-bold text-theme-primary truncate">{post.authorName}</p>
-                    <p className="text-[11px] text-theme-secondary truncate">{post.content}</p>
-                    <div className="flex items-center gap-2 text-[9px] text-theme-muted mt-0.5">
-                      <span className={`px-1.5 py-0.5 rounded font-bold ${
-                        post.type === "Announcement" ? "bg-theme-accent-light text-theme-accent" :
-                        post.type === "Workout" ? "bg-theme-accent-light text-theme-accent" :
-                        post.type === "Challenge" ? "bg-theme-warning-light text-theme-warning" :
-                        post.type === "Milestone" ? "bg-theme-success-light text-theme-success" :
-                        "bg-theme-border/30 text-theme-muted"
-                      }`}>{post.type}</span>
-                      <span>{post.timestamp}</span>
-                      <span className="flex items-center gap-1"><ThumbsUp size={9} />{post.likes}</span>
-                      {post.pinned && <span className="text-theme-accent flex items-center gap-1"><Pin size={9} />Pinned</span>}
+              <div key={post.id} className="hover:bg-theme-border/10 transition-colors">
+                <div className="flex items-center justify-between px-5 py-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <img referrerPolicy="no-referrer" src={post.authorAvatar} alt="" className="w-8 h-8 rounded-lg border border-theme-border shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-display font-bold text-theme-primary truncate">{post.authorName}</p>
+                      <p className="text-[11px] text-theme-secondary truncate">{post.content}</p>
+                      <div className="flex items-center gap-2 text-[9px] text-theme-muted mt-0.5">
+                        <span className={`px-1.5 py-0.5 rounded font-bold ${
+                          post.type === "Announcement" ? "bg-theme-accent-light text-theme-accent" :
+                          post.type === "Workout" ? "bg-theme-accent-light text-theme-accent" :
+                          post.type === "Challenge" ? "bg-theme-warning-light text-theme-warning" :
+                          post.type === "Milestone" ? "bg-theme-success-light text-theme-success" :
+                          "bg-theme-border/30 text-theme-muted"
+                        }`}>{post.type}</span>
+                        <span>{post.timestamp}</span>
+                        <span className="flex items-center gap-1"><ThumbsUp size={9} />{post.likes}</span>
+                        {post.pinned && <span className="text-theme-accent flex items-center gap-1"><Pin size={9} />Pinned</span>}
+                      </div>
                     </div>
                   </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => onRemovePost(post.id)}
+                      className="p-1.5 rounded-lg hover:bg-theme-border/30 text-theme-muted hover:text-theme-accent transition-colors cursor-pointer"
+                      title="Remove post"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex items-center gap-2 px-5 pb-3 pt-0 border-t border-theme-border/30 mx-5">
+                  <img referrerPolicy="no-referrer" src={gym.ownerAvatar} alt="" className="w-6 h-6 rounded-full shrink-0 border border-theme-border" />
+                  <input
+                    type="text"
+                    placeholder="Comment as admin..."
+                    value={commentTexts[post.id] || ""}
+                    onChange={(e) => setCommentTexts(prev => ({ ...prev, [post.id]: e.target.value }))}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAdminComment(post.id); } }}
+                    className="flex-1 bg-theme-border/10 border border-theme-border rounded-full px-3 py-1.5 text-[11px] font-body text-theme-primary placeholder-theme-muted focus:outline-none focus:border-theme-accent transition-colors"
+                  />
                   <button
-                    onClick={() => onRemovePost(post.id)}
-                    className="p-1.5 rounded-lg hover:bg-theme-border/30 text-theme-muted hover:text-theme-accent transition-colors cursor-pointer"
-                    title="Remove post"
+                    onClick={() => handleAdminComment(post.id)}
+                    disabled={!(commentTexts[post.id] || "").trim()}
+                    className="p-1.5 rounded-full text-theme-accent hover:bg-theme-accent-light disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                   >
-                    <Trash2 size={14} />
+                    <Send size={12} />
                   </button>
                 </div>
               </div>

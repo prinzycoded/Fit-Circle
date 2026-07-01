@@ -13,9 +13,11 @@ import {
   Medal,
   X,
   Send,
+  Users,
+  Shield,
 } from "lucide-react";
 
-export default function Dashboard({ metrics, user, challenges, badges, feedPosts, onUpdateMetrics, onLogWorkout, onCreateChallenge }) {
+export default function Dashboard({ metrics, user, challenges, badges, feedPosts, accountabilityGroups = [], onUpdateMetrics, onLogWorkout, onCreateChallenge, onNavigate }) {
   const [showCreateChallenge, setShowCreateChallenge] = useState(false);
   const [challengeForm, setChallengeForm] = useState({
     title: "",
@@ -45,6 +47,7 @@ export default function Dashboard({ metrics, user, challenges, badges, feedPosts
   const activeChallenges = challenges.filter(c => c.status === "active" || c.status === "pending");
   const myWorkouts = feedPosts.filter(p => p.authorName === user.name);
   const nextBadge = badges.filter(b => !b.unlocked)[0];
+  const mySquads = accountabilityGroups.filter(g => g.members.some(m => m.id === "me"));
 
   return (
     <div id="dashboard-section" className="space-y-6">
@@ -126,6 +129,34 @@ export default function Dashboard({ metrics, user, challenges, badges, feedPosts
           </div>
         </div>
       </div>
+
+      {/* Squad Captain */}
+      {mySquads.length > 0 && (
+        <div onClick={() => onNavigate?.("groups")} className="card flex items-center justify-between gap-4 cursor-pointer hover:bg-theme-border/20 transition-all">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-theme-accent/10 text-theme-accent rounded-xl">
+              <Shield size={18} />
+            </div>
+            <div>
+              <p className="text-xs font-display font-extrabold text-theme-primary">Squad Captain</p>
+              <p className="text-[10px] text-theme-secondary">{mySquads.length} active squad{mySquads.length > 1 ? "s" : ""} · {mySquads.reduce((sum, g) => sum + g.members.length, 0)} members</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex -space-x-2">
+              {mySquads.flatMap(g => g.members.filter(m => m.id !== "me")).slice(0, 4).map((m, i) => (
+                <img key={m.id || i} src={m.avatar} alt={m.name} className="w-7 h-7 rounded-full border-2 border-theme-surface object-cover" />
+              ))}
+              {mySquads.flatMap(g => g.members.filter(m => m.id !== "me")).length > 4 && (
+                <div className="w-7 h-7 rounded-full border-2 border-theme-surface bg-theme-border/50 flex items-center justify-center text-[9px] font-display font-bold text-theme-muted">
+                  +{mySquads.flatMap(g => g.members.filter(m => m.id !== "me")).length - 4}
+                </div>
+              )}
+            </div>
+            <ChevronRight size={14} className="text-theme-muted" />
+          </div>
+        </div>
+      )}
 
       {/* Active Challenges + Next Badge side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
