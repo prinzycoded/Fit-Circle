@@ -12,6 +12,12 @@ import StreakSystem from "./components/StreakSystem";
 import OwnerDashboard from "./components/OwnerDashboard";
 import WelcomePage from "./components/WelcomePage";
 import LoginPage from "./components/LoginPage";
+import CoachWorkoutBuilder from "./components/CoachWorkoutBuilder";
+import WorkoutPlanView from "./components/WorkoutPlanView";
+import ProgressTracker from "./components/ProgressTracker";
+import ChallengeHeroCard from "./components/ChallengeHeroCard";
+import ReminderSystem from "./components/ReminderSystem";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { 
   Flame, 
   Trophy, 
@@ -33,6 +39,16 @@ import {
   Sun,
   Moon,
   LogOut,
+  Ruler,
+  Camera,
+  Bell,
+  Clock,
+  Gift,
+  ChevronDown,
+  UserPlus,
+  Activity,
+  BarChart3,
+  Image,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -120,6 +136,70 @@ const initialWeeklyChallenges = [
   { id: "wc2", title: "HIIT x3", description: "Complete 3 HIIT sessions this week. Intensity matters!", type: "frequency", targetValue: 3, currentValue: 1, metricLabel: "sessions", rewardPoints: 450, weekStart: "2026-06-22", weekEnd: "2026-06-28", status: "active", streakBonus: 1 },
   { id: "wc3", title: "Hydration Hero", description: "Drink 2L+ water for 5 days this week.", type: "frequency", targetValue: 5, currentValue: 5, metricLabel: "days", rewardPoints: 350, weekStart: "2026-06-22", weekEnd: "2026-06-28", status: "completed", streakBonus: 1 },
 ];
+
+const initialWorkoutPlans = [];
+
+const initialAssignedWorkouts = [];
+
+const initialProgressData = {
+  weight: [
+    { date: new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0], value: 75.2 },
+    { date: new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0], value: 74.8 },
+    { date: new Date().toISOString().split('T')[0], value: 74.5 },
+  ],
+  measurements: {
+    chest: [{ date: new Date().toISOString().split('T')[0], value: 95 }],
+    waist: [{ date: new Date().toISOString().split('T')[0], value: 82 }],
+    arms: [{ date: new Date().toISOString().split('T')[0], value: 35 }],
+    thighs: [{ date: new Date().toISOString().split('T')[0], value: 52 }],
+  },
+  photos: [],
+};
+
+const initialReminderSettings = {
+  enabled: true,
+  workoutReminders: true,
+  checkInReminder: true,
+  wateringReminder: false,
+  reminderTime: "08:00",
+  reminderDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+  lastReminded: null,
+};
+
+const initialFeaturedChallenge = {
+  id: "fc1",
+  title: "Summer Shred Challenge",
+  description: "Complete 20 workout sessions this month. Burn fat, build muscle, and compete for exclusive subscription discounts!",
+  challengeType: "time-based",
+  targetValue: 20,
+  currentValue: 3,
+  metricLabel: "workout sessions",
+  daysLeft: 25,
+  rules: [
+    "Complete 20 workout sessions (any type: Run, HIIT, Strength, Yoga, etc.)",
+    "Each session must be at least 20 minutes long",
+    "Log each session within 24 hours of completion",
+    "The first 3 members to finish win the discount rewards",
+    "Only logged workouts count — share them to the feed",
+  ],
+  rewards: [
+    { rank: 1, label: "1st Place — 20% OFF", discount: 20, claimed: false, claimedBy: null },
+    { rank: 2, label: "2nd Place — 17% OFF", discount: 17, claimed: false, claimedBy: null },
+    { rank: 3, label: "3rd Place — 15% OFF", discount: 15, claimed: false, claimedBy: null },
+  ],
+  participants: [
+    { id: "liam", name: "Liam Carter", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop&q=80", progress: 8 },
+    { id: "jessica", name: "Jessica Vance", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&auto=format&fit=crop&q=80", progress: 6 },
+    { id: "me", name: "You (Alex)", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80", progress: 3 },
+    { id: "noah", name: "Noah Reynolds", avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=80&auto=format&fit=crop&q=80", progress: 1 },
+  ],
+  completers: [],
+  badge: { icon: "🏆", name: "Summer Shred Champion" },
+  createdBy: "FitCircle Coach",
+  status: "active",
+  startDate: "2026-07-01",
+  endDate: new Date(Date.now() + 25 * 86400000).toISOString().split('T')[0],
+};
 
 const initialGymProfile = {
   id: "gym-1", name: "Fit Circle Gym", ownerName: "Marcus Chen",
@@ -225,6 +305,51 @@ export default function App() {
   });
 
   // Role State: "client" or "owner"
+  const [workoutPlans, setWorkoutPlans] = useState(() => {
+    try {
+      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}workoutPlans`);
+      return saved ? JSON.parse(saved) : initialWorkoutPlans;
+    } catch (e) {
+      return initialWorkoutPlans;
+    }
+  });
+
+  const [assignedWorkouts, setAssignedWorkouts] = useState(() => {
+    try {
+      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}assignedWorkouts`);
+      return saved ? JSON.parse(saved) : initialAssignedWorkouts;
+    } catch (e) {
+      return initialAssignedWorkouts;
+    }
+  });
+
+  const [progressData, setProgressData] = useState(() => {
+    try {
+      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}progressData`);
+      return saved ? JSON.parse(saved) : initialProgressData;
+    } catch (e) {
+      return initialProgressData;
+    }
+  });
+
+  const [reminderSettings, setReminderSettings] = useState(() => {
+    try {
+      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}reminderSettings`);
+      return saved ? JSON.parse(saved) : initialReminderSettings;
+    } catch (e) {
+      return initialReminderSettings;
+    }
+  });
+
+  const [featuredChallenge, setFeaturedChallenge] = useState(() => {
+    try {
+      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}featuredChallenge`);
+      return saved ? JSON.parse(saved) : initialFeaturedChallenge;
+    } catch (e) {
+      return initialFeaturedChallenge;
+    }
+  });
+
   const [viewAs, setViewAs] = useState(() => {
     try {
       const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}role`);
@@ -292,6 +417,33 @@ export default function App() {
   useEffect(() => {
     safeStorage.setItem(`${STORAGE_KEY_PREFIX}weeklyChals`, JSON.stringify(weeklyChallenges));
   }, [weeklyChallenges]);
+
+  useEffect(() => {
+    safeStorage.setItem(`${STORAGE_KEY_PREFIX}workoutPlans`, JSON.stringify(workoutPlans));
+  }, [workoutPlans]);
+
+  useEffect(() => {
+    safeStorage.setItem(`${STORAGE_KEY_PREFIX}assignedWorkouts`, JSON.stringify(assignedWorkouts));
+  }, [assignedWorkouts]);
+
+  useEffect(() => {
+    safeStorage.setItem(`${STORAGE_KEY_PREFIX}progressData`, JSON.stringify(progressData));
+  }, [progressData]);
+
+  useEffect(() => {
+    safeStorage.setItem(`${STORAGE_KEY_PREFIX}reminderSettings`, JSON.stringify(reminderSettings));
+  }, [reminderSettings]);
+
+  useEffect(() => {
+    safeStorage.setItem(`${STORAGE_KEY_PREFIX}featuredChallenge`, JSON.stringify(featuredChallenge));
+  }, [featuredChallenge]);
+
+  // Auto-proceed when Firebase session is restored on page reload
+  useEffect(() => {
+    if (firebaseUser && !loading) {
+      setAuthEntryDone(true);
+    }
+  }, [firebaseUser, loading]);
 
   // Sync Firebase user info into the app user state on login
   useEffect(() => {
@@ -612,23 +764,10 @@ export default function App() {
     showToast(`Challenge "${title}" created and sent to all members!`, "success");
   };
 
-  // Create a personal challenge (client)
-  const handleCreateClientChallenge = (form) => {
-    const newChallenge = {
-      id: `client_chal_${Date.now()}`,
-      title: form.title,
-      description: form.description,
-      type: form.type,
-      targetValue: form.targetValue,
-      currentValue: 0,
-      metricLabel: form.metricLabel,
-      daysLeft: form.daysLeft,
-      invitedBy: user.name,
-      status: "active",
-      rewardPoints: form.rewardPoints,
-    };
-    setChallenges(prev => [newChallenge, ...prev]);
-    showToast(`Challenge "${form.title}" created! Start working on it.`, "success");
+  // Delete a challenge (owner only)
+  const handleDeleteChallenge = (challengeId) => {
+    setChallenges(prev => prev.filter(c => c.id !== challengeId));
+    showToast("Challenge has been deleted.", "info");
   };
 
   // Accept a challenge card
@@ -785,6 +924,141 @@ export default function App() {
     showToast("New weekly challenges are ready! Bonus rewards increased!");
   };
 
+  // === WORKOUT PLAN MANAGEMENT (Coach) ===
+  const handleCreateWorkoutPlan = (plan) => {
+    const newPlan = {
+      ...plan,
+      id: `wp_${Date.now()}`,
+      createdAt: new Date().toISOString().split('T')[0],
+      createdBy: gym.ownerName || "Coach",
+      status: "active",
+    };
+    setWorkoutPlans(prev => [newPlan, ...prev]);
+    showToast(`Workout plan "${plan.title}" created!`, "success");
+    return newPlan;
+  };
+
+  const handleAssignWorkoutToMember = (planId, memberId) => {
+    const plan = workoutPlans.find(p => p.id === planId);
+    if (!plan) return;
+    const existing = assignedWorkouts.find(a => a.planId === planId && a.clientId === memberId);
+    if (existing) {
+      showToast("This member already has this plan assigned.", "info");
+      return;
+    }
+    const newAssignment = {
+      id: `a_${Date.now()}`,
+      planId,
+      clientId: memberId,
+      assignedBy: gym.ownerName || "Coach",
+      assignedDate: new Date().toISOString().split('T')[0],
+      currentDay: 0,
+      completedDays: [],
+      status: "active",
+      startedAt: new Date().toISOString().split('T')[0],
+      completedAt: null,
+    };
+    setAssignedWorkouts(prev => [...prev, newAssignment]);
+    setWorkoutPlans(prev => prev.map(p => {
+      if (p.id === planId) {
+        const assignedTo = p.assignedTo || [];
+        return { ...p, assignedTo: assignedTo.includes(memberId) ? assignedTo : [...assignedTo, memberId] };
+      }
+      return p;
+    }));
+    const member = members.find(m => m.id === memberId);
+    showToast(`Plan assigned to ${member?.name || memberId}!`, "success");
+  };
+
+  // === WORKOUT DAY LOGGING (Client) ===
+  const handleLogWorkoutDay = (assignmentId, dayIndex) => {
+    setAssignedWorkouts(prev => prev.map(a => {
+      if (a.id !== assignmentId) return a;
+      if (a.completedDays.includes(dayIndex)) return a;
+      const newCompleted = [...a.completedDays, dayIndex];
+      const plan = workoutPlans.find(p => p.id === a.planId);
+      const totalDays = plan?.days?.length || 1;
+      const isComplete = newCompleted.length >= totalDays;
+      const pointsGained = 100;
+      setUser(p => ({ ...p, points: p.points + pointsGained }));
+      showToast(`Day ${dayIndex + 1} completed! +${pointsGained} pts`, "success");
+      return {
+        ...a,
+        completedDays: newCompleted,
+        currentDay: isComplete ? totalDays : Math.max(...newCompleted) + 1,
+        status: isComplete ? "completed" : "active",
+        completedAt: isComplete ? new Date().toISOString().split('T')[0] : null,
+      };
+    }));
+    // Progress the featured challenge
+    setFeaturedChallenge(prev => {
+      if (!prev || prev.status !== "active") return prev;
+      const newVal = Math.min(prev.targetValue, prev.currentValue + 1);
+      const updatedParticipants = prev.participants.map(p =>
+        p.id === "me" ? { ...p, progress: newVal } : p
+      );
+      return { ...prev, currentValue: newVal, participants: updatedParticipants };
+    });
+  };
+
+  // === PROGRESS TRACKING ===
+  const handleUpdateProgress = (entry) => {
+    setProgressData(prev => {
+      if (entry.type === "weight") {
+        return {
+          ...prev,
+          weight: [...prev.weight, { date: entry.date, value: entry.value }],
+        };
+      }
+      if (entry.type === "measurement") {
+        const existing = prev.measurements[entry.measurementType] || [];
+        return {
+          ...prev,
+          measurements: {
+            ...prev.measurements,
+            [entry.measurementType]: [...existing, { date: entry.date, value: entry.value }],
+          },
+        };
+      }
+      if (entry.type === "photo") {
+        return {
+          ...prev,
+          photos: [...prev.photos, { date: entry.date, url: entry.url, caption: entry.caption || "" }],
+        };
+      }
+      return prev;
+    });
+    showToast("Progress updated!", "success");
+  };
+
+  // === REMINDER SETTINGS ===
+  const handleUpdateReminders = (settings) => {
+    setReminderSettings(prev => ({ ...prev, ...settings }));
+    showToast("Reminder settings saved!", "success");
+  };
+
+  // === FEATURED CHALLENGE ===
+  const handleJoinFeaturedChallenge = () => {
+    setFeaturedChallenge(prev => {
+      if (!prev || prev.status !== "active") return prev;
+      const alreadyJoined = prev.participants.some(p => p.id === "me");
+      if (alreadyJoined) {
+        showToast("You've already joined this challenge!", "info");
+        return prev;
+      }
+      showToast("You joined the Summer Shred Challenge! Start logging workouts!", "success");
+      return {
+        ...prev,
+        participants: [...prev.participants, { id: "me", name: user.name, avatar: user.avatar, progress: 0 }],
+      };
+    });
+  };
+
+  const handleUpdateFeaturedChallenge = (updates) => {
+    setFeaturedChallenge(prev => ({ ...prev, ...updates }));
+    showToast("Featured challenge updated!", "success");
+  };
+
   // Quick reset standard stats for fresh presentation demo
   const handleResetData = () => {
     setShowResetConfirm(true);
@@ -799,11 +1073,27 @@ export default function App() {
     safeStorage.removeItem(`${STORAGE_KEY_PREFIX}challenges`);
     safeStorage.removeItem(`${STORAGE_KEY_PREFIX}groups`);
     safeStorage.removeItem(`${STORAGE_KEY_PREFIX}weeklyChals`);
+    safeStorage.removeItem(`${STORAGE_KEY_PREFIX}workoutPlans`);
+    safeStorage.removeItem(`${STORAGE_KEY_PREFIX}assignedWorkouts`);
+    safeStorage.removeItem(`${STORAGE_KEY_PREFIX}progressData`);
+    safeStorage.removeItem(`${STORAGE_KEY_PREFIX}reminderSettings`);
+    safeStorage.removeItem(`${STORAGE_KEY_PREFIX}featuredChallenge`);
     window.location.reload();
   };
 
-  if (!authEntryDone) {
-    return <LoginPage onLoginSuccess={() => setAuthEntryDone(true)} />;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-theme-bg flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-theme-accent-light flex items-center justify-center mx-auto animate-pulse">
+            <svg className="animate-spin w-6 h-6 text-theme-accent" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" strokeLinecap="round" />
+            </svg>
+          </div>
+          <p className="text-sm font-display font-bold text-theme-muted">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!firebaseUser) {
@@ -811,6 +1101,7 @@ export default function App() {
   }
 
   return (
+    <ErrorBoundary>
     <div id="applet-viewport" className="min-h-screen bg-theme-bg text-theme-primary antialiased font-body bg-mesh">
       <div className="bg-noise"></div>
       
@@ -890,13 +1181,19 @@ export default function App() {
             challenges={challenges}
             accountabilityGroups={accountabilityGroups}
             currentUser={user}
+            workoutPlans={workoutPlans}
+            featuredChallenge={featuredChallenge}
             onRemovePost={handleRemovePost}
             onCreateAnnouncement={handleCreateAnnouncement}
             onCreateShoutout={handleCreateShoutout}
             onCreateChallenge={handleCreateOwnerChallenge}
+            onDeleteChallenge={handleDeleteChallenge}
             onNudgeGroup={handleNudgeGroupMember}
             onNavigate={setActiveTab}
             onAddComment={handleAddComment}
+            onCreateWorkoutPlan={handleCreateWorkoutPlan}
+            onAssignWorkout={handleAssignWorkoutToMember}
+            onUpdateFeaturedChallenge={handleUpdateFeaturedChallenge}
           />
         ) : (<>
           {/* Mobile bottom nav bar */}
@@ -959,6 +1256,8 @@ export default function App() {
                   { tab: "social", label: "Social Feed", icon: Users },
                   { tab: "leaderboard", label: "Leaderboard", icon: Trophy },
                   { tab: "badges", label: "Achievement Badges", icon: Award },
+                  { tab: "workout", label: "Workout Plan", icon: Dumbbell },
+                  { tab: "progress", label: "Progress Tracker", icon: Activity },
                   { tab: "groups", label: "Accountability Groups", icon: Shield },
                   { tab: "weeklyChallenges", label: "Weekly Challenges", icon: Calendar },
                 ].map(({ tab, label, icon: Icon }) => (
@@ -1028,11 +1327,19 @@ export default function App() {
                     badges={badges}
                     feedPosts={feedPosts}
                     accountabilityGroups={accountabilityGroups}
+                    workoutPlans={workoutPlans}
+                    assignedWorkouts={assignedWorkouts}
+                    featuredChallenge={featuredChallenge}
+                    reminderSettings={reminderSettings}
+                    progressData={progressData}
                     onUpdateMetrics={handleUpdateMetrics}
                     onLogWorkout={handleLogWorkout}
-                    onCreateChallenge={handleCreateClientChallenge}
                     onJoinOwnerChallenge={handleJoinOwnerChallenge}
                     onNavigate={setActiveTab}
+                    onLogWorkoutDay={handleLogWorkoutDay}
+                    onJoinFeaturedChallenge={handleJoinFeaturedChallenge}
+                    onUpdateReminders={handleUpdateReminders}
+                    onUpdateProgress={handleUpdateProgress}
                   />
                 )}
 
@@ -1079,6 +1386,23 @@ export default function App() {
                       }
                     }}
                     onJoinGroup={handleJoinGroup}
+                  />
+                )}
+
+                {activeTab === "workout" && (
+                  <WorkoutPlanView
+                    workoutPlans={workoutPlans}
+                    assignedWorkouts={assignedWorkouts}
+                    currentUser={user}
+                    onLogDay={handleLogWorkoutDay}
+                    onNavigate={setActiveTab}
+                  />
+                )}
+
+                {activeTab === "progress" && (
+                  <ProgressTracker
+                    progressData={progressData}
+                    onUpdateProgress={handleUpdateProgress}
                   />
                 )}
 
@@ -1180,6 +1504,7 @@ export default function App() {
       </footer>
 
     </div>
+    </ErrorBoundary>
   );
 }
 

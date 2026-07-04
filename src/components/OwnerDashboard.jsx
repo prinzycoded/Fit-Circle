@@ -33,9 +33,11 @@ import {
   Gift,
   UserPlus,
   Send,
+  ListChecks,
 } from "lucide-react";
+import CoachWorkoutBuilder from "./CoachWorkoutBuilder";
 
-export default function OwnerDashboard({ gym, members, feedPosts, challenges, accountabilityGroups, currentUser, onRemovePost, onCreateAnnouncement, onCreateShoutout, onCreateChallenge, onNudgeGroup, onNavigate, onAddComment }) {
+export default function OwnerDashboard({ gym, members, feedPosts, challenges, accountabilityGroups, currentUser, onRemovePost, onCreateAnnouncement, onCreateShoutout, onCreateChallenge, onDeleteChallenge, onNudgeGroup, onNavigate, onAddComment, workoutPlans = [], featuredChallenge, onCreateWorkoutPlan, onAssignWorkout, onUpdateFeaturedChallenge }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewingMember, setViewingMember] = useState(null);
   const [sortBy, setSortBy] = useState("points");
@@ -486,6 +488,74 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
             <p className="text-[10px] text-theme-muted">Monthly analytics</p>
           </div>
         </button>
+      </div>
+
+      {/* Workout Plan Management */}
+      <div className="card p-0 overflow-hidden">
+        <div className="px-5 py-4 border-b border-theme-border">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ListChecks size={16} className="text-theme-support" />
+              <h2 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">Workout Plans</h2>
+              <span className="text-[10px] font-bold bg-theme-support-light text-theme-support px-2 py-0.5 rounded-full">{workoutPlans.length} plans</span>
+            </div>
+          </div>
+        </div>
+        <div className="p-5">
+          <CoachWorkoutBuilder
+            members={members}
+            workoutPlans={workoutPlans}
+            onCreateWorkoutPlan={onCreateWorkoutPlan}
+            onAssignWorkout={onAssignWorkout}
+            onNavigate={onNavigate}
+          />
+        </div>
+      </div>
+
+      {/* Coach Challenges Management */}
+      <div className="card p-0 overflow-hidden">
+        <div className="px-5 py-4 border-b border-theme-border flex items-center gap-2">
+          <Zap size={16} className="text-theme-support" />
+          <h2 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">My Challenges</h2>
+          <span className="text-[10px] font-bold bg-theme-support-light text-theme-support px-2 py-0.5 rounded-full">{challenges.filter(c => c.createdByOwner).length} created</span>
+        </div>
+        <div className="divide-y divide-theme-border/50">
+          {challenges.filter(c => c.createdByOwner).length === 0 ? (
+            <div className="px-5 py-8 text-center text-sm text-theme-muted">No challenges created yet. Use the Create Challenge action above!</div>
+          ) : (
+            challenges.filter(c => c.createdByOwner).map((challenge) => {
+              const pct = challenge.targetValue > 0 ? Math.min(100, Math.round((challenge.currentValue / challenge.targetValue) * 100)) : 0;
+              return (
+                <div key={challenge.id} className="flex items-center justify-between px-5 py-3 hover:bg-theme-border/10 transition-colors">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="p-2 bg-theme-support-light text-theme-support rounded-lg shrink-0">
+                      <Target size={16} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-display font-bold text-theme-primary truncate">{challenge.title}</p>
+                      <p className="text-[10px] text-theme-secondary truncate">{challenge.description}</p>
+                      <div className="flex items-center gap-3 text-[9px] text-theme-muted mt-1">
+                        <span>{challenge.participants?.length || 0} joined</span>
+                        <span>{challenge.daysLeft}d left</span>
+                        <span className={`px-1.5 py-0.5 rounded font-bold ${challenge.status === "active" ? "bg-theme-success-light text-theme-success" : challenge.status === "completed" ? "bg-theme-accent-light text-theme-accent" : "bg-theme-border/30 text-theme-muted"}`}>{challenge.status}</span>
+                      </div>
+                      <div className="progress-bar h-1 mt-1.5">
+                        <div className="progress-bar-fill bg-theme-support" style={{ width: `${pct}%` }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => onDeleteChallenge(challenge.id)}
+                    className="p-1.5 rounded-lg hover:bg-theme-border/30 text-theme-muted hover:text-red-500 transition-colors cursor-pointer shrink-0 ml-2"
+                    title="Delete challenge"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
 
       {/* Feed Moderation */}

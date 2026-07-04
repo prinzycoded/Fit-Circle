@@ -31,6 +31,7 @@ export default function AuthForm({ role = "client", onLoginSuccess }) {
       }
       onLoginSuccess?.();
     } catch (err) {
+      console.error("Firebase Auth Error:", err.code, err.message);
       setError(getErrorMessage(err.code));
     } finally {
       setSubmitting(false);
@@ -45,6 +46,7 @@ export default function AuthForm({ role = "client", onLoginSuccess }) {
       await signInWithPopup(auth, googleProvider);
       onLoginSuccess?.();
     } catch (err) {
+      console.error("Firebase Google Auth Error:", err.code, err.message);
       setError(getErrorMessage(err.code));
     } finally {
       setSubmitting(false);
@@ -60,8 +62,11 @@ export default function AuthForm({ role = "client", onLoginSuccess }) {
       "auth/weak-password": "Password must be at least 6 characters.",
       "auth/popup-closed-by-user": "Sign-in cancelled.",
       "auth/cancelled-popup-request": "Sign-in cancelled.",
+      "auth/unauthorized-domain": "This domain is not authorized. Add it in Firebase Console > Authentication > Settings > Authorized domains.",
+      "auth/operation-not-allowed": "Email/Password sign-in is not enabled. Enable it in Firebase Console > Authentication > Sign-in method.",
+      "auth/network-request-failed": "Network error. Check your internet connection.",
     };
-    return messages[code] || "Something went wrong. Please try again.";
+    return messages[code] || `Error: ${code}. Check the browser console for details.`;
   };
 
   const isOwner = role === "owner";
