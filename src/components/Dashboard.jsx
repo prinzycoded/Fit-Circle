@@ -52,7 +52,7 @@ export default function Dashboard({ metrics, user, challenges, weeklyChallenges 
   const activeChallenges = challenges.filter(c => c.status === "active" || c.status === "pending");
   const myWorkouts = feedPosts.filter(p => p.authorName === user.name);
   const nextBadge = badges.filter(b => !b.unlocked)[0];
-  const mySquads = accountabilityGroups.filter(g => g.members.some(m => m.id === "me"));
+  const mySquads = accountabilityGroups.filter(g => g.members.some(m => m.id === "me" || m.id === user.id));
 
   return (
     <div id="dashboard-section" className="space-y-6">
@@ -222,12 +222,12 @@ export default function Dashboard({ metrics, user, challenges, weeklyChallenges 
           </div>
           <div className="flex items-center gap-2">
             <div className="flex -space-x-2">
-              {mySquads.flatMap(g => g.members.filter(m => m.id !== "me")).slice(0, 4).map((m, i) => (
+              {mySquads.flatMap(g => g.members.filter(m => m.id !== "me" && m.id !== user.id)).slice(0, 4).map((m, i) => (
                 <img key={m.id || i} src={m.avatar} alt={m.name} className="w-7 h-7 rounded-full border-2 border-theme-surface object-cover" />
               ))}
-              {mySquads.flatMap(g => g.members.filter(m => m.id !== "me")).length > 4 && (
+              {mySquads.flatMap(g => g.members.filter(m => m.id !== "me" && m.id !== user.id)).length > 4 && (
                 <div className="w-7 h-7 rounded-full border-2 border-theme-surface bg-theme-border/50 flex items-center justify-center text-[9px] font-display font-bold text-theme-muted">
-                  +{mySquads.flatMap(g => g.members.filter(m => m.id !== "me")).length - 4}
+                  +{mySquads.flatMap(g => g.members.filter(m => m.id !== "me" && m.id !== user.id)).length - 4}
                 </div>
               )}
             </div>

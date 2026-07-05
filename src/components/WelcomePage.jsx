@@ -292,7 +292,7 @@ export default function WelcomePage({ user, badges, onCheckIn, onBuyFreeze, onUs
         team={[
           { id: "liam", name: "Liam Carter", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80", streak: 12, points: 18950, checkInStatus: "done" },
           { id: "jessica", name: "Jessica Vance", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80", streak: 9, points: 16880, checkInStatus: "done" },
-          { id: "me", name: user.name, avatar: user.avatar, streak: user.streak, points: user.points, checkInStatus: user.lastCheckIn === new Date().toISOString().split('T')[0] ? "done" : "pending" },
+          { id: user.id, name: user.name, avatar: user.avatar, streak: user.streak, points: user.points, checkInStatus: user.lastCheckIn === new Date().toISOString().split('T')[0] ? "done" : "pending" },
           { id: "noah", name: "Noah Reynolds", avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=120&auto=format&fit=crop&q=80", streak: 8, points: 17430, checkInStatus: "pending" },
         ]}
         onRescue={(member) => onRescueStreak && onRescueStreak("group1", member.name)}

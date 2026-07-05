@@ -17,7 +17,6 @@ import WorkoutPlanView from "./components/WorkoutPlanView";
 import ProgressTracker from "./components/ProgressTracker";
 import ChallengeHeroCard from "./components/ChallengeHeroCard";
 import ReminderSystem from "./components/ReminderSystem";
-import ErrorBoundary from "./components/ErrorBoundary";
 import { 
   Flame, 
   Trophy, 
@@ -359,8 +358,8 @@ export default function App() {
     }
   });
 
-  const [gym] = useState(initialGymProfile);
-  const [members] = useState(initialMemberList);
+  const [gym, setGym] = useState(initialGymProfile);
+  const [members, setMembers] = useState(initialMemberList);
 
   // Dark Mode State
   const [darkMode, setDarkMode] = useState(() => {
@@ -451,6 +450,7 @@ export default function App() {
       const displayName = firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "User";
       setUser(prev => ({
         ...prev,
+        id: firebaseUser.uid,
         name: displayName,
         email: firebaseUser.email || prev.email,
         avatar: firebaseUser.photoURL || prev.avatar,
@@ -462,6 +462,41 @@ export default function App() {
           setViewAs(savedRole);
         }
       } catch (e) { /* ignore */ }
+    }
+  }, [firebaseUser?.uid]);
+
+  // Sync Firebase user info into the gym owner profile on login
+  useEffect(() => {
+    if (firebaseUser) {
+      const ownerName = firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "Gym Owner";
+      setGym(prev => ({
+        ...prev,
+        ownerName: ownerName,
+        ownerAvatar: firebaseUser.photoURL || prev.ownerAvatar,
+      }));
+    }
+  }, [firebaseUser?.uid]);
+
+  // Sync Firebase auth users into the members list so coaches can assign workouts
+  useEffect(() => {
+    if (firebaseUser) {
+      setMembers(prev => {
+        const exists = prev.some(m => m.id === firebaseUser.uid || m.email === firebaseUser.email);
+        if (exists) return prev;
+        const fbName = firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "Member";
+        return [{
+          id: firebaseUser.uid,
+          name: fbName,
+          avatar: firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(fbName)}&background=D95C42&color=fff`,
+          email: firebaseUser.email || "",
+          plan: "Standard",
+          joined: new Date().toISOString().split('T')[0],
+          points: 0, streak: 0, checkInsThisMonth: 0,
+          lastActive: "Just now", status: "online",
+          metrics: { steps: 0, water: 0, activeMinutes: 0, caloriesBurned: 0 },
+          goals: { stepGoal: 10000, waterGoal: 2500, activeMinutesGoal: 45 },
+        }, ...prev];
+      });
     }
   }, [firebaseUser?.uid]);
 
@@ -995,7 +1030,7 @@ export default function App() {
       if (!prev || prev.status !== "active") return prev;
       const newVal = Math.min(prev.targetValue, prev.currentValue + 1);
       const updatedParticipants = prev.participants.map(p =>
-        p.id === "me" ? { ...p, progress: newVal } : p
+        p.id === "me" || p.id === user.id ? { ...p, progress: newVal } : p
       );
       return { ...prev, currentValue: newVal, participants: updatedParticipants };
     });
@@ -1041,7 +1076,7 @@ export default function App() {
   const handleJoinFeaturedChallenge = () => {
     setFeaturedChallenge(prev => {
       if (!prev || prev.status !== "active") return prev;
-      const alreadyJoined = prev.participants.some(p => p.id === "me");
+      const alreadyJoined = prev.participants.some(p => p.id === "me" || p.id === user.id);
       if (alreadyJoined) {
         showToast("You've already joined this challenge!", "info");
         return prev;
@@ -1049,7 +1084,7 @@ export default function App() {
       showToast("You joined the Summer Shred Challenge! Start logging workouts!", "success");
       return {
         ...prev,
-        participants: [...prev.participants, { id: "me", name: user.name, avatar: user.avatar, progress: 0 }],
+        participants: [...prev.participants, { id: user.id, name: user.name, avatar: user.avatar, progress: 0 }],
       };
     });
   };
@@ -1101,7 +1136,6 @@ export default function App() {
   }
 
   return (
-    <ErrorBoundary>
     <div id="applet-viewport" className="min-h-screen bg-theme-bg text-theme-primary antialiased font-body bg-mesh">
       <div className="bg-noise"></div>
       
@@ -1504,7 +1538,6 @@ export default function App() {
       </footer>
 
     </div>
-    </ErrorBoundary>
   );
 }
 
