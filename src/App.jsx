@@ -758,7 +758,7 @@ export default function App() {
   };
 
   // Create a gym-wide challenge (owner)
-  const handleCreateOwnerChallenge = (title, description, type, targetValue, metricLabel, daysLeft, rewardPoints) => {
+  const handleCreateOwnerChallenge = (title, description, type, targetValue, metricLabel, daysLeft, rewardPoints, difficulty = "medium", streakBonus = false, category = "fitness") => {
     const newChallenge = {
       id: `owner_chal_${Date.now()}`,
       title,
@@ -771,10 +771,13 @@ export default function App() {
       invitedBy: gym.name,
       status: "active",
       rewardPoints,
+      difficulty,
+      streakBonus,
+      category,
       createdByOwner: true,
     };
     setChallenges(prev => [newChallenge, ...prev]);
-    showToast(`Challenge "${title}" created and sent to all members!`, "success");
+    showToast(`Challenge "${title}" launched!`, "success");
   };
 
   // Delete a challenge (owner only)

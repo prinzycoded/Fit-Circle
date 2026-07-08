@@ -34,7 +34,14 @@ import {
   UserPlus,
   Send,
   ListChecks,
+  Trophy,
+  Swords,
+  Skull,
+  HeartHandshake,
+  Sparkles,
+  Hash,
 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import CoachWorkoutBuilder from "./CoachWorkoutBuilder";
 
 const MemberDetailModal = ({ member, onClose, shoutoutMember, setShoutoutMember, shoutoutReason, setShoutoutReason, onCreateShoutout }) => (
@@ -155,8 +162,10 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
   const [shoutoutReason, setShoutoutReason] = useState("");
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const [challengeForm, setChallengeForm] = useState({
-    title: "", description: "", type: "duration", targetValue: 60, metricLabel: "min", daysLeft: 7, rewardPoints: 300
+    title: "", description: "", type: "duration", targetValue: 60, metricLabel: "min", daysLeft: 7, rewardPoints: 300,
+    difficulty: "medium", streakBonus: false, category: "fitness"
   });
+  const [editingChallenge, setEditingChallenge] = useState(null);
 
   const memberRef = useRef(null);
   const [commentTexts, setCommentTexts] = useState({});
@@ -532,61 +541,153 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
 
       {/* Challenges */}
       {activeAdminSection === "challenges" && (
-      <div className="space-y-4">
+      <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">My Challenges</h2>
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-theme-support-light text-theme-support rounded-xl">
+              <Swords size={18} />
+            </div>
+            <div>
+              <h1 className="text-xl font-display font-extrabold text-theme-primary">Challenge Arena</h1>
+              <p className="text-xs text-theme-secondary">Create and manage gamified challenges for your members</p>
+            </div>
+          </div>
           <button
             onClick={() => setShowChallengeModal(true)}
-            className="bg-theme-support hover:bg-theme-support/80 text-white text-xs font-display font-bold px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+            className="bg-theme-support hover:bg-theme-support/80 text-white text-xs font-display font-bold px-5 py-2.5 rounded-xl transition-all flex items-center gap-1.5 shadow-lg shadow-theme-support/25 cursor-pointer"
           >
             <Zap size={14} />
-            Create
+            New Challenge
           </button>
         </div>
-        <div className="card p-0 overflow-hidden">
-          <div className="px-5 py-4 border-b border-theme-border flex items-center gap-2">
-            <Zap size={16} className="text-theme-support" />
-            <h2 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">All Challenges</h2>
-            <span className="text-[10px] font-bold bg-theme-support-light text-theme-support px-2 py-0.5 rounded-full">{challenges.filter(c => c.createdByOwner).length} created</span>
-          </div>
-          <div className="divide-y divide-theme-border/50">
-            {challenges.filter(c => c.createdByOwner).length === 0 ? (
-              <div className="px-5 py-8 text-center text-sm text-theme-muted">No challenges created yet.</div>
-            ) : (
-              challenges.filter(c => c.createdByOwner).map((challenge) => {
-                const pct = challenge.targetValue > 0 ? Math.min(100, Math.round((challenge.currentValue / challenge.targetValue) * 100)) : 0;
-                return (
-                  <div key={challenge.id} className="flex items-center justify-between px-5 py-3 hover:bg-theme-border/10 transition-colors">
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="p-2 bg-theme-support-light text-theme-support rounded-lg shrink-0">
-                        <Target size={16} />
+
+        {/* Stats row */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: "Active", value: challenges.filter(c => c.createdByOwner && c.status === "active").length, icon: Flame, color: "text-theme-warning", bg: "bg-theme-warning-light" },
+            { label: "Completed", value: challenges.filter(c => c.createdByOwner && c.status === "completed").length, icon: Trophy, color: "text-theme-success", bg: "bg-theme-success-light" },
+            { label: "Participants", value: challenges.filter(c => c.createdByOwner).reduce((s, c) => s + (c.participants?.length || 0), 0), icon: Users, color: "text-theme-support", bg: "bg-theme-support-light" },
+          ].map((stat, i) => (
+            <div key={i} className="card flex items-center gap-3 px-4 py-3">
+              <div className={`p-2 rounded-lg ${stat.bg} ${stat.color}`}>
+                <stat.icon size={16} />
+              </div>
+              <div>
+                <p className="text-lg font-display font-extrabold text-theme-primary">{stat.value}</p>
+                <p className="text-[10px] text-theme-muted">{stat.label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Challenge grid */}
+        {challenges.filter(c => c.createdByOwner).length === 0 ? (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="card text-center py-14">
+            <div className="w-16 h-16 rounded-2xl bg-theme-support-light flex items-center justify-center mx-auto mb-4">
+              <Swords size={32} className="text-theme-support" />
+            </div>
+            <p className="text-sm font-display font-bold text-theme-primary">No challenges yet</p>
+            <p className="text-xs text-theme-secondary mt-1">Create your first challenge to ignite friendly competition.</p>
+            <button
+              onClick={() => setShowChallengeModal(true)}
+              className="mt-4 bg-theme-support hover:bg-theme-support/80 text-white text-xs font-display font-bold px-5 py-2.5 rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer"
+            >
+              <Zap size={15} />
+              Create Challenge
+            </button>
+          </motion.div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {challenges.filter(c => c.createdByOwner).map((challenge) => {
+              const pct = challenge.targetValue > 0 ? Math.min(100, Math.round((challenge.currentValue / challenge.targetValue) * 100)) : 0;
+              const participantCount = challenge.participants?.length || 0;
+              const diffColors = { easy: "bg-theme-success-light text-theme-success", medium: "bg-theme-warning-light text-theme-warning", hard: "bg-theme-accent-light text-theme-accent", extreme: "bg-red-100 text-red-600" };
+              const diffLabel = challenge.difficulty || "medium";
+              const diffIcon = diffLabel === "easy" ? HeartHandshake : diffLabel === "hard" ? Skull : diffLabel === "extreme" ? Skull : Swords;
+              const DiffIcon = diffIcon;
+              return (
+                <motion.div
+                  key={challenge.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="card hover:shadow-lg hover:shadow-theme-support/5 transition-all overflow-hidden relative"
+                >
+                  {/* Difficulty stripe */}
+                  <div className={`absolute top-0 left-0 right-0 h-1 ${diffLabel === "easy" ? "bg-theme-success" : diffLabel === "medium" ? "bg-theme-warning" : diffLabel === "hard" ? "bg-theme-accent" : "bg-red-500"}`} />
+
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className={`p-2 rounded-lg ${diffColors[diffLabel] || diffColors.medium}`}>
+                        <DiffIcon size={16} />
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-display font-bold text-theme-primary truncate">{challenge.title}</p>
-                        <p className="text-[10px] text-theme-secondary truncate">{challenge.description}</p>
-                        <div className="flex items-center gap-3 text-[9px] text-theme-muted mt-1">
-                          <span>{challenge.participants?.length || 0} joined</span>
-                          <span>{challenge.daysLeft}d left</span>
-                          <span className={`px-1.5 py-0.5 rounded font-bold ${challenge.status === "active" ? "bg-theme-success-light text-theme-success" : challenge.status === "completed" ? "bg-theme-accent-light text-theme-accent" : "bg-theme-border/30 text-theme-muted"}`}>{challenge.status}</span>
-                        </div>
-                        <div className="progress-bar h-1 mt-1.5">
-                          <div className="progress-bar-fill bg-theme-support" style={{ width: `${pct}%` }}></div>
-                        </div>
+                      <div>
+                        <h3 className="text-sm font-display font-extrabold text-theme-primary">{challenge.title}</h3>
+                        <p className="text-[10px] text-theme-muted">Created by you</p>
                       </div>
                     </div>
+                  </div>
+
+                  {challenge.description && (
+                    <p className="text-[11px] text-theme-secondary mb-3 leading-relaxed">{challenge.description}</p>
+                  )}
+
+                  {/* Progress ring + stats */}
+                  <div className="flex items-center gap-4 mb-3">
+                    <div className="relative w-12 h-12 shrink-0">
+                      <svg className="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--theme-border)" strokeWidth="3" />
+                        <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--theme-support)" strokeWidth="3" strokeDasharray={`${pct * 0.97} 100`} strokeLinecap="round" />
+                      </svg>
+                      <span className="absolute inset-0 flex items-center justify-center text-[9px] font-extrabold text-theme-primary">{pct}%</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-[10px] text-theme-muted flex-wrap">
+                      <span className="flex items-center gap-1"><Target size={11} />{challenge.targetValue}{challenge.metricLabel}</span>
+                      <span className="flex items-center gap-1"><Users size={11} />{participantCount} joined</span>
+                      <span className="flex items-center gap-1"><Clock size={11} />{challenge.daysLeft}d left</span>
+                      {challenge.streakBonus && <span className="flex items-center gap-1"><Flame size={11} className="text-theme-warning" />Streak</span>}
+                    </div>
+                  </div>
+
+                  {/* Participant avatars */}
+                  {participantCount > 0 && (
+                    <div className="flex items-center gap-1 mb-3">
+                      <div className="flex -space-x-2">
+                        {challenge.participants.slice(0, 4).map((p, i) => (
+                          <img key={i} referrerPolicy="no-referrer" src={p.avatar} alt="" className="w-6 h-6 rounded-full border-2 border-theme-surface" />
+                        ))}
+                      </div>
+                      {participantCount > 4 && (
+                        <span className="text-[9px] text-theme-muted font-bold ml-1">+{participantCount - 4}</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Difficulty badge + reward */}
+                  <div className="flex items-center justify-between pt-3 border-t border-theme-border">
+                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full capitalize ${diffColors[diffLabel] || diffColors.medium}`}>
+                      {diffLabel}
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-theme-warning">
+                      <Star size={11} className="fill-theme-warning text-theme-warning" />
+                      {challenge.rewardPoints} pts
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 mt-3">
                     <button
                       onClick={() => onDeleteChallenge(challenge.id)}
-                      className="p-1.5 rounded-lg hover:bg-theme-border/30 text-theme-muted hover:text-red-500 transition-colors cursor-pointer shrink-0 ml-2"
-                      title="Delete challenge"
+                      className="flex-1 py-2 rounded-xl border border-theme-border text-[10px] font-display font-bold text-theme-secondary hover:bg-theme-border/30 transition-all flex items-center justify-center gap-1 cursor-pointer hover:text-red-500"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={12} />
+                      Delete
                     </button>
                   </div>
-                );
-              })
-            )}
+                </motion.div>
+              );
+            })}
           </div>
-        </div>
+        )}
       </div>
       )}
 
@@ -848,72 +949,115 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
 
       {/* Challenge Creation Modal */}
       {showChallengeModal && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowChallengeModal(false)}>
-          <div className="card max-w-lg w-full space-y-4" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowChallengeModal(false)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="card max-w-lg w-full space-y-5 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between sticky top-0 bg-theme-surface z-10 pb-3 border-b border-theme-border">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-theme-support-light text-theme-support rounded-xl">
-                  <Zap size={18} />
+                  <Swords size={18} />
                 </div>
-                <h3 className="text-base font-display font-extrabold text-theme-primary">Create Gym Challenge</h3>
+                <div>
+                  <h3 className="text-base font-display font-extrabold text-theme-primary">Design Challenge</h3>
+                  <p className="text-[9px] text-theme-muted">Create a gamified challenge for your gym</p>
+                </div>
               </div>
               <button onClick={() => setShowChallengeModal(false)} className="p-1.5 rounded-lg hover:bg-theme-border/30 text-theme-muted cursor-pointer">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
+              {/* Title + Description */}
               <div>
-                <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Challenge Title</label>
+                <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Challenge Name</label>
                 <input
                   type="text"
                   placeholder="e.g. 30-Day Streak Challenge"
                   value={challengeForm.title}
                   onChange={(e) => setChallengeForm({...challengeForm, title: e.target.value})}
-                  className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary placeholder-theme-muted focus:outline-none focus:border-theme-accent transition-colors"
+                  className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-sm font-body text-theme-primary placeholder-theme-muted focus:outline-none focus:border-theme-support transition-colors"
                 />
               </div>
               <div>
                 <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Description</label>
                 <textarea
-                  placeholder="Describe the challenge goals..."
+                  placeholder="What's this challenge about? Set the scene..."
                   value={challengeForm.description}
                   onChange={(e) => setChallengeForm({...challengeForm, description: e.target.value})}
                   rows={2}
-                  className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary placeholder-theme-muted resize-none focus:outline-none focus:border-theme-accent transition-colors"
+                  className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary placeholder-theme-muted resize-none focus:outline-none focus:border-theme-support transition-colors"
                 />
               </div>
 
+              {/* Difficulty Selector */}
+              <div>
+                <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-2">Difficulty Level</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { id: "easy", label: "Easy", icon: HeartHandshake, color: "text-theme-success", bg: "bg-theme-success-light", border: "border-theme-success/30" },
+                    { id: "medium", label: "Medium", icon: Swords, color: "text-theme-warning", bg: "bg-theme-warning-light", border: "border-theme-warning/30" },
+                    { id: "hard", label: "Hard", icon: Skull, color: "text-theme-accent", bg: "bg-theme-accent-light", border: "border-theme-accent/30" },
+                    { id: "extreme", label: "Extreme", icon: Skull, color: "text-red-600", bg: "bg-red-100", border: "border-red-300" },
+                  ].map((d) => {
+                    const DiffIcon = d.icon;
+                    const isActive = challengeForm.difficulty === d.id;
+                    return (
+                      <button
+                        key={d.id}
+                        onClick={() => setChallengeForm({...challengeForm, difficulty: d.id})}
+                        className={`flex flex-col items-center gap-1 px-2 py-3 rounded-xl border-2 transition-all cursor-pointer ${
+                          isActive ? `${d.bg} ${d.color} ${d.border}` : "border-theme-border bg-transparent text-theme-muted hover:bg-theme-border/20"
+                        }`}
+                      >
+                        <DiffIcon size={18} className={isActive ? d.color : ""} />
+                        <span className="text-[9px] font-bold">{d.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Type + Target Row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Type</label>
+                  <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Metric Type</label>
                   <select
                     value={challengeForm.type}
                     onChange={(e) => setChallengeForm({...challengeForm, type: e.target.value})}
-                    className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary focus:outline-none focus:border-theme-accent cursor-pointer"
+                    className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary focus:outline-none focus:border-theme-support cursor-pointer"
                   >
-                    <option value="duration">Duration (min)</option>
+                    <option value="duration">Duration (minutes)</option>
                     <option value="steps">Steps</option>
-                    <option value="frequency">Frequency (days)</option>
+                    <option value="frequency">Workout Frequency</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Target</label>
+                  <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Target Value</label>
                   <input
                     type="number"
                     value={challengeForm.targetValue}
                     onChange={(e) => setChallengeForm({...challengeForm, targetValue: parseInt(e.target.value) || 0})}
-                    className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary focus:outline-none focus:border-theme-accent transition-colors"
+                    className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary focus:outline-none focus:border-theme-support transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Label</label>
+                  <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Unit Label</label>
                   <input
                     type="text"
                     placeholder="e.g. min, steps, sessions"
                     value={challengeForm.metricLabel}
                     onChange={(e) => setChallengeForm({...challengeForm, metricLabel: e.target.value})}
-                    className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary placeholder-theme-muted focus:outline-none focus:border-theme-accent transition-colors"
+                    className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary placeholder-theme-muted focus:outline-none focus:border-theme-support transition-colors"
                   />
                 </div>
                 <div>
@@ -922,24 +1066,59 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
                     type="number"
                     value={challengeForm.daysLeft}
                     onChange={(e) => setChallengeForm({...challengeForm, daysLeft: parseInt(e.target.value) || 0})}
-                    className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary focus:outline-none focus:border-theme-accent transition-colors"
+                    className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary focus:outline-none focus:border-theme-support transition-colors"
                   />
                 </div>
               </div>
+
+              {/* Streak Bonus Toggle */}
+              <div className="flex items-center justify-between bg-theme-warning-light/50 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2.5">
+                  <Flame size={18} className="text-theme-warning" />
+                  <div>
+                    <p className="text-xs font-display font-bold text-theme-primary">Streak Bonus</p>
+                    <p className="text-[9px] text-theme-muted">Extra rewards for consecutive daily participation</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setChallengeForm({...challengeForm, streakBonus: !challengeForm.streakBonus})}
+                  className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${challengeForm.streakBonus ? "bg-theme-warning" : "bg-theme-border"}`}
+                >
+                  <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${challengeForm.streakBonus ? "translate-x-4" : "translate-x-0"}`} />
+                </button>
+              </div>
+
+              {/* Reward */}
               <div>
                 <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Reward Points</label>
                 <input
                   type="number"
                   value={challengeForm.rewardPoints}
                   onChange={(e) => setChallengeForm({...challengeForm, rewardPoints: parseInt(e.target.value) || 0})}
-                  className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary focus:outline-none focus:border-theme-accent transition-colors"
+                  className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary focus:outline-none focus:border-theme-support transition-colors"
                 />
+                <p className="text-[9px] text-theme-muted mt-1 flex items-center gap-1">
+                  <Star size={10} className="text-theme-warning" />
+                  Members earn these points upon completing the challenge
+                </p>
               </div>
             </div>
 
-            <p className="text-[10px] text-theme-muted font-medium">
-              This challenge will appear in all members' challenge dashboards.
-            </p>
+            {/* Preview */}
+            <div className="rounded-xl bg-theme-bg border border-theme-border p-3 space-y-2">
+              <p className="text-[9px] font-display font-bold text-theme-muted uppercase tracking-wider flex items-center gap-1">
+                <Eye size={11} /> Preview
+              </p>
+              <div className="flex items-center gap-2.5">
+                <div className={`p-1.5 rounded-lg ${challengeForm.difficulty === "easy" ? "bg-theme-success-light text-theme-success" : challengeForm.difficulty === "medium" ? "bg-theme-warning-light text-theme-warning" : challengeForm.difficulty === "hard" ? "bg-theme-accent-light text-theme-accent" : "bg-red-100 text-red-600"}`}>
+                  <Swords size={14} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-display font-bold text-theme-primary truncate">{challengeForm.title || "Untitled Challenge"}</p>
+                  <p className="text-[9px] text-theme-muted truncate">{challengeForm.targetValue} {challengeForm.metricLabel} &middot; {challengeForm.daysLeft}d &middot; {challengeForm.rewardPoints} pts</p>
+                </div>
+              </div>
+            </div>
 
             <div className="flex items-center gap-3 pt-1">
               <button
@@ -958,21 +1137,24 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
                       challengeForm.targetValue,
                       challengeForm.metricLabel,
                       challengeForm.daysLeft,
-                      challengeForm.rewardPoints
+                      challengeForm.rewardPoints,
+                      challengeForm.difficulty,
+                      challengeForm.streakBonus,
+                      challengeForm.category
                     );
-                    setChallengeForm({ title: "", description: "", type: "duration", targetValue: 60, metricLabel: "min", daysLeft: 7, rewardPoints: 300 });
+                    setChallengeForm({ title: "", description: "", type: "duration", targetValue: 60, metricLabel: "min", daysLeft: 7, rewardPoints: 300, difficulty: "medium", streakBonus: false, category: "fitness" });
                     setShowChallengeModal(false);
                   }
                 }}
                 disabled={!challengeForm.title.trim() || !challengeForm.description.trim()}
-                className="flex-1 py-2.5 rounded-xl bg-theme-support hover:bg-theme-support/80 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-display font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl bg-theme-support hover:bg-theme-support/80 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-display font-bold transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-theme-support/25 cursor-pointer"
               >
                 <Zap size={14} />
                 Launch Challenge
               </button>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
 
       {/* Member detail modal */}
