@@ -156,7 +156,18 @@ export default function CoachWorkoutBuilder({ members = [], workoutPlans = [], o
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-xs text-theme-secondary">{workoutPlans.length} plan{workoutPlans.length !== 1 && "s"} total</p>
+            <button
+              onClick={() => setShowBuilder(true)}
+              className="bg-theme-accent hover:bg-theme-accent-hover text-white text-xs font-display font-bold px-4 py-2 rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer"
+            >
+              <Plus size={14} />
+              Create New Plan
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {workoutPlans.map((plan) => {
             const assignedCount = plan.assignedTo?.length || 0;
             return (
@@ -273,6 +284,7 @@ export default function CoachWorkoutBuilder({ members = [], workoutPlans = [], o
               </motion.div>
             );
           })}
+        </div>
         </div>
       )}
 

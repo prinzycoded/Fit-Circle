@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap');
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant dark (@media (prefers-color-scheme: dark));
 
 @theme {
   --font-display: 'Sora', 'Inter', system-ui, sans-serif;
@@ -42,22 +42,24 @@
   --color-theme-warning-light: #FDF6E8;
 }
 
-.dark {
-  --color-theme-bg: #0E1017;
-  --color-theme-surface: #181B26;
-  --color-theme-border: #2A2E3A;
-  --color-theme-primary: #EAEBF0;
-  --color-theme-secondary: #9CA0B0;
-  --color-theme-muted: #6B7080;
-  --color-theme-accent: #D95C42;
-  --color-theme-accent-hover: #C44E36;
-  --color-theme-accent-light: #2D1A16;
-  --color-theme-support: #6B9FC0;
-  --color-theme-support-light: #1A2430;
-  --color-theme-success: #3DAF8E;
-  --color-theme-success-light: #142E25;
-  --color-theme-warning: #D4A843;
-  --color-theme-warning-light: #2E2512;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-theme-bg: #0E1017;
+    --color-theme-surface: #181B26;
+    --color-theme-border: #2A2E3A;
+    --color-theme-primary: #EAEBF0;
+    --color-theme-secondary: #9CA0B0;
+    --color-theme-muted: #6B7080;
+    --color-theme-accent: #D95C42;
+    --color-theme-accent-hover: #C44E36;
+    --color-theme-accent-light: #2D1A16;
+    --color-theme-support: #6B9FC0;
+    --color-theme-support-light: #1A2430;
+    --color-theme-success: #3DAF8E;
+    --color-theme-success-light: #142E25;
+    --color-theme-warning: #D4A843;
+    --color-theme-warning-light: #2E2512;
+  }
 }
 
 * {
@@ -114,10 +116,12 @@ h1, h2, h3, h4, h5, h6, .font-display {
     radial-gradient(ellipse 60% 50% at 80% 70%, rgba(232, 101, 75, 0.03) 0%, transparent 60%);
 }
 
-.dark .bg-mesh {
-  background-image:
-    radial-gradient(ellipse 80% 60% at 20% 30%, rgba(107, 159, 192, 0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 80% 70%, rgba(217, 92, 66, 0.05) 0%, transparent 60%);
+@media (prefers-color-scheme: dark) {
+  .bg-mesh {
+    background-image:
+      radial-gradient(ellipse 80% 60% at 20% 30%, rgba(107, 159, 192, 0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 70%, rgba(217, 92, 66, 0.05) 0%, transparent 60%);
+  }
 }
 
 /* Tactile feedback for all interactive elements */

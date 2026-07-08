@@ -35,8 +35,6 @@ import {
   RefreshCw,
   UserCheck,
   Target,
-  Sun,
-  Moon,
   LogOut,
   Ruler,
   Camera,
@@ -360,25 +358,6 @@ export default function App() {
 
   const [gym, setGym] = useState(initialGymProfile);
   const [members, setMembers] = useState(initialMemberList);
-
-  // Dark Mode State
-  const [darkMode, setDarkMode] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}darkMode`);
-      return saved === "true";
-    } catch (e) {
-      return false;
-    }
-  });
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}darkMode`, darkMode.toString());
-  }, [darkMode]);
 
   // Alert/Notification Toast State
   const [toastMessage, setToastMessage] = useState(null);
@@ -1130,14 +1109,7 @@ export default function App() {
               <span className="text-sm sm:text-base font-display font-extrabold tracking-tight text-theme-primary truncate block">FitCircle</span>
               <p className="hidden sm:block text-[10px] text-theme-muted font-medium uppercase tracking-widest mt-0.5">{viewAs === "owner" ? "Gym Management" : "Gamified Fitness Social"}</p>
             </div>
-            <button
-              id="theme-toggle-btn"
-              onClick={() => setDarkMode(prev => !prev)}
-              className="ml-1 sm:ml-2 w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center bg-theme-border/40 hover:bg-theme-border transition-all text-theme-muted hover:text-theme-primary cursor-pointer shrink-0"
-              title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            >
-              {darkMode ? <Sun size={13} /> : <Moon size={13} />}
-            </button>
+
           </div>
 
           {/* Quick Realtime Multi-Status Header widget */}
