@@ -382,7 +382,6 @@ export default function App() {
 
   // Alert/Notification Toast State
   const [toastMessage, setToastMessage] = useState(null);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // Sync state with safeStorage
   useEffect(() => {
@@ -1094,27 +1093,7 @@ export default function App() {
     showToast("Featured challenge updated!", "success");
   };
 
-  // Quick reset standard stats for fresh presentation demo
-  const handleResetData = () => {
-    setShowResetConfirm(true);
-  };
 
-  const confirmResetData = () => {
-    safeStorage.removeItem(`${STORAGE_KEY_PREFIX}metrics`);
-    safeStorage.removeItem(`${STORAGE_KEY_PREFIX}user`);
-    safeStorage.removeItem(`${STORAGE_KEY_PREFIX}friends`);
-    safeStorage.removeItem(`${STORAGE_KEY_PREFIX}posts`);
-    safeStorage.removeItem(`${STORAGE_KEY_PREFIX}badges`);
-    safeStorage.removeItem(`${STORAGE_KEY_PREFIX}challenges`);
-    safeStorage.removeItem(`${STORAGE_KEY_PREFIX}groups`);
-    safeStorage.removeItem(`${STORAGE_KEY_PREFIX}weeklyChals`);
-    safeStorage.removeItem(`${STORAGE_KEY_PREFIX}workoutPlans`);
-    safeStorage.removeItem(`${STORAGE_KEY_PREFIX}assignedWorkouts`);
-    safeStorage.removeItem(`${STORAGE_KEY_PREFIX}progressData`);
-    safeStorage.removeItem(`${STORAGE_KEY_PREFIX}reminderSettings`);
-    safeStorage.removeItem(`${STORAGE_KEY_PREFIX}featuredChallenge`);
-    window.location.reload();
-  };
 
   if (loading) {
     return (
@@ -1136,33 +1115,33 @@ export default function App() {
   }
 
   return (
-    <div id="applet-viewport" className="min-h-screen bg-theme-bg text-theme-primary antialiased font-body bg-mesh">
+    <div id="applet-viewport" className="min-h-screen bg-theme-bg text-theme-primary antialiased font-body bg-mesh overflow-x-hidden">
       <div className="bg-noise"></div>
       
       {/* Top Main Navigation / Brand Bar */}
       <header id="app-header" className="sticky top-0 z-40 bg-theme-surface/80 backdrop-blur-lg border-b border-theme-border shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between">
           
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-theme-accent rounded-xl flex items-center justify-center text-white font-display font-extrabold shadow-sm">
-              <Dumbbell size={18} className="rotate-45" />
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 bg-theme-accent rounded-xl flex items-center justify-center text-white font-display font-extrabold shadow-sm shrink-0">
+              <Dumbbell size={16} className="rotate-45 sm:size-[18]" />
             </div>
-            <div>
-              <span className="text-base font-display font-extrabold tracking-tight text-theme-primary">FitCircle</span>
-              <p className="text-[10px] text-theme-muted font-medium uppercase tracking-widest mt-0.5">{viewAs === "owner" ? "Gym Management" : "Gamified Fitness Social"}</p>
+            <div className="min-w-0">
+              <span className="text-sm sm:text-base font-display font-extrabold tracking-tight text-theme-primary truncate block">FitCircle</span>
+              <p className="hidden sm:block text-[10px] text-theme-muted font-medium uppercase tracking-widest mt-0.5">{viewAs === "owner" ? "Gym Management" : "Gamified Fitness Social"}</p>
             </div>
             <button
               id="theme-toggle-btn"
               onClick={() => setDarkMode(prev => !prev)}
-              className="ml-2 w-8 h-8 rounded-xl flex items-center justify-center bg-theme-border/40 hover:bg-theme-border transition-all text-theme-muted hover:text-theme-primary cursor-pointer"
+              className="ml-1 sm:ml-2 w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center bg-theme-border/40 hover:bg-theme-border transition-all text-theme-muted hover:text-theme-primary cursor-pointer shrink-0"
               title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
-              {darkMode ? <Sun size={15} /> : <Moon size={15} />}
+              {darkMode ? <Sun size={13} /> : <Moon size={13} />}
             </button>
           </div>
 
           {/* Quick Realtime Multi-Status Header widget */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             
             <div className="hidden lg:flex items-center gap-2.5 bg-theme-support-light border border-theme-border rounded-xl px-3 py-1.5 text-theme-support">
               <Trophy size={14} className="text-theme-accent" />
@@ -1174,7 +1153,7 @@ export default function App() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5 bg-theme-warning-light border border-theme-border rounded-xl px-3 py-1.5 text-theme-warning">
+            <div className="hidden sm:flex items-center gap-2.5 bg-theme-warning-light border border-theme-border rounded-xl px-3 py-1.5 text-theme-warning">
               <Flame size={14} className="text-theme-warning" />
               <div className="text-left">
                 <p className="text-[9px] font-bold uppercase tracking-widest leading-none text-theme-muted">Active Streak</p>
@@ -1185,17 +1164,17 @@ export default function App() {
             </div>
 
             {/* Profile circular preview */}
-            <div className="w-9 h-9 rounded-xl overflow-hidden border border-theme-border shadow-xs">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden border border-theme-border shadow-xs shrink-0">
               <img referrerPolicy="no-referrer" src={user.avatar} alt="Me" className="w-full h-full object-cover" />
             </div>
 
             {firebaseUser && (
               <button
                 onClick={logout}
-                className="w-8 h-8 rounded-xl flex items-center justify-center bg-theme-border/40 hover:bg-theme-border transition-all text-theme-muted hover:text-theme-primary cursor-pointer"
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center bg-theme-border/40 hover:bg-theme-border transition-all text-theme-muted hover:text-theme-primary cursor-pointer shrink-0"
                 title="Sign Out"
               >
-                <LogOut size={14} />
+                <LogOut size={12} className="sm:size-[14]" />
               </button>
             )}
 
@@ -1205,7 +1184,7 @@ export default function App() {
       </header>
 
       {/* Main Container Layout */}
-      <main id="app-main-view" className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <main id="app-main-view" className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-8">
 
         {viewAs === "owner" ? (
           <OwnerDashboard
@@ -1231,7 +1210,7 @@ export default function App() {
           />
         ) : (<>
           {/* Mobile bottom nav bar */}
-          <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-theme-surface/95 backdrop-blur-lg border-t border-theme-border" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+          <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-theme-surface/95 backdrop-blur-lg border-t border-theme-border safe-bottom">
             <div className="flex items-center justify-around max-w-lg mx-auto">
               {[
                 { tab: "welcome", label: "Home", icon: Compass },
@@ -1246,12 +1225,12 @@ export default function App() {
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`flex flex-col items-center gap-0 py-1.5 px-0.5 transition-all flex-1 min-w-0 ${
+                    className={`flex flex-col items-center gap-0.5 py-2 px-1 transition-all flex-1 min-w-0 ${
                       isActive ? "text-theme-accent" : "text-theme-muted hover:text-theme-secondary"
                     }`}
                   >
-                    <Icon size={18} className={isActive ? "text-theme-accent" : ""} />
-                    <span className={`text-[7px] font-display font-bold mt-0 leading-tight ${isActive ? "text-theme-accent" : ""}`}>{label}</span>
+                    <Icon size={20} className={isActive ? "text-theme-accent" : ""} />
+                    <span className={`text-[9px] font-display font-bold leading-tight ${isActive ? "text-theme-accent" : ""}`}>{label}</span>
                   </button>
                 );
               })}
@@ -1312,17 +1291,7 @@ export default function App() {
                 ))}
               </nav>
 
-              {/* Quick action: Reset simulator */}
-              <div className="rounded-2xl border border-theme-border bg-theme-surface/40 backdrop-blur-sm p-4 text-center">
-                <p className="text-[10px] font-medium text-theme-muted">Need a fresh start?</p>
-                <button
-                  id="reset-demo-btn"
-                  onClick={handleResetData}
-                  className="mt-2 text-[10px] font-display font-bold text-theme-accent hover:text-theme-accent-hover underline-offset-2 underline cursor-pointer"
-                >
-                  Reset Simulator Data
-                </button>
-              </div>
+
 
             </div>
           </section>
@@ -1466,7 +1435,7 @@ export default function App() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}
             id="toast-notification-banner"
-            className={`fixed bottom-6 left-6 right-6 sm:left-auto sm:right-6 sm:w-80 p-4 rounded-2xl shadow-xl border z-50 flex items-start gap-3 ${
+            className={`fixed bottom-6 left-6 right-6 sm:left-auto sm:right-6 sm:w-80 p-4 rounded-2xl shadow-xl border z-[60] flex items-start gap-3 ${
               toastMessage.type === "badge"
                 ? "bg-theme-success border-theme-success text-white"
                 : "bg-theme-surface border-theme-border shadow-lg"
@@ -1487,44 +1456,6 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Custom Non-blocking confirmation modal */}
-      <AnimatePresence>
-        {showResetConfirm && (
-          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-100 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="card max-w-sm w-full space-y-5 text-center"
-            >
-              <div className="w-12 h-12 bg-theme-accent-light rounded-full flex items-center justify-center mx-auto font-display font-bold text-theme-accent text-lg">
-                !
-              </div>
-              <h3 className="text-lg font-display font-extrabold text-theme-primary">Reset Simulator?</h3>
-              <p className="text-xs text-theme-secondary leading-relaxed font-medium">
-                This will wipe your streaks, workouts, challenges, and metrics to restore the default showcase. Are you sure?
-              </p>
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowResetConfirm(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-theme-border text-xs font-display font-bold text-theme-secondary hover:bg-theme-border/30 transition-all cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={confirmResetData}
-                  className="flex-1 py-2.5 rounded-xl bg-theme-accent hover:bg-theme-accent-hover text-xs font-display font-bold text-white transition-all cursor-pointer"
-                >
-                  Yes, Reset
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
       {/* Client Centered Footer */}
       <footer id="app-footer" className="border-t border-theme-border py-6 text-center text-xs text-theme-muted mt-12">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -1532,7 +1463,7 @@ export default function App() {
           <div className="flex gap-4">
             <span className="hover:text-theme-secondary cursor-pointer">Terms</span>
             <span className="hover:text-theme-secondary cursor-pointer">Privacy</span>
-            <span className="hover:text-theme-secondary cursor-pointer text-theme-accent font-bold" onClick={handleResetData}>Clear Cache</span>
+            <span className="hover:text-theme-secondary cursor-pointer">About</span>
           </div>
         </div>
       </footer>

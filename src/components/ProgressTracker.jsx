@@ -1,14 +1,10 @@
 import React, { useState } from "react";
 import {
   Activity,
-  Weight,
   Ruler,
   TrendingUp,
   TrendingDown,
   Plus,
-  ChevronRight,
-  Target,
-  Scale,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -78,44 +74,26 @@ const SimpleChart = ({ data, color = "var(--theme-accent)", height = 120 }) => {
 };
 
 export default function ProgressTracker({ progressData, onUpdateProgress }) {
-  const [activeTab, setActiveTab] = useState("weight");
   const [showEntry, setShowEntry] = useState(false);
   const [entryForm, setEntryForm] = useState({
-    type: "weight",
+    type: "measurement",
     value: "",
     measurementType: "chest",
     date: new Date().toISOString().split("T")[0],
   });
 
-  const tabs = [
-    { id: "weight", label: "Weight", icon: Scale },
-    { id: "measurements", label: "Measurements", icon: Ruler },
-  ];
-
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!entryForm.value) return;
-    if (entryForm.type === "weight") {
-      onUpdateProgress({ type: "weight", date: entryForm.date, value: parseFloat(entryForm.value) });
-    } else if (entryForm.type === "measurement") {
-      onUpdateProgress({ type: "measurement", date: entryForm.date, value: parseFloat(entryForm.value), measurementType: entryForm.measurementType });
-    }
+    onUpdateProgress({ type: "measurement", date: entryForm.date, value: parseFloat(entryForm.value), measurementType: entryForm.measurementType });
     setEntryForm({
-      type: "weight",
+      type: "measurement",
       value: "",
       measurementType: "chest",
       date: new Date().toISOString().split("T")[0],
     });
     setShowEntry(false);
   };
-
-  const latestWeight = progressData.weight?.length > 0
-    ? progressData.weight[progressData.weight.length - 1].value
-    : null;
-  const firstWeight = progressData.weight?.length > 0
-    ? progressData.weight[0].value
-    : null;
-  const weightChange = latestWeight && firstWeight ? (latestWeight - firstWeight) : null;
 
   return (
     <div className="space-y-6">
@@ -126,7 +104,7 @@ export default function ProgressTracker({ progressData, onUpdateProgress }) {
           </div>
           <div>
             <h1 className="text-xl font-display font-extrabold text-theme-primary">Progress Tracker</h1>
-            <p className="text-xs text-theme-secondary">Track your weight and measurements</p>
+            <p className="text-xs text-theme-secondary">Track your body measurements</p>
           </div>
         </div>
         <button
@@ -138,91 +116,23 @@ export default function ProgressTracker({ progressData, onUpdateProgress }) {
         </button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="card flex items-center gap-3 py-3 px-4">
-          <div className="p-2 bg-theme-accent-light text-theme-accent rounded-xl">
-            <Weight size={16} />
-          </div>
-          <div>
-            <p className="text-xs font-display font-extrabold text-theme-primary">
-              {latestWeight ? `${latestWeight} kg` : "No data"}
-            </p>
-            <p className="text-[10px] text-theme-muted">Current Weight</p>
-            {weightChange !== null && (
-              <p className={`text-[9px] font-bold flex items-center gap-0.5 ${weightChange <= 0 ? "text-theme-success" : "text-theme-warning"}`}>
-                {weightChange <= 0 ? <TrendingDown size={10} /> : <TrendingUp size={10} />}
-                {weightChange > 0 ? "+" : ""}{weightChange.toFixed(1)} kg
-              </p>
-            )}
-          </div>
+      {/* Summary Card */}
+      <div className="card flex items-center gap-3 py-3 px-4">
+        <div className="p-2 bg-theme-support-light text-theme-support rounded-xl">
+          <Ruler size={16} />
         </div>
-        <div className="card flex items-center gap-3 py-3 px-4">
-          <div className="p-2 bg-theme-support-light text-theme-support rounded-xl">
-            <Ruler size={16} />
-          </div>
-          <div>
-            <p className="text-xs font-display font-extrabold text-theme-primary">
-              {Object.values(progressData.measurements || {}).some(m => m.length > 0) ? "Recorded" : "No data"}
-            </p>
-            <p className="text-[10px] text-theme-muted">Measurements</p>
-            <p className="text-[9px] text-theme-secondary">
-              {Object.entries(progressData.measurements || {}).filter(([, v]) => v.length > 0).length}/4 tracked
-            </p>
-          </div>
+        <div>
+          <p className="text-xs font-display font-extrabold text-theme-primary">
+            {Object.values(progressData.measurements || {}).some(m => m.length > 0) ? "Recorded" : "No data"}
+          </p>
+          <p className="text-[10px] text-theme-muted">Measurements</p>
+          <p className="text-[9px] text-theme-secondary">
+            {Object.entries(progressData.measurements || {}).filter(([, v]) => v.length > 0).length}/4 tracked
+          </p>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 bg-theme-border/20 rounded-xl p-1">
-        {tabs.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => setActiveTab(id)}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-display font-bold transition-all cursor-pointer ${
-              activeTab === id
-                ? "bg-theme-surface text-theme-primary shadow-sm"
-                : "text-theme-muted hover:text-theme-secondary"
-            }`}
-          >
-            <Icon size={14} />
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Weight Tab */}
-      {activeTab === "weight" && (
-        <div className="card !p-3">
-          <div className="flex items-center gap-1.5 mb-2">
-            <Weight size={13} className="text-theme-accent" />
-            <h2 className="text-[11px] font-display font-extrabold text-theme-primary">Weight History</h2>
-          </div>
-          {progressData.weight?.length >= 2 ? (
-            <SimpleChart data={progressData.weight} color="var(--theme-accent)" height={80} />
-          ) : (
-            <div className="text-center py-4">
-              <Scale size={22} className="text-theme-muted mx-auto mb-1" />
-              <p className="text-[10px] text-theme-muted">Log at least 2 weight entries to see your trend.</p>
-            </div>
-          )}
-          {progressData.weight?.length > 0 && (
-            <div className="mt-2 space-y-0.5">
-              <p className="text-[9px] font-bold text-theme-muted uppercase tracking-wider mb-1">History</p>
-              {[...progressData.weight].reverse().slice(0, 8).map((w, i) => (
-                <div key={i} className="flex items-center justify-between text-[10px] py-1 px-1.5 rounded-md hover:bg-theme-border/10">
-                  <span className="text-theme-secondary">{w.date}</span>
-                  <span className="font-semibold text-theme-primary">{w.value} kg</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Measurements Tab */}
-      {activeTab === "measurements" && (
-        <div className="space-y-4">
+      <div className="space-y-4">
           {MEASUREMENT_TYPES.map(({ id, label, unit }) => {
             const data = progressData.measurements?.[id] || [];
             const latest = data.length > 0 ? data[data.length - 1] : null;
@@ -264,7 +174,6 @@ export default function ProgressTracker({ progressData, onUpdateProgress }) {
             );
           })}
         </div>
-      )}
 
       {/* Log Entry Modal */}
       <AnimatePresence>
@@ -282,7 +191,7 @@ export default function ProgressTracker({ progressData, onUpdateProgress }) {
                   <div className="p-2 bg-theme-accent-light text-theme-accent rounded-xl">
                     <Plus size={18} />
                   </div>
-                  <h3 className="text-base font-display font-extrabold text-theme-primary">Log Progress</h3>
+                  <h3 className="text-base font-display font-extrabold text-theme-primary">Log Measurement</h3>
                 </div>
                 <button onClick={() => setShowEntry(false)} className="p-1.5 rounded-lg hover:bg-theme-border/30 text-theme-muted cursor-pointer">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -290,27 +199,6 @@ export default function ProgressTracker({ progressData, onUpdateProgress }) {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-3">
-                <div className="flex items-center gap-2 bg-theme-border/20 rounded-xl p-1">
-                  {[
-                    { id: "weight", label: "Weight", icon: Scale },
-                    { id: "measurement", label: "Measurement", icon: Ruler },
-                  ].map(({ id, label, icon: Icon }) => (
-                    <button
-                      key={id}
-                      type="button"
-                      onClick={() => setEntryForm(prev => ({ ...prev, type: id, value: "" }))}
-                      className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[10px] font-display font-bold transition-all cursor-pointer ${
-                        entryForm.type === id
-                          ? "bg-theme-surface text-theme-primary shadow-sm"
-                          : "text-theme-muted hover:text-theme-secondary"
-                      }`}
-                    >
-                      <Icon size={13} />
-                      {label}
-                    </button>
-                  ))}
-                </div>
-
                 <div>
                   <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Date</label>
                   <input
@@ -321,47 +209,30 @@ export default function ProgressTracker({ progressData, onUpdateProgress }) {
                   />
                 </div>
 
-                {entryForm.type === "weight" && (
-                  <div>
-                    <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Weight (kg)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      placeholder="e.g. 74.5"
-                      value={entryForm.value}
-                      onChange={(e) => setEntryForm({ ...entryForm, value: e.target.value })}
-                      className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-2.5 text-sm font-body text-theme-primary placeholder-theme-muted focus:outline-none focus:ring-2 focus:ring-theme-accent"
-                    />
-                  </div>
-                )}
+                <div>
+                  <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Body Part</label>
+                  <select
+                    value={entryForm.measurementType}
+                    onChange={(e) => setEntryForm({ ...entryForm, measurementType: e.target.value })}
+                    className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary focus:outline-none focus:ring-2 focus:ring-theme-accent cursor-pointer"
+                  >
+                    {MEASUREMENT_TYPES.map(({ id, label, unit }) => (
+                      <option key={id} value={id}>{label} ({unit})</option>
+                    ))}
+                  </select>
+                </div>
 
-                {entryForm.type === "measurement" && (
-                  <>
-                    <div>
-                      <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Body Part</label>
-                      <select
-                        value={entryForm.measurementType}
-                        onChange={(e) => setEntryForm({ ...entryForm, measurementType: e.target.value })}
-                        className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary focus:outline-none focus:ring-2 focus:ring-theme-accent cursor-pointer"
-                      >
-                        {MEASUREMENT_TYPES.map(({ id, label, unit }) => (
-                          <option key={id} value={id}>{label} ({unit})</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Value</label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        placeholder="e.g. 95"
-                        value={entryForm.value}
-                        onChange={(e) => setEntryForm({ ...entryForm, value: e.target.value })}
-                        className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-2.5 text-sm font-body text-theme-primary placeholder-theme-muted focus:outline-none focus:ring-2 focus:ring-theme-accent"
-                      />
-                    </div>
-                  </>
-                )}
+                <div>
+                  <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Value</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    placeholder="e.g. 95"
+                    value={entryForm.value}
+                    onChange={(e) => setEntryForm({ ...entryForm, value: e.target.value })}
+                    className="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-2.5 text-sm font-body text-theme-primary placeholder-theme-muted focus:outline-none focus:ring-2 focus:ring-theme-accent"
+                  />
+                </div>
 
                 <div className="flex items-center gap-3 pt-2">
                   <button
@@ -377,7 +248,7 @@ export default function ProgressTracker({ progressData, onUpdateProgress }) {
                     className="flex-1 py-2.5 rounded-xl bg-theme-accent hover:bg-theme-accent-hover disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-display font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Plus size={15} />
-                    Save Entry
+                    Save Measurement
                   </button>
                 </div>
               </form>

@@ -37,6 +37,114 @@ import {
 } from "lucide-react";
 import CoachWorkoutBuilder from "./CoachWorkoutBuilder";
 
+const MemberDetailModal = ({ member, onClose, shoutoutMember, setShoutoutMember, shoutoutReason, setShoutoutReason, onCreateShoutout }) => (
+  <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+    <div className="card max-w-lg w-full space-y-5" onClick={e => e.stopPropagation()}>
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-3">
+          <img referrerPolicy="no-referrer" src={member.avatar} alt="" className="w-14 h-14 rounded-2xl border border-theme-border" />
+          <div>
+            <h3 className="text-lg font-display font-extrabold text-theme-primary">{member.name}</h3>
+            <p className="text-xs text-theme-muted">{member.email}</p>
+            <span className={`inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              member.plan === "Premium" ? "bg-theme-warning-light text-theme-warning" :
+              member.plan === "Standard" ? "bg-theme-support-light text-theme-support" :
+              "bg-theme-border/40 text-theme-muted"
+            }`}>{member.plan} Plan</span>
+          </div>
+        </div>
+        <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-theme-border/30 text-theme-muted cursor-pointer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-theme-support-light rounded-xl p-3 text-center">
+          <p className="text-xl font-display font-extrabold text-theme-support">{member.points.toLocaleString()}</p>
+          <p className="text-[10px] font-bold text-theme-muted uppercase tracking-wider mt-0.5">Points</p>
+        </div>
+        <div className="bg-theme-warning-light rounded-xl p-3 text-center">
+          <p className="text-xl font-display font-extrabold text-theme-warning">{member.streak}</p>
+          <p className="text-[10px] font-bold text-theme-muted uppercase tracking-wider mt-0.5">Streak</p>
+        </div>
+        <div className="bg-theme-accent-light rounded-xl p-3 text-center">
+          <p className="text-xl font-display font-extrabold text-theme-accent">{member.checkInsThisMonth}</p>
+          <p className="text-[10px] font-bold text-theme-muted uppercase tracking-wider mt-0.5">Check-ins</p>
+        </div>
+      </div>
+
+      <div className="space-y-2.5">
+        <p className="text-xs font-display font-bold text-theme-primary uppercase tracking-wider">Today's Metrics</p>
+        {[
+          { label: "Steps", value: member.metrics.steps.toLocaleString(), goal: member.goals.stepGoal.toLocaleString(), pct: Math.round(member.metrics.steps / member.goals.stepGoal * 100) },
+          { label: "Water", value: `${(member.metrics.water / 1000).toFixed(1)}L`, goal: `${(member.goals.waterGoal / 1000).toFixed(1)}L`, pct: Math.round(member.metrics.water / member.goals.waterGoal * 100) },
+          { label: "Active Mins", value: `${member.metrics.activeMinutes}min`, goal: `${member.goals.activeMinutesGoal}min`, pct: Math.round(member.metrics.activeMinutes / member.goals.activeMinutesGoal * 100) },
+        ].map(({ label, value, goal, pct }) => (
+          <div key={label} className="flex items-center gap-3">
+            <span className="text-[10px] sm:text-xs font-medium text-theme-secondary w-16 sm:w-24">{label}</span>
+            <div className="flex-1 progress-bar h-1.5">
+              <div className="progress-bar-fill bg-theme-accent" style={{ width: `${Math.min(100, pct)}%` }}></div>
+            </div>
+            <span className="text-[10px] sm:text-xs font-bold text-theme-primary w-20 sm:w-32 text-right">{value} / {goal}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center justify-between pt-2 border-t border-theme-border text-xs text-theme-muted">
+        <span className="flex items-center gap-1"><Calendar size={12} /> Joined {member.joined}</span>
+        <span className={`flex items-center gap-1 ${member.status === "online" ? "text-theme-success" : ""}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${member.status === "online" ? "bg-theme-success" : "bg-theme-muted"}`}></span>
+          {member.lastActive}
+        </span>
+      </div>
+
+      {/* Shoutout action */}
+      <div className="pt-3 border-t border-theme-border">
+        {shoutoutMember === member.id ? (
+          <div className="space-y-2">
+            <textarea
+              placeholder={`Why is ${member.name} awesome?`}
+              value={shoutoutReason}
+              onChange={(e) => setShoutoutReason(e.target.value)}
+              rows={2}
+              className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-3 py-2 text-xs font-body text-theme-primary placeholder-theme-muted resize-none focus:outline-none focus:border-theme-accent transition-colors"
+            />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  if (shoutoutReason.trim()) {
+                    onCreateShoutout(member.name, member.avatar, shoutoutReason.trim());
+                    setShoutoutReason("");
+                    setShoutoutMember(null);
+                  }
+                }}
+                disabled={!shoutoutReason.trim()}
+                className="flex-1 py-2 rounded-xl bg-theme-accent hover:bg-theme-accent-hover disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-display font-bold transition-all cursor-pointer"
+              >
+                Send Shoutout
+              </button>
+              <button
+                onClick={() => { setShoutoutMember(null); setShoutoutReason(""); }}
+                className="py-2 px-4 rounded-xl border border-theme-border text-xs font-display font-bold text-theme-secondary hover:bg-theme-border/30 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShoutoutMember(member.id)}
+            className="w-full py-2.5 rounded-xl bg-theme-warning-light text-theme-warning text-xs font-display font-bold hover:bg-theme-warning/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <Star size={14} />
+            Give Shoutout
+          </button>
+        )}
+      </div>
+    </div>
+  </div>
+);
+
 export default function OwnerDashboard({ gym, members, feedPosts, challenges, accountabilityGroups, currentUser, onRemovePost, onCreateAnnouncement, onCreateShoutout, onCreateChallenge, onDeleteChallenge, onNudgeGroup, onNavigate, onAddComment, workoutPlans = [], featuredChallenge, onCreateWorkoutPlan, onAssignWorkout, onUpdateFeaturedChallenge }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewingMember, setViewingMember] = useState(null);
@@ -129,122 +237,24 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
       return 0;
     });
 
-  const scrollToMembers = () => memberRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-
   const stats = [
-    { label: "Total Members", value: gym.totalMembers, icon: Users, color: "text-theme-support", bg: "bg-theme-support-light", change: "+12% this quarter", onClick: scrollToMembers },
-    { label: "Active Today", value: gym.activeToday, icon: Activity, color: "text-theme-success", bg: "bg-theme-success-light", change: `${Math.round(gym.activeToday / gym.totalMembers * 100)}% engagement`, nav: "leaderboard" },
-    { label: "Avg Streak", value: `${gym.avgMemberStreak}d`, icon: Flame, color: "text-theme-warning", bg: "bg-theme-warning-light", change: "Across all members", nav: "welcome" },
-    { label: "Monthly Revenue", value: `$${gym.monthlyRevenue.toLocaleString()}`, icon: DollarSign, color: "text-theme-accent", bg: "bg-theme-accent-light", change: "From membership plans", nav: null },
+    { label: "Total Members", value: gym.totalMembers, icon: Users, color: "text-theme-support", bg: "bg-theme-support-light", change: "+12% this quarter", onClick: () => setActiveAdminSection("members") },
+    { label: "Active Today", value: gym.activeToday, icon: Activity, color: "text-theme-success", bg: "bg-theme-success-light", change: `${Math.round(gym.activeToday / gym.totalMembers * 100)}% engagement`, onClick: () => setActiveAdminSection("members") },
+    { label: "Avg Streak", value: `${gym.avgMemberStreak}d`, icon: Flame, color: "text-theme-warning", bg: "bg-theme-warning-light", change: "Across all members" },
+    { label: "Monthly Revenue", value: `$${gym.monthlyRevenue.toLocaleString()}`, icon: DollarSign, color: "text-theme-accent", bg: "bg-theme-accent-light", change: "From membership plans" },
   ];
 
-  const MemberDetailModal = ({ member, onClose }) => (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="card max-w-lg w-full space-y-5" onClick={e => e.stopPropagation()}>
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <img referrerPolicy="no-referrer" src={member.avatar} alt="" className="w-14 h-14 rounded-2xl border border-theme-border" />
-            <div>
-              <h3 className="text-lg font-display font-extrabold text-theme-primary">{member.name}</h3>
-              <p className="text-xs text-theme-muted">{member.email}</p>
-              <span className={`inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                member.plan === "Premium" ? "bg-theme-warning-light text-theme-warning" :
-                member.plan === "Standard" ? "bg-theme-support-light text-theme-support" :
-                "bg-theme-border/40 text-theme-muted"
-              }`}>{member.plan} Plan</span>
-            </div>
-          </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-theme-border/30 text-theme-muted cursor-pointer">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
+  const [activeAdminSection, setActiveAdminSection] = useState("overview");
 
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-theme-support-light rounded-xl p-3 text-center">
-            <p className="text-xl font-display font-extrabold text-theme-support">{member.points.toLocaleString()}</p>
-            <p className="text-[10px] font-bold text-theme-muted uppercase tracking-wider mt-0.5">Points</p>
-          </div>
-          <div className="bg-theme-warning-light rounded-xl p-3 text-center">
-            <p className="text-xl font-display font-extrabold text-theme-warning">{member.streak}</p>
-            <p className="text-[10px] font-bold text-theme-muted uppercase tracking-wider mt-0.5">Streak</p>
-          </div>
-          <div className="bg-theme-accent-light rounded-xl p-3 text-center">
-            <p className="text-xl font-display font-extrabold text-theme-accent">{member.checkInsThisMonth}</p>
-            <p className="text-[10px] font-bold text-theme-muted uppercase tracking-wider mt-0.5">Check-ins</p>
-          </div>
-        </div>
-
-        <div className="space-y-2.5">
-          <p className="text-xs font-display font-bold text-theme-primary uppercase tracking-wider">Today's Metrics</p>
-          {[
-            { label: "Steps", value: member.metrics.steps.toLocaleString(), goal: member.goals.stepGoal.toLocaleString(), pct: Math.round(member.metrics.steps / member.goals.stepGoal * 100) },
-            { label: "Water", value: `${(member.metrics.water / 1000).toFixed(1)}L`, goal: `${(member.goals.waterGoal / 1000).toFixed(1)}L`, pct: Math.round(member.metrics.water / member.goals.waterGoal * 100) },
-            { label: "Active Mins", value: `${member.metrics.activeMinutes}min`, goal: `${member.goals.activeMinutesGoal}min`, pct: Math.round(member.metrics.activeMinutes / member.goals.activeMinutesGoal * 100) },
-          ].map(({ label, value, goal, pct }) => (
-            <div key={label} className="flex items-center gap-3">
-              <span className="text-xs font-medium text-theme-secondary w-24">{label}</span>
-              <div className="flex-1 progress-bar h-1.5">
-                <div className="progress-bar-fill bg-theme-accent" style={{ width: `${Math.min(100, pct)}%` }}></div>
-              </div>
-              <span className="text-xs font-bold text-theme-primary w-32 text-right">{value} / {goal}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex items-center justify-between pt-2 border-t border-theme-border text-xs text-theme-muted">
-          <span className="flex items-center gap-1"><Calendar size={12} /> Joined {member.joined}</span>
-          <span className={`flex items-center gap-1 ${member.status === "online" ? "text-theme-success" : ""}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${member.status === "online" ? "bg-theme-success" : "bg-theme-muted"}`}></span>
-            {member.lastActive}
-          </span>
-        </div>
-
-        {/* Shoutout action */}
-        <div className="pt-3 border-t border-theme-border">
-          {shoutoutMember === member.id ? (
-            <div className="space-y-2">
-              <textarea
-                placeholder={`Why is ${member.name} awesome?`}
-                value={shoutoutReason}
-                onChange={(e) => setShoutoutReason(e.target.value)}
-                rows={2}
-                className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-3 py-2 text-xs font-body text-theme-primary placeholder-theme-muted resize-none focus:outline-none focus:border-theme-accent transition-colors"
-              />
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    if (shoutoutReason.trim()) {
-                      onCreateShoutout(member.name, member.avatar, shoutoutReason.trim());
-                      setShoutoutReason("");
-                      setShoutoutMember(null);
-                    }
-                  }}
-                  disabled={!shoutoutReason.trim()}
-                  className="flex-1 py-2 rounded-xl bg-theme-accent hover:bg-theme-accent-hover disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-display font-bold transition-all cursor-pointer"
-                >
-                  Send Shoutout
-                </button>
-                <button
-                  onClick={() => { setShoutoutMember(null); setShoutoutReason(""); }}
-                  className="py-2 px-4 rounded-xl border border-theme-border text-xs font-display font-bold text-theme-secondary hover:bg-theme-border/30 transition-all cursor-pointer"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShoutoutMember(member.id)}
-              className="w-full py-2.5 rounded-xl bg-theme-warning-light text-theme-warning text-xs font-display font-bold hover:bg-theme-warning/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <Star size={14} />
-              Give Shoutout
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  const adminTabs = [
+    { id: "overview", label: "Overview", icon: Activity },
+    { id: "members", label: "Members", icon: Users },
+    { id: "challenges", label: "Challenges", icon: Zap },
+    { id: "workouts", label: "Workouts", icon: Dumbbell },
+    { id: "feed", label: "Feed", icon: MessageCircle },
+    { id: "activity", label: "Activity", icon: TrendingUp },
+    { id: "groups", label: "Groups", icon: Group },
+  ];
 
   return (
     <div className="space-y-6">
@@ -282,10 +292,74 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
         </div>
       </div>
 
+      {/* Mobile tab bar */}
+      <div className="lg:hidden overflow-x-auto flex gap-1 bg-theme-border/20 rounded-xl p-1">
+        {adminTabs.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            onClick={() => setActiveAdminSection(id)}
+            className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-display font-bold whitespace-nowrap transition-all cursor-pointer ${
+              activeAdminSection === id
+                ? "bg-theme-surface text-theme-primary shadow-sm"
+                : "text-theme-muted hover:text-theme-secondary"
+            }`}
+          >
+            <Icon size={14} />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Desktop layout: sidebar + content */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        {/* Sidebar */}
+        <div className="hidden lg:block lg:col-span-3">
+          <div className="sticky top-24 space-y-4">
+            <nav className="rounded-2xl overflow-hidden border border-theme-border bg-theme-surface/60 backdrop-blur-sm">
+              {adminTabs.map(({ id, label, icon: Icon }, idx) => (
+                <button
+                  key={id}
+                  onClick={() => setActiveAdminSection(id)}
+                  className={`w-full text-left font-display font-bold text-xs py-3 px-4 transition-all flex items-center gap-3 cursor-pointer ${
+                    idx > 0 ? "border-t border-theme-border/50" : ""
+                  } ${
+                    activeAdminSection === id
+                      ? "bg-theme-accent text-white shadow-sm"
+                      : "text-theme-secondary hover:text-theme-primary hover:bg-theme-border/20"
+                  }`}
+                >
+                  <Icon size={16} className={activeAdminSection === id ? "text-white" : "text-theme-muted"} />
+                  <span className="flex-1">{label}</span>
+                  {activeAdminSection === id && <ChevronRight size={14} className="text-white/70" />}
+                </button>
+              ))}
+            </nav>
+
+            {/* Quick actions sidebar card */}
+            <div className="rounded-2xl border border-theme-border bg-theme-surface/40 backdrop-blur-sm p-4 space-y-3">
+              <p className="text-[10px] font-bold text-theme-muted uppercase tracking-wider">Quick Actions</p>
+              <button
+                onClick={() => setShowAnnounceModal(true)}
+                className="w-full flex items-center gap-2 py-2 px-3 rounded-xl bg-theme-accent-light text-theme-accent text-xs font-display font-bold hover:bg-theme-accent/20 transition-all cursor-pointer"
+              >
+                <Megaphone size={14} />
+                Announcement
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="lg:col-span-9 space-y-6">
+
+      {/* Overview */}
+      {activeAdminSection === "overview" && (
+        <>
       {/* Overview Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map(({ label, value, icon: Icon, color, bg, change, nav, onClick }) => (
-          <div key={label} onClick={onClick || (nav ? () => onNavigate?.(nav) : undefined)} className={`card flex items-start gap-3 ${onClick || nav ? "hover:bg-theme-border/20 cursor-pointer" : ""} transition-all`}>
+        {stats.map(({ label, value, icon: Icon, color, bg, change, onClick }) => (
+          <div key={label} onClick={onClick} className={`card flex items-start gap-3 ${onClick ? "hover:bg-theme-border/20 cursor-pointer" : ""} transition-all`}>
             <div className={`p-2.5 rounded-xl ${bg} ${color}`}>
               <Icon size={18} />
             </div>
@@ -298,7 +372,7 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
         ))}
       </div>
 
-      {/* Membership Distribution + Quick Actions */}
+      {/* Membership Distribution + Goals */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="card lg:col-span-2">
           <div className="flex items-center gap-2 mb-4">
@@ -353,8 +427,11 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
           </div>
         </div>
       </div>
+      </>
+      )}
 
-      {/* Member Management */}
+      {/* Members */}
+      {activeAdminSection === "members" && (
       <div ref={memberRef} className="card p-0 overflow-hidden">
         <div className="px-5 py-4 border-b border-theme-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -431,7 +508,6 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
                     <p className="text-[10px] text-theme-muted">check-ins</p>
                   </div>
                 </div>
-                {/* Mobile: compact inline stats */}
                 <div className="flex sm:hidden items-center gap-2">
                   <span className="text-[9px] font-display font-bold text-theme-primary">{member.points.toLocaleString()}p</span>
                   <span className="text-[9px] font-display font-bold text-theme-warning">{member.streak}d</span>
@@ -452,45 +528,70 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
           Showing {filteredMembers.length} of {members.length} members
         </div>
       </div>
+      )}
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <button
-          onClick={() => setShowAnnounceModal(true)}
-          className="card flex items-center gap-3 hover:bg-theme-accent-light/50 transition-colors text-left cursor-pointer"
-        >
-          <div className="p-2 bg-theme-accent-light text-theme-accent rounded-xl">
-            <Megaphone size={18} />
+      {/* Challenges */}
+      {activeAdminSection === "challenges" && (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">My Challenges</h2>
+          <button
+            onClick={() => setShowChallengeModal(true)}
+            className="bg-theme-support hover:bg-theme-support/80 text-white text-xs font-display font-bold px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <Zap size={14} />
+            Create
+          </button>
+        </div>
+        <div className="card p-0 overflow-hidden">
+          <div className="px-5 py-4 border-b border-theme-border flex items-center gap-2">
+            <Zap size={16} className="text-theme-support" />
+            <h2 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">All Challenges</h2>
+            <span className="text-[10px] font-bold bg-theme-support-light text-theme-support px-2 py-0.5 rounded-full">{challenges.filter(c => c.createdByOwner).length} created</span>
           </div>
-          <div>
-            <p className="text-xs font-display font-bold text-theme-primary">Send Announcement</p>
-            <p className="text-[10px] text-theme-muted">Notify all members</p>
+          <div className="divide-y divide-theme-border/50">
+            {challenges.filter(c => c.createdByOwner).length === 0 ? (
+              <div className="px-5 py-8 text-center text-sm text-theme-muted">No challenges created yet.</div>
+            ) : (
+              challenges.filter(c => c.createdByOwner).map((challenge) => {
+                const pct = challenge.targetValue > 0 ? Math.min(100, Math.round((challenge.currentValue / challenge.targetValue) * 100)) : 0;
+                return (
+                  <div key={challenge.id} className="flex items-center justify-between px-5 py-3 hover:bg-theme-border/10 transition-colors">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="p-2 bg-theme-support-light text-theme-support rounded-lg shrink-0">
+                        <Target size={16} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-display font-bold text-theme-primary truncate">{challenge.title}</p>
+                        <p className="text-[10px] text-theme-secondary truncate">{challenge.description}</p>
+                        <div className="flex items-center gap-3 text-[9px] text-theme-muted mt-1">
+                          <span>{challenge.participants?.length || 0} joined</span>
+                          <span>{challenge.daysLeft}d left</span>
+                          <span className={`px-1.5 py-0.5 rounded font-bold ${challenge.status === "active" ? "bg-theme-success-light text-theme-success" : challenge.status === "completed" ? "bg-theme-accent-light text-theme-accent" : "bg-theme-border/30 text-theme-muted"}`}>{challenge.status}</span>
+                        </div>
+                        <div className="progress-bar h-1 mt-1.5">
+                          <div className="progress-bar-fill bg-theme-support" style={{ width: `${pct}%` }}></div>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => onDeleteChallenge(challenge.id)}
+                      className="p-1.5 rounded-lg hover:bg-theme-border/30 text-theme-muted hover:text-red-500 transition-colors cursor-pointer shrink-0 ml-2"
+                      title="Delete challenge"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                );
+              })
+            )}
           </div>
-        </button>
-        <button
-          onClick={() => setShowChallengeModal(true)}
-          className="card flex items-center gap-3 hover:bg-theme-support-light/50 transition-colors text-left cursor-pointer"
-        >
-          <div className="p-2 bg-theme-support-light text-theme-support rounded-xl">
-            <Zap size={18} />
-          </div>
-          <div>
-            <p className="text-xs font-display font-bold text-theme-primary">Create Challenge</p>
-            <p className="text-[10px] text-theme-muted">Boost engagement</p>
-          </div>
-        </button>
-        <button className="card flex items-center gap-3 hover:bg-theme-warning-light/50 transition-colors text-left cursor-pointer">
-          <div className="p-2 bg-theme-warning-light text-theme-warning rounded-xl">
-            <BarChart3 size={18} />
-          </div>
-          <div>
-            <p className="text-xs font-display font-bold text-theme-primary">View Reports</p>
-            <p className="text-[10px] text-theme-muted">Monthly analytics</p>
-          </div>
-        </button>
+        </div>
       </div>
+      )}
 
-      {/* Workout Plan Management */}
+      {/* Workouts */}
+      {activeAdminSection === "workouts" && (
       <div className="card p-0 overflow-hidden">
         <div className="px-5 py-4 border-b border-theme-border">
           <div className="flex items-center justify-between">
@@ -511,54 +612,10 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
           />
         </div>
       </div>
+      )}
 
-      {/* Coach Challenges Management */}
-      <div className="card p-0 overflow-hidden">
-        <div className="px-5 py-4 border-b border-theme-border flex items-center gap-2">
-          <Zap size={16} className="text-theme-support" />
-          <h2 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">My Challenges</h2>
-          <span className="text-[10px] font-bold bg-theme-support-light text-theme-support px-2 py-0.5 rounded-full">{challenges.filter(c => c.createdByOwner).length} created</span>
-        </div>
-        <div className="divide-y divide-theme-border/50">
-          {challenges.filter(c => c.createdByOwner).length === 0 ? (
-            <div className="px-5 py-8 text-center text-sm text-theme-muted">No challenges created yet. Use the Create Challenge action above!</div>
-          ) : (
-            challenges.filter(c => c.createdByOwner).map((challenge) => {
-              const pct = challenge.targetValue > 0 ? Math.min(100, Math.round((challenge.currentValue / challenge.targetValue) * 100)) : 0;
-              return (
-                <div key={challenge.id} className="flex items-center justify-between px-5 py-3 hover:bg-theme-border/10 transition-colors">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="p-2 bg-theme-support-light text-theme-support rounded-lg shrink-0">
-                      <Target size={16} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-display font-bold text-theme-primary truncate">{challenge.title}</p>
-                      <p className="text-[10px] text-theme-secondary truncate">{challenge.description}</p>
-                      <div className="flex items-center gap-3 text-[9px] text-theme-muted mt-1">
-                        <span>{challenge.participants?.length || 0} joined</span>
-                        <span>{challenge.daysLeft}d left</span>
-                        <span className={`px-1.5 py-0.5 rounded font-bold ${challenge.status === "active" ? "bg-theme-success-light text-theme-success" : challenge.status === "completed" ? "bg-theme-accent-light text-theme-accent" : "bg-theme-border/30 text-theme-muted"}`}>{challenge.status}</span>
-                      </div>
-                      <div className="progress-bar h-1 mt-1.5">
-                        <div className="progress-bar-fill bg-theme-support" style={{ width: `${pct}%` }}></div>
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => onDeleteChallenge(challenge.id)}
-                    className="p-1.5 rounded-lg hover:bg-theme-border/30 text-theme-muted hover:text-red-500 transition-colors cursor-pointer shrink-0 ml-2"
-                    title="Delete challenge"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
-
-      {/* Feed Moderation */}
+      {/* Feed */}
+      {activeAdminSection === "feed" && (
       <div className="card p-0 overflow-hidden">
         <div className="px-5 py-4 border-b border-theme-border flex items-center gap-2">
           <MessageCircle size={16} className="text-theme-accent" />
@@ -627,8 +684,10 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
           Showing {Math.min(15, feedPosts.length)} of {feedPosts.length} posts
         </div>
       </div>
+      )}
 
-      {/* Activity Timeline */}
+      {/* Activity */}
+      {activeAdminSection === "activity" && (
       <div className="card p-0 overflow-hidden">
         <div className="px-5 py-4 border-b border-theme-border flex items-center gap-2">
           <Activity size={16} className="text-theme-support" />
@@ -650,8 +709,10 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
           ))}
         </div>
       </div>
+      )}
 
-      {/* Group Hub */}
+      {/* Groups */}
+      {activeAdminSection === "groups" && (
       <div className="card p-0 overflow-hidden">
         <div className="px-5 py-4 border-b border-theme-border flex items-center gap-2">
           <Group size={16} className="text-theme-warning" />
@@ -713,6 +774,26 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
           {accountabilityGroups.reduce((s, g) => s + g.members.length, 0)} total members across all groups
         </div>
       </div>
+      )}
+
+      {/* Mobile quick actions */}
+      <div className="lg:hidden">
+        <button
+          onClick={() => setShowAnnounceModal(true)}
+          className="card w-full flex items-center gap-3 hover:bg-theme-accent-light/50 transition-colors text-left cursor-pointer"
+        >
+          <div className="p-2 bg-theme-accent-light text-theme-accent rounded-xl">
+            <Megaphone size={18} />
+          </div>
+          <div>
+            <p className="text-xs font-display font-bold text-theme-primary">Announcement</p>
+            <p className="text-[10px] text-theme-muted">Notify all members</p>
+          </div>
+        </button>
+      </div>
+
+        </div>
+      </div> {/* End grid */}
 
       {/* Announcement Modal */}
       {showAnnounceModal && (
@@ -899,6 +980,11 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
         <MemberDetailModal
           member={viewingMember}
           onClose={() => setViewingMember(null)}
+          shoutoutMember={shoutoutMember}
+          setShoutoutMember={setShoutoutMember}
+          shoutoutReason={shoutoutReason}
+          setShoutoutReason={setShoutoutReason}
+          onCreateShoutout={onCreateShoutout}
         />
       )}
 

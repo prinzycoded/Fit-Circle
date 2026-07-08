@@ -129,23 +129,14 @@ export default function CoachWorkoutBuilder({ members = [], workoutPlans = [], o
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-theme-support-light text-theme-support rounded-xl">
-            <Dumbbell size={20} />
-          </div>
-          <div>
-            <h1 className="text-xl font-display font-extrabold text-theme-primary">Workout Builder</h1>
-            <p className="text-xs text-theme-secondary">Create and assign workout plans to members</p>
-          </div>
+      <div className="flex items-center gap-3">
+        <div className="p-2.5 bg-theme-support-light text-theme-support rounded-xl">
+          <Dumbbell size={20} />
         </div>
-        <button
-          onClick={() => setShowBuilder(true)}
-          className="bg-theme-accent hover:bg-theme-accent-hover text-white text-xs font-display font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
-        >
-          <Plus size={15} />
-          New Plan
-        </button>
+        <div>
+          <h1 className="text-xl font-display font-extrabold text-theme-primary">Workout Builder</h1>
+          <p className="text-xs text-theme-secondary">Create and assign workout plans to members</p>
+        </div>
       </div>
 
       {/* Existing Plans */}
