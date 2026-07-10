@@ -320,6 +320,15 @@ export default function App() {
     }
   });
 
+  const [workoutPlanRequests, setWorkoutPlanRequests] = useState(() => {
+    try {
+      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}workoutRequests`);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
   const [progressData, setProgressData] = useState(() => {
     try {
       const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}progressData`);
@@ -402,6 +411,10 @@ export default function App() {
   useEffect(() => {
     safeStorage.setItem(`${STORAGE_KEY_PREFIX}assignedWorkouts`, JSON.stringify(assignedWorkouts));
   }, [assignedWorkouts]);
+
+  useEffect(() => {
+    safeStorage.setItem(`${STORAGE_KEY_PREFIX}workoutRequests`, JSON.stringify(workoutPlanRequests));
+  }, [workoutPlanRequests]);
 
   useEffect(() => {
     safeStorage.setItem(`${STORAGE_KEY_PREFIX}progressData`, JSON.stringify(progressData));
@@ -986,6 +999,28 @@ export default function App() {
     showToast(`Plan assigned to ${member?.name || memberId}!`, "success");
   };
 
+  // Handle client request for a workout plan
+  const handleRequestWorkoutPlan = (memberId, memberName) => {
+    const existing = workoutPlanRequests.find(r => r.memberId === memberId);
+    if (existing) {
+      showToast("You already have a pending request with the coach.", "info");
+      return;
+    }
+    setWorkoutPlanRequests(prev => [...prev, {
+      id: `req_${Date.now()}`,
+      memberId,
+      memberName,
+      requestedAt: new Date().toISOString().split('T')[0],
+      status: "pending"
+    }]);
+    showToast("Request sent to your coach!", "success");
+  };
+
+  // Clear workout plan request (coach acknowledges it)
+  const handleClearWorkoutRequest = (requestId) => {
+    setWorkoutPlanRequests(prev => prev.filter(r => r.id !== requestId));
+  };
+
   // === WORKOUT DAY LOGGING (Client) ===
   const handleLogWorkoutDay = (assignmentId, dayIndex) => {
     setAssignedWorkouts(prev => prev.map(a => {
@@ -1101,7 +1136,7 @@ export default function App() {
       <div className="bg-noise"></div>
       
       {/* Top Main Navigation / Brand Bar */}
-      <header id="app-header" className="sticky top-0 z-40 bg-theme-surface/80 backdrop-blur-lg border-b border-theme-border shadow-xs">
+      <header id="app-header" className="sticky top-0 z-40 bg-theme-surface border-b border-theme-border/60 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between">
           
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -1182,6 +1217,8 @@ export default function App() {
             onCreateWorkoutPlan={handleCreateWorkoutPlan}
             onAssignWorkout={handleAssignWorkoutToMember}
             onUpdateFeaturedChallenge={handleUpdateFeaturedChallenge}
+            workoutPlanRequests={workoutPlanRequests}
+            onClearWorkoutRequest={handleClearWorkoutRequest}
           />
         ) : (<>
           {/* Mobile bottom nav bar */}
@@ -1374,6 +1411,7 @@ export default function App() {
                     currentUser={user}
                     onLogDay={handleLogWorkoutDay}
                     onNavigate={setActiveTab}
+                    onRequestPlan={handleRequestWorkoutPlan}
                   />
                 )}
 
@@ -1410,7 +1448,7 @@ export default function App() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}
             id="toast-notification-banner"
-            className={`fixed bottom-6 left-6 right-6 sm:left-auto sm:right-6 sm:w-80 p-4 rounded-2xl shadow-xl border z-[60] flex items-start gap-3 ${
+            className={`fixed bottom-6 left-4 right-4 sm:left-1/2 sm:-translate-x-1/2 sm:w-80 p-4 rounded-2xl shadow-xl border z-[60] flex items-start gap-3 ${
               toastMessage.type === "badge"
                 ? "bg-theme-success border-theme-success text-white"
                 : "bg-theme-surface border-theme-border shadow-lg"

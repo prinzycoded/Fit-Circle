@@ -18,10 +18,13 @@ import {
   Bell,
   Activity,
   Image,
+  AlertCircle,
 } from "lucide-react";
 
 
-export default function Dashboard({ metrics, user, challenges, weeklyChallenges = [], ownerChallenges = [], badges, feedPosts, accountabilityGroups = [], onUpdateMetrics, onLogWorkout, onJoinOwnerChallenge, onNavigate, featuredChallenge, onJoinFeaturedChallenge = () => {}, onUpdateReminders, onUpdateProgress }) {
+export default function Dashboard({ metrics, user, challenges, weeklyChallenges = [], ownerChallenges = [], badges, feedPosts, accountabilityGroups = [], onUpdateMetrics, onLogWorkout, onJoinOwnerChallenge, onNavigate, featuredChallenge, onJoinFeaturedChallenge = () => {}, onUpdateReminders, onUpdateProgress, workoutPlans = [], assignedWorkouts = [] }) {
+
+  const hasAssignedPlan = assignedWorkouts.some(a => (a.clientId === "me" || a.clientId === user?.id) && a.status === "active");
 
   const normalizeChallenge = (c) => ({
     ...c,
@@ -517,13 +520,16 @@ export default function Dashboard({ metrics, user, challenges, weeklyChallenges 
           <ChevronRight size={14} className="text-theme-muted" />
         </div>
         <div onClick={() => onNavigate?.("workout")} className="card flex items-center gap-3 hover:bg-theme-border/20 transition-all cursor-pointer">
-          <div className="p-2.5 bg-theme-support-light text-theme-support rounded-xl">
-            <Dumbbell size={18} />
+          <div className={`p-2.5 rounded-xl ${hasAssignedPlan ? "bg-theme-support-light text-theme-support" : "bg-theme-warning-light text-theme-warning"}`}>
+            {hasAssignedPlan ? <Dumbbell size={18} /> : <AlertCircle size={18} />}
           </div>
           <div className="flex-1">
             <p className="text-xs font-display font-extrabold text-theme-primary">Workout Plan</p>
-            <p className="text-[10px] text-theme-secondary">View assigned workouts & log days</p>
+            <p className="text-[10px] text-theme-secondary">{hasAssignedPlan ? "View assigned workouts & log days" : "No plan assigned yet"}</p>
           </div>
+          {!hasAssignedPlan && (
+            <span className="text-[9px] font-bold bg-theme-warning-light text-theme-warning px-2 py-0.5 rounded-full">Request</span>
+          )}
           <ChevronRight size={14} className="text-theme-muted" />
         </div>
       </div>

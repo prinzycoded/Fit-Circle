@@ -152,7 +152,7 @@ const MemberDetailModal = ({ member, onClose, shoutoutMember, setShoutoutMember,
   </div>
 );
 
-export default function OwnerDashboard({ gym, members, feedPosts, challenges, accountabilityGroups, currentUser, onRemovePost, onCreateAnnouncement, onCreateShoutout, onCreateChallenge, onDeleteChallenge, onNudgeGroup, onNavigate, onAddComment, workoutPlans = [], featuredChallenge, onCreateWorkoutPlan, onAssignWorkout, onUpdateFeaturedChallenge }) {
+export default function OwnerDashboard({ gym, members, feedPosts, challenges, accountabilityGroups, currentUser, onRemovePost, onCreateAnnouncement, onCreateShoutout, onCreateChallenge, onDeleteChallenge, onNudgeGroup, onNavigate, onAddComment, workoutPlans = [], featuredChallenge, onCreateWorkoutPlan, onAssignWorkout, onUpdateFeaturedChallenge, workoutPlanRequests = [], onClearWorkoutRequest }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewingMember, setViewingMember] = useState(null);
   const [sortBy, setSortBy] = useState("points");
@@ -562,7 +562,7 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
             { label: "Active", value: challenges.filter(c => c.createdByOwner && c.status === "active").length, icon: Flame, color: "text-theme-warning", bg: "bg-theme-warning-light" },
             { label: "Completed", value: challenges.filter(c => c.createdByOwner && c.status === "completed").length, icon: Trophy, color: "text-theme-success", bg: "bg-theme-success-light" },
@@ -693,24 +693,55 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
 
       {/* Workouts */}
       {activeAdminSection === "workouts" && (
-      <div className="card p-0 overflow-hidden">
-        <div className="px-5 py-4 border-b border-theme-border">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ListChecks size={16} className="text-theme-support" />
-              <h2 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">Workout Plans</h2>
-              <span className="text-[10px] font-bold bg-theme-support-light text-theme-support px-2 py-0.5 rounded-full">{workoutPlans.length} plans</span>
+      <div className="space-y-4">
+        {workoutPlanRequests.filter(r => r.status === "pending").length > 0 && (
+          <div className="card overflow-hidden">
+            <div className="px-5 py-3 bg-theme-warning-light/50 border-b border-theme-warning/20 flex items-center gap-2">
+              <Bell size={14} className="text-theme-warning" />
+              <p className="text-xs font-display font-bold text-theme-primary">Pending Workout Plan Requests</p>
+            </div>
+            <div className="divide-y divide-theme-border/50">
+              {workoutPlanRequests.filter(r => r.status === "pending").map((req) => (
+                <div key={req.id} className="flex items-center justify-between px-5 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-theme-warning-light flex items-center justify-center">
+                      <span className="text-xs font-extrabold text-theme-warning">{req.memberName?.charAt(0) || "?"}</span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-display font-bold text-theme-primary">{req.memberName}</p>
+                      <p className="text-[10px] text-theme-muted">Requested {req.requestedAt}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => onClearWorkoutRequest(req.id)}
+                    className="text-[10px] font-display font-bold px-3 py-1.5 rounded-xl bg-theme-accent hover:bg-theme-accent-hover text-white transition-all cursor-pointer"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-        <div className="p-5">
-          <CoachWorkoutBuilder
-            members={members}
-            workoutPlans={workoutPlans}
-            onCreateWorkoutPlan={onCreateWorkoutPlan}
-            onAssignWorkout={onAssignWorkout}
-            onNavigate={onNavigate}
-          />
+        )}
+        <div className="card p-0 overflow-hidden">
+          <div className="px-5 py-4 border-b border-theme-border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ListChecks size={16} className="text-theme-support" />
+                <h2 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">Workout Plans</h2>
+                <span className="text-[10px] font-bold bg-theme-support-light text-theme-support px-2 py-0.5 rounded-full">{workoutPlans.length} plans</span>
+              </div>
+            </div>
+          </div>
+          <div className="p-5">
+            <CoachWorkoutBuilder
+              members={members}
+              workoutPlans={workoutPlans}
+              onCreateWorkoutPlan={onCreateWorkoutPlan}
+              onAssignWorkout={onAssignWorkout}
+              onNavigate={onNavigate}
+            />
+          </div>
         </div>
       </div>
       )}

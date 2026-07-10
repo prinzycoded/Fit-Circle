@@ -173,7 +173,7 @@ export default function ChallengeHeroCard({
           </div>
 
           {/* Rewards / Podium */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {(challenge.rewards || []).map((reward, i) => (
               <div
                 key={i}
@@ -204,7 +204,7 @@ export default function ChallengeHeroCard({
       </div>
 
       {/* Bottom Section: Participants + Actions */}
-      <div className="bg-theme-surface border border-t-0 border-theme-border rounded-b-3xl p-6 space-y-4">
+      <div className="bg-theme-surface border border-t-0 border-theme-border rounded-b-3xl p-4 sm:p-6 space-y-4">
         {/* Top 3 Participants */}
         <div>
           <div className="flex items-center gap-2 mb-3">

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Dumbbell,
   CheckCircle2,
@@ -11,10 +11,14 @@ import {
   ChevronRight,
   ListChecks,
   Zap,
+  Bell,
+  BellOff,
 } from "lucide-react";
 import { motion } from "motion/react";
 
-export default function WorkoutPlanView({ workoutPlans = [], assignedWorkouts = [], currentUser, onLogDay, onNavigate }) {
+export default function WorkoutPlanView({ workoutPlans = [], assignedWorkouts = [], currentUser, onLogDay, onNavigate, onRequestPlan }) {
+  const [requestSent, setRequestSent] = useState(false);
+
   const myAssignments = assignedWorkouts.filter(a => a.clientId === "me" || a.clientId === currentUser?.id);
   const assignedPlanIds = myAssignments.map(a => a.planId);
   const myPlans = workoutPlans.filter(p => assignedPlanIds.includes(p.id));
@@ -41,13 +45,32 @@ export default function WorkoutPlanView({ workoutPlans = [], assignedWorkouts = 
           <p className="text-sm text-theme-secondary max-w-md mx-auto mb-6">
             Your coach hasn't assigned you a workout plan yet. Once they do, you'll see your daily workouts here to track your progress.
           </p>
-          <button
-            onClick={() => onNavigate?.("dashboard")}
-            className="bg-theme-accent hover:bg-theme-accent-hover text-white text-xs font-display font-bold px-5 py-2.5 rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer"
-          >
-            <Target size={15} />
-            Go to Dashboard
-          </button>
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={() => onNavigate?.("dashboard")}
+              className="bg-theme-accent hover:bg-theme-accent-hover text-white text-xs font-display font-bold px-5 py-2.5 rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer"
+            >
+              <Target size={15} />
+              Go to Dashboard
+            </button>
+            <button
+              onClick={() => {
+                if (!requestSent && onRequestPlan) {
+                  onRequestPlan(currentUser?.id || "me", currentUser?.name || "You");
+                  setRequestSent(true);
+                }
+              }}
+              disabled={requestSent}
+              className={`text-xs font-display font-bold px-5 py-2.5 rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer ${
+                requestSent
+                  ? "bg-theme-success-light text-theme-success cursor-default"
+                  : "bg-theme-warning-light text-theme-warning hover:bg-theme-warning/20"
+              }`}
+            >
+              {requestSent ? <BellOff size={15} /> : <Bell size={15} />}
+              {requestSent ? "Request Sent" : "Notify Coach"}
+            </button>
+          </div>
         </div>
       </div>
     );

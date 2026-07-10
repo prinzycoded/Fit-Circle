@@ -295,7 +295,7 @@ export default function SocialHub({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 flex-wrap justify-center">
+        <div className="flex items-center gap-1.5 overflow-x-auto flex-nowrap md:flex-wrap justify-center pb-1">
           {categories.map((cat) => (
             <button
               key={cat}
