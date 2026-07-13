@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Users,
   TrendingUp,
@@ -40,6 +40,7 @@ import {
   HeartHandshake,
   Sparkles,
   Hash,
+  Mail,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import CoachWorkoutBuilder from "./CoachWorkoutBuilder";
@@ -153,7 +154,7 @@ const MemberDetailModal = ({ member, onClose, shoutoutMember, setShoutoutMember,
   </div>
 );
 
-export default function OwnerDashboard({ gym, members, feedPosts, challenges, accountabilityGroups, currentUser, onRemovePost, onCreateAnnouncement, onCreateShoutout, onCreateChallenge, onDeleteChallenge, onNudgeGroup, onNavigate, onAddComment, workoutPlans = [], featuredChallenge, onCreateWorkoutPlan, onAssignWorkout, onUpdateFeaturedChallenge, workoutPlanRequests = [], onClearWorkoutRequest }) {
+export default function OwnerDashboard({ gym, members, feedPosts, challenges, accountabilityGroups, currentUser, onRemovePost, onCreateAnnouncement, onCreateShoutout, onCreateChallenge, onDeleteChallenge, onNudgeGroup, onNavigate, onAddComment, workoutPlans = [], featuredChallenge, onCreateWorkoutPlan, onAssignWorkout, onUpdateFeaturedChallenge, workoutPlanRequests = [], onClearWorkoutRequest, coachMessages = [], onSendCoachReply }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewingMember, setViewingMember] = useState(null);
   const [sortBy, setSortBy] = useState("points");
@@ -170,6 +171,20 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
 
   const memberRef = useRef(null);
   const [commentTexts, setCommentTexts] = useState({});
+  const [coachReplyInput, setCoachReplyInput] = useState("");
+  const messagesListRef = useRef(null);
+
+  useEffect(() => {
+    if (messagesListRef.current) {
+      messagesListRef.current.scrollTop = messagesListRef.current.scrollHeight;
+    }
+  }, [coachMessages]);
+
+  const handleSendReply = () => {
+    if (!coachReplyInput.trim() || !onSendCoachReply) return;
+    onSendCoachReply(coachReplyInput.trim());
+    setCoachReplyInput("");
+  };
 
   const handleAdminComment = (postId) => {
     const text = (commentTexts[postId] || "").trim();
@@ -262,6 +277,7 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
     { id: "challenges", label: "Challenges", icon: Zap },
     { id: "workouts", label: "Workouts", icon: Dumbbell },
     { id: "feed", label: "Feed", icon: MessageCircle },
+    { id: "messages", label: "Messages", icon: Mail },
     { id: "activity", label: "Activity", icon: TrendingUp },
     { id: "groups", label: "Groups", icon: Group },
   ];
@@ -816,6 +832,68 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
         </div>
         <div className="px-5 py-2.5 text-center text-[10px] font-bold text-theme-muted bg-theme-border/5">
           Showing {Math.min(15, feedPosts.length)} of {feedPosts.length} posts
+        </div>
+      </div>
+      )}
+
+      {/* Messages */}
+      {activeAdminSection === "messages" && (
+      <div className="card p-0 overflow-hidden">
+        <div className="px-5 py-4 border-b border-theme-border flex items-center gap-2">
+          <Mail size={16} className="text-theme-accent" />
+          <h2 className="text-sm font-display font-extrabold text-theme-primary tracking-tight">Private Messages</h2>
+          <span className="text-[10px] font-bold bg-theme-accent-light text-theme-accent px-2 py-0.5 rounded-full">{coachMessages.filter(m => m.role === "client").length} unread</span>
+        </div>
+
+        {/* Messages list */}
+        <div ref={messagesListRef} className="h-80 overflow-y-auto px-5 py-3 space-y-3 bg-theme-bg/30">
+          {coachMessages.length === 0 ? (
+            <div className="text-center py-12">
+              <Mail size={32} className="mx-auto text-theme-muted mb-3" />
+              <p className="text-sm font-display font-bold text-theme-primary">No messages yet</p>
+              <p className="text-xs text-theme-muted mt-1">When members send you a private message, it will appear here.</p>
+            </div>
+          ) : (
+            [...coachMessages].map((msg) => {
+              const isFromClient = msg.role === "client";
+              return (
+                <div key={msg.id} className={`flex ${isFromClient ? "justify-start" : "justify-end"}`}>
+                  <div
+                    className={`max-w-[75%] px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed ${
+                      isFromClient
+                        ? "bg-theme-border/30 text-theme-primary rounded-bl-md"
+                        : "bg-theme-accent text-white rounded-br-md"
+                    }`}
+                  >
+                    {isFromClient && (
+                      <p className="text-[9px] font-bold text-theme-accent mb-0.5 uppercase tracking-wider">Member</p>
+                    )}
+                    <p className="font-body">{msg.content}</p>
+                    <p className={`text-[9px] mt-0.5 ${isFromClient ? "text-theme-muted" : "text-white/60"}`}>{msg.timestamp}</p>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Reply input */}
+        <div className="flex items-center gap-2 p-3 border-t border-theme-border bg-theme-surface">
+          <input
+            type="text"
+            placeholder="Type your reply..."
+            value={coachReplyInput}
+            onChange={(e) => setCoachReplyInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleSendReply(); }}
+            className="flex-1 bg-theme-bg border border-theme-border rounded-xl px-3 py-2 text-xs font-body text-theme-primary placeholder-theme-muted focus:outline-none focus:ring-2 focus:ring-theme-accent"
+          />
+          <button
+            onClick={handleSendReply}
+            disabled={!coachReplyInput.trim()}
+            className="p-2 rounded-xl bg-theme-accent hover:bg-theme-accent-hover disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all cursor-pointer"
+          >
+            <Send size={15} />
+          </button>
         </div>
       </div>
       )}

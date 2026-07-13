@@ -19,6 +19,7 @@ import ChallengeHeroCard from "./components/ChallengeHeroCard";
 import ReminderSystem from "./components/ReminderSystem";
 import SubscriptionPlans from "./components/SubscriptionPlans";
 import RewardsStore from "./components/RewardsStore";
+import CoachChat from "./components/CoachChat";
 import { 
   Flame, 
   Trophy, 
@@ -426,6 +427,48 @@ export default function App() {
     showToast(`Redeemed ${itemId.includes("frame") ? "Avatar Frame" : itemId.includes("title") ? "Profile Title" : itemId.includes("shield") ? "Streak Shield" : "Perk"}!`, "success");
   };
 
+  const [coachMessages, setCoachMessages] = useState(() => {
+    try {
+      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}coachMessages`);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const handleSendCoachMessage = (content) => {
+    const newMsg = {
+      id: `msg_${Date.now()}`,
+      role: "client",
+      content,
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+    const isFirstMessage = coachMessages.length === 0;
+    setCoachMessages(prev => [...prev, newMsg]);
+    if (isFirstMessage) {
+      setTimeout(() => {
+        setCoachMessages(prev => [...prev, {
+          id: `msg_reply_${Date.now()}`,
+          role: "coach",
+          content: "Thanks for reaching out! I'll check on this and get back to you soon. Keep up the great work! 💪",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        }]);
+      }, 1500);
+    }
+    showToast("Message sent to your coach!", "success");
+  };
+
+  const handleSendCoachReply = (content) => {
+    const newMsg = {
+      id: `msg_coach_${Date.now()}`,
+      role: "coach",
+      content,
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+    setCoachMessages(prev => [...prev, newMsg]);
+    showToast("Reply sent!", "success");
+  };
+
   const handleSubscribe = (planName) => {
     setUserPlan(planName);
     setMembers(prev => prev.map(m =>
@@ -501,6 +544,10 @@ export default function App() {
   useEffect(() => {
     safeStorage.setItem(`${STORAGE_KEY_PREFIX}ownedItems`, JSON.stringify(ownedItems));
   }, [ownedItems]);
+
+  useEffect(() => {
+    safeStorage.setItem(`${STORAGE_KEY_PREFIX}coachMessages`, JSON.stringify(coachMessages));
+  }, [coachMessages]);
 
   // Auto-proceed when Firebase session is restored on page reload
   useEffect(() => {
@@ -1359,6 +1406,7 @@ export default function App() {
             currentUser={user}
             workoutPlans={workoutPlans}
             featuredChallenge={featuredChallenge}
+            coachMessages={coachMessages}
             onRemovePost={handleRemovePost}
             onCreateAnnouncement={handleCreateAnnouncement}
             onCreateShoutout={handleCreateShoutout}
@@ -1372,6 +1420,7 @@ export default function App() {
             onUpdateFeaturedChallenge={handleUpdateFeaturedChallenge}
             workoutPlanRequests={workoutPlanRequests}
             onClearWorkoutRequest={handleClearWorkoutRequest}
+            onSendCoachReply={handleSendCoachReply}
           />
         ) : (<>
           {/* Mobile bottom nav bar */}
@@ -1539,14 +1588,22 @@ export default function App() {
                 )}
 
                 {activeTab === "social" && (
-                  <SocialHub 
-                    feed={feedPosts}
-                    currentUser={user}
-                    onToggleLike={(postId) => handleLikePost(postId)}
-                    onAddComment={handleAddComment}
-                    onReshare={(postId) => showToast("Post reshared to your network!", "success")}
-                    onCreatePost={handleCreatePost}
-                  />
+                  <div className="space-y-6">
+                    <SocialHub 
+                      feed={feedPosts}
+                      currentUser={user}
+                      onToggleLike={(postId) => handleLikePost(postId)}
+                      onAddComment={handleAddComment}
+                      onReshare={(postId) => showToast("Post reshared to your network!", "success")}
+                      onCreatePost={handleCreatePost}
+                    />
+                    <CoachChat
+                      gym={gym}
+                      currentUser={user}
+                      messages={coachMessages}
+                      onSendMessage={handleSendCoachMessage}
+                    />
+                  </div>
                 )}
 
                 {activeTab === "leaderboard" && (
