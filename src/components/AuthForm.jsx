@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, updateProfile } from "firebase/auth";
 import { auth, googleProvider } from "../firebase";
-import { Dumbbell, Mail, Lock, Globe, Loader2, Shield } from "lucide-react";
+import { Dumbbell, Mail, Lock, Globe, Loader2, Shield, User } from "lucide-react";
 
 export default function AuthForm({ role = "client", onLoginSuccess }) {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -25,7 +26,13 @@ export default function AuthForm({ role = "client", onLoginSuccess }) {
     saveRole();
     try {
       if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email, password);
+        if (!fullName.trim()) {
+          setError("Please enter your full name.");
+          setSubmitting(false);
+          return;
+        }
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, { displayName: fullName.trim() });
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }
@@ -96,6 +103,19 @@ export default function AuthForm({ role = "client", onLoginSuccess }) {
         </p>
 
         <form onSubmit={handleEmailAuth} className="mt-6 space-y-3">
+          {isSignUp && (
+            <div className="relative">
+              <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/50" />
+              <input
+                type="text"
+                placeholder="Full Name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-sm text-white placeholder-white/40 font-medium outline-none focus:border-white/40 transition-all"
+              />
+            </div>
+          )}
           <div className="relative">
             <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/50" />
             <input
@@ -155,7 +175,7 @@ export default function AuthForm({ role = "client", onLoginSuccess }) {
         <p className="text-center text-xs text-white/60 mt-5 font-medium">
           {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
           <button
-            onClick={() => { setIsSignUp(!isSignUp); setError(""); }}
+            onClick={() => { setIsSignUp(!isSignUp); setError(""); setFullName(""); }}
             className="text-white font-bold underline underline-offset-2 hover:text-white/80 transition-all cursor-pointer"
           >
             {isSignUp ? "Sign In" : "Sign Up"}

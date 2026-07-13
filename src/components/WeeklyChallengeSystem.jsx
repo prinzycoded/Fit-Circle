@@ -11,7 +11,7 @@ import {
   Shield
 } from "lucide-react";
 
-export default function WeeklyChallengeSystem({ challenges, ownerChallenges = [], currentUser, onJoinChallenge, onJoinOwnerChallenge, onClaimReward }) {
+export default function WeeklyChallengeSystem({ challenges, ownerChallenges = [], currentUser, userPlan, onJoinChallenge, onJoinOwnerChallenge, onClaimReward, onNavigate }) {
   const [expandedChallenge, setExpandedChallenge] = useState(null);
 
   const normalizeChallenge = (c) => ({
@@ -180,7 +180,7 @@ export default function WeeklyChallengeSystem({ challenges, ownerChallenges = []
                     View Progress
                   </button>
                 </div>
-              ) : (
+              ) : userPlan ? (
                 <button
                   id={`join-challenge-btn-${challenge.id}`}
                   onClick={() => onJoinChallenge(challenge.id)}
@@ -188,6 +188,14 @@ export default function WeeklyChallengeSystem({ challenges, ownerChallenges = []
                 >
                   <Zap size={14} />
                   Join Challenge
+                </button>
+              ) : (
+                <button
+                  onClick={() => onNavigate?.("subscription")}
+                  className="w-full py-2.5 text-xs font-display font-bold text-white bg-theme-accent hover:bg-theme-accent-hover rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Shield size={14} />
+                  Subscribe to Join
                 </button>
               )}
 
@@ -322,13 +330,21 @@ export default function WeeklyChallengeSystem({ challenges, ownerChallenges = []
                     >
                       View Progress
                     </button>
-                  ) : (
+                  ) : userPlan ? (
                     <button
                       onClick={() => onJoinOwnerChallenge(challenge.id)}
                       className="w-full py-2.5 text-xs font-display font-bold text-white bg-purple-500 hover:bg-purple-600 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <Zap size={14} />
                       Join Challenge
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => onNavigate?.("subscription")}
+                      className="w-full py-2.5 text-xs font-display font-bold text-white bg-purple-500 hover:bg-purple-600 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Shield size={14} />
+                      Subscribe to Join
                     </button>
                   )}
 

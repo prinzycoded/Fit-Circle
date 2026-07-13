@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   MessageCircle,
   MoreVertical,
@@ -7,7 +7,8 @@ import {
   Bookmark,
   PenSquare,
   Image,
-  X
+  X,
+  Loader2
 } from "lucide-react";
 
 import { motion } from "motion/react";
@@ -56,10 +57,10 @@ const PostCard = ({ post, currentUser, commentText, onCommentChange, onAddCommen
         </div>
       </div>
 
-      <div className="px-5 py-4">
+      <div className="px-4 py-3">
         <p className="text-sm font-body text-theme-primary leading-relaxed">{post.content}</p>
         {post.metrics && (
-          <div className="mt-3 flex gap-3 flex-wrap">
+          <div className="mt-2 flex gap-3 flex-wrap">
             {Object.entries(post.metrics).map(([key, val]) => (
               <div key={key} className="bg-theme-border/30 rounded-xl px-2.5 py-1 inline-flex items-center gap-1">
                 <span className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider">{key}</span>
@@ -69,8 +70,8 @@ const PostCard = ({ post, currentUser, commentText, onCommentChange, onAddCommen
           </div>
         )}
         {post.image && (
-          <div className="mt-3 rounded-2xl overflow-hidden border border-theme-border">
-            <img referrerPolicy="no-referrer" src={post.image} alt="Post visual" className="w-full h-40 sm:h-48 object-cover" />
+          <div className="mt-2 rounded-xl overflow-hidden border border-theme-border bg-theme-border/10">
+            <img referrerPolicy="no-referrer" src={post.image} alt="Post visual" className="w-full h-48 sm:h-56 lg:h-64 object-cover" />
           </div>
         )}
       </div>
@@ -160,17 +161,80 @@ export default function SocialHub({
   const [postContent, setPostContent] = useState("");
   const [postType, setPostType] = useState("Milestone");
   const [postImage, setPostImage] = useState("");
+  const [imagePreview, setImagePreview] = useState(null);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const fileInputRef = useRef(null);
   const [showImageInput, setShowImageInput] = useState(false);
 
   const postTypes = ["Workout", "Challenge", "Milestone", "Nutrition"];
 
+  const MAX_IMAGE_WIDTH = 1200;
+  const IMAGE_QUALITY = 0.85;
+
+  const compressImage = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onerror = () => reject(new Error("Failed to decode image"));
+        img.onload = () => {
+          try {
+            const canvas = document.createElement("canvas");
+            let { width, height } = img;
+            if (width > MAX_IMAGE_WIDTH) {
+              height = Math.round((height * MAX_IMAGE_WIDTH) / width);
+              width = MAX_IMAGE_WIDTH;
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL("image/jpeg", IMAGE_QUALITY));
+          } catch (err) {
+            reject(err);
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return;
+    setIsCompressing(true);
+    setImagePreview(URL.createObjectURL(file));
+    try {
+      const compressed = await compressImage(file);
+      setPostImage(compressed);
+    } catch (err) {
+      console.error("Image compression failed, using original:", err);
+      const fallbackReader = new FileReader();
+      fallbackReader.onload = (ev) => setPostImage(ev.target.result);
+      fallbackReader.readAsDataURL(file);
+    } finally {
+      setIsCompressing(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setPostImage("");
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const handleSubmitPost = () => {
-    if (!postContent.trim()) return;
-    onCreatePost(postContent.trim(), postType, postImage.trim() || null);
+    if (!postContent.trim() || isCompressing) return;
+    onCreatePost(postContent.trim(), postType, postImage || null);
     setPostContent("");
     setPostType("Milestone");
     setPostImage("");
+    setImagePreview(null);
     setShowImageInput(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleCommentChange = (postId, value) => {
@@ -235,23 +299,43 @@ export default function SocialHub({
               ))}
             </div>
 
-            {/* Optional image URL */}
+            {/* Image upload */}
             {showImageInput && (
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  placeholder="Paste image URL..."
-                  value={postImage}
-                  onChange={(e) => setPostImage(e.target.value)}
-                  className="flex-1 bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2 text-xs font-body text-theme-primary placeholder-theme-muted focus:outline-none focus:border-theme-accent transition-colors"
-                />
-                <button
-                  type="button"
-                  onClick={() => { setShowImageInput(false); setPostImage(""); }}
-                  className="p-2 text-theme-muted hover:text-theme-primary cursor-pointer"
-                >
-                  <X size={14} />
-                </button>
+              <div className="space-y-3">
+                {isCompressing && !imagePreview ? (
+                  <div className="flex items-center gap-2 px-4 py-3 bg-theme-border/20 border border-theme-border rounded-xl">
+                    <Loader2 size={14} className="animate-spin text-theme-accent" />
+                    <span className="text-xs font-body text-theme-muted">Processing image…</span>
+                  </div>
+                ) : imagePreview ? (
+                  <div className="relative rounded-2xl overflow-hidden border border-theme-border">
+                    <img src={imagePreview} alt="Preview" className="w-full h-40 sm:h-48 object-cover" />
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors cursor-pointer"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                      className="flex-1 bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2 text-xs font-body text-theme-primary file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-theme-accent file:text-white file:text-xs file:font-display file:font-bold file:cursor-pointer cursor-pointer focus:outline-none focus:border-theme-accent transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => { setShowImageInput(false); handleRemoveImage(); }}
+                      className="p-2 text-theme-muted hover:text-theme-primary cursor-pointer"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -267,16 +351,16 @@ export default function SocialHub({
                 }`}
               >
                 <Image size={14} />
-                Photo
+                {isCompressing ? "Processing..." : "Photo"}
               </button>
               <button
                 type="button"
                 onClick={handleSubmitPost}
-                disabled={!postContent.trim()}
+                disabled={!postContent.trim() || isCompressing}
                 className="px-5 py-2 bg-theme-accent hover:bg-theme-accent-hover disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-display font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
               >
                 <PenSquare size={14} />
-                Share Post
+                {isCompressing ? "Processing…" : "Share Post"}
               </button>
             </div>
           </div>

@@ -17,6 +17,7 @@ import WorkoutPlanView from "./components/WorkoutPlanView";
 import ProgressTracker from "./components/ProgressTracker";
 import ChallengeHeroCard from "./components/ChallengeHeroCard";
 import ReminderSystem from "./components/ReminderSystem";
+import SubscriptionPlans from "./components/SubscriptionPlans";
 import { 
   Flame, 
   Trophy, 
@@ -368,6 +369,21 @@ export default function App() {
   const [gym, setGym] = useState(initialGymProfile);
   const [members, setMembers] = useState(initialMemberList);
 
+  // Subscription state
+  const [userPlan, setUserPlan] = useState(() => {
+    try {
+      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}userPlan`);
+      return saved || null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const handleSubscribe = (planName) => {
+    setUserPlan(planName);
+    showToast(`You're now on the ${planName} plan! Welcome aboard.`, "success");
+  };
+
   // Alert/Notification Toast State
   const [toastMessage, setToastMessage] = useState(null);
 
@@ -428,6 +444,10 @@ export default function App() {
     safeStorage.setItem(`${STORAGE_KEY_PREFIX}featuredChallenge`, JSON.stringify(featuredChallenge));
   }, [featuredChallenge]);
 
+  useEffect(() => {
+    safeStorage.setItem(`${STORAGE_KEY_PREFIX}userPlan`, userPlan);
+  }, [userPlan]);
+
   // Auto-proceed when Firebase session is restored on page reload
   useEffect(() => {
     if (firebaseUser && !loading) {
@@ -454,7 +474,7 @@ export default function App() {
         }
       } catch (e) { /* ignore */ }
     }
-  }, [firebaseUser?.uid]);
+  }, [firebaseUser?.uid, firebaseUser?.displayName, firebaseUser?.photoURL]);
 
   // Sync Firebase user info into the gym owner profile on login
   useEffect(() => {
@@ -466,7 +486,7 @@ export default function App() {
         ownerAvatar: firebaseUser.photoURL || prev.ownerAvatar,
       }));
     }
-  }, [firebaseUser?.uid]);
+  }, [firebaseUser?.uid, firebaseUser?.displayName, firebaseUser?.photoURL]);
 
   // Sync Firebase auth users into the members list so coaches can assign workouts
   useEffect(() => {
@@ -1230,6 +1250,7 @@ export default function App() {
                 { tab: "race", label: "Race", icon: Target },
                 { tab: "social", label: "Feed", icon: Users },
                 { tab: "leaderboard", label: "Top", icon: Trophy },
+                { tab: "subscription", label: "Plan", icon: Shield },
                 { tab: "badges", label: "More", icon: Award },
               ].map(({ tab, label, icon: Icon }) => {
                 const isActive = activeTab === tab || (tab === "badges" && (activeTab === "groups" || activeTab === "weeklyChallenges" || activeTab === "badges"));
@@ -1268,6 +1289,19 @@ export default function App() {
                       <Trophy size={11} className="text-theme-warning" />
                       <span className="text-[10px] text-white/80 font-medium">{user.points.toLocaleString()} pts</span>
                     </div>
+                    <div className="flex items-center gap-1 mt-1">
+                      <span className={`text-[8px] font-display font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${
+                        userPlan === "Premium"
+                          ? "bg-theme-warning/20 text-theme-warning"
+                          : userPlan === "Standard"
+                          ? "bg-theme-support/20 text-blue-300"
+                          : userPlan === "Basic"
+                          ? "bg-white/10 text-white/60"
+                          : "bg-white/10 text-white/40"
+                      }`}>
+                        {userPlan || "Free"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1285,6 +1319,7 @@ export default function App() {
                   { tab: "progress", label: "Progress Tracker", icon: Activity },
                   { tab: "groups", label: "Accountability Groups", icon: Shield },
                   { tab: "weeklyChallenges", label: "Weekly Challenges", icon: Calendar },
+                  { tab: "subscription", label: "Subscription", icon: Shield },
                 ].map(({ tab, label, icon: Icon }) => (
                   <button
                     key={tab}
@@ -1404,11 +1439,20 @@ export default function App() {
                   />
                 )}
 
+                {activeTab === "subscription" && (
+                  <SubscriptionPlans
+                    userPlan={userPlan}
+                    onSubscribe={handleSubscribe}
+                    onNavigate={setActiveTab}
+                  />
+                )}
+
                 {activeTab === "workout" && (
                   <WorkoutPlanView
                     workoutPlans={workoutPlans}
                     assignedWorkouts={assignedWorkouts}
                     currentUser={user}
+                    userPlan={userPlan}
                     onLogDay={handleLogWorkoutDay}
                     onNavigate={setActiveTab}
                     onRequestPlan={handleRequestWorkoutPlan}
@@ -1427,9 +1471,11 @@ export default function App() {
                     challenges={weeklyChallenges}
                     ownerChallenges={challenges.filter(c => c.createdByOwner)}
                     currentUser={user}
+                    userPlan={userPlan}
                     onJoinChallenge={(wcId) => showToast("Joined the challenge!", "success")}
                     onJoinOwnerChallenge={handleJoinOwnerChallenge}
                     onClaimReward={handleClaimWeeklyReward}
+                    onNavigate={setActiveTab}
                   />
                 )}
               </motion.div>

@@ -13,10 +13,11 @@ import {
   Zap,
   Bell,
   BellOff,
+  Shield,
 } from "lucide-react";
 import { motion } from "motion/react";
 
-export default function WorkoutPlanView({ workoutPlans = [], assignedWorkouts = [], currentUser, onLogDay, onNavigate, onRequestPlan }) {
+export default function WorkoutPlanView({ workoutPlans = [], assignedWorkouts = [], currentUser, userPlan, onLogDay, onNavigate, onRequestPlan }) {
   const [requestSent, setRequestSent] = useState(false);
 
   const myAssignments = assignedWorkouts.filter(a => a.clientId === "me" || a.clientId === currentUser?.id);
@@ -53,23 +54,33 @@ export default function WorkoutPlanView({ workoutPlans = [], assignedWorkouts = 
               <Target size={15} />
               Go to Dashboard
             </button>
-            <button
-              onClick={() => {
-                if (!requestSent && onRequestPlan) {
-                  onRequestPlan(currentUser?.id || "me", currentUser?.name || "You");
-                  setRequestSent(true);
-                }
-              }}
-              disabled={requestSent}
-              className={`text-xs font-display font-bold px-5 py-2.5 rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer ${
-                requestSent
-                  ? "bg-theme-success-light text-theme-success cursor-default"
-                  : "bg-theme-warning-light text-theme-warning hover:bg-theme-warning/20"
-              }`}
-            >
-              {requestSent ? <BellOff size={15} /> : <Bell size={15} />}
-              {requestSent ? "Request Sent" : "Notify Coach"}
-            </button>
+            {userPlan ? (
+              <button
+                onClick={() => {
+                  if (!requestSent && onRequestPlan) {
+                    onRequestPlan(currentUser?.id || "me", currentUser?.name || "You");
+                    setRequestSent(true);
+                  }
+                }}
+                disabled={requestSent}
+                className={`text-xs font-display font-bold px-5 py-2.5 rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer ${
+                  requestSent
+                    ? "bg-theme-success-light text-theme-success cursor-default"
+                    : "bg-theme-warning-light text-theme-warning hover:bg-theme-warning/20"
+                }`}
+              >
+                {requestSent ? <BellOff size={15} /> : <Bell size={15} />}
+                {requestSent ? "Request Sent" : "Notify Coach"}
+              </button>
+            ) : (
+              <button
+                onClick={() => onNavigate?.("subscription")}
+                className="bg-theme-accent hover:bg-theme-accent-hover text-white text-xs font-display font-bold px-5 py-2.5 rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Shield size={15} />
+                Subscribe to Unlock
+              </button>
+            )}
           </div>
         </div>
       </div>
