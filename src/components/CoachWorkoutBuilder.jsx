@@ -258,7 +258,7 @@ export default function CoachWorkoutBuilder({ members = [], workoutPlans = [], o
                         >
                           <option value="">Select a member</option>
                           {members.map((m) => (
-                            <option key={m.id} value={m.id}>{m.name}</option>
+                            <option key={m.id} value={m.id}>{m.name}{m.plan ? ` (${m.plan})` : " (No Plan)"}</option>
                           ))}
                         </select>
                         <div className="flex items-center gap-2">

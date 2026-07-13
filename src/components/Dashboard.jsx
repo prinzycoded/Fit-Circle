@@ -19,10 +19,12 @@ import {
   Activity,
   Image,
   AlertCircle,
+  Droplets,
+  Footprints,
 } from "lucide-react";
 
 
-export default function Dashboard({ metrics, user, challenges, weeklyChallenges = [], ownerChallenges = [], badges, feedPosts, accountabilityGroups = [], onUpdateMetrics, onLogWorkout, onJoinOwnerChallenge, onNavigate, featuredChallenge, onJoinFeaturedChallenge = () => {}, onUpdateReminders, onUpdateProgress, workoutPlans = [], assignedWorkouts = [] }) {
+export default function Dashboard({ metrics, user, challenges, weeklyChallenges = [], ownerChallenges = [], badges, feedPosts, accountabilityGroups = [], onUpdateMetrics, onLogWorkout, onJoinOwnerChallenge, onNavigate, featuredChallenge, onJoinFeaturedChallenge = () => {}, onUpdateReminders, onUpdateProgress, workoutPlans = [], assignedWorkouts = [], onQuickLogWater, onQuickLogSteps, onQuickLogActiveMinutes }) {
 
   const hasAssignedPlan = assignedWorkouts.some(a => (a.clientId === "me" || a.clientId === user?.id) && a.status === "active");
 
@@ -171,6 +173,66 @@ export default function Dashboard({ metrics, user, challenges, weeklyChallenges 
         );
       })()}
 
+      {/* Daily Habits Quick-Log */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="card flex items-center justify-between gap-2 py-3 px-4">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="p-2 bg-blue-100 text-blue-600 rounded-xl shrink-0">
+              <Droplets size={16} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-display font-extrabold text-theme-primary">{(metrics.water / 1000).toFixed(1)}L</p>
+              <p className="text-[10px] text-theme-muted truncate">of {(metrics.waterGoal / 1000).toFixed(1)}L water</p>
+            </div>
+          </div>
+          <button
+            onClick={onQuickLogWater}
+            className="px-3 py-1.5 text-[10px] font-display font-bold bg-blue-100 text-blue-600 hover:bg-blue-200 rounded-xl transition-all flex items-center gap-1 cursor-pointer shrink-0"
+          >
+            <Plus size={12} />
+            +1 Glass
+          </button>
+        </div>
+
+        <div className="card flex items-center justify-between gap-2 py-3 px-4">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="p-2 bg-emerald-100 text-emerald-600 rounded-xl shrink-0">
+              <Footprints size={16} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-display font-extrabold text-theme-primary">{metrics.steps.toLocaleString()}</p>
+              <p className="text-[10px] text-theme-muted truncate">of {metrics.stepGoal.toLocaleString()} steps</p>
+            </div>
+          </div>
+          <button
+            onClick={() => onQuickLogSteps?.(500)}
+            className="px-3 py-1.5 text-[10px] font-display font-bold bg-emerald-100 text-emerald-600 hover:bg-emerald-200 rounded-xl transition-all flex items-center gap-1 cursor-pointer shrink-0"
+          >
+            <Plus size={12} />
+            +500
+          </button>
+        </div>
+
+        <div className="card flex items-center justify-between gap-2 py-3 px-4">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="p-2 bg-orange-100 text-orange-600 rounded-xl shrink-0">
+              <Zap size={16} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-display font-extrabold text-theme-primary">{metrics.activeMinutes} min</p>
+              <p className="text-[10px] text-theme-muted truncate">of {metrics.activeMinutesGoal} min active</p>
+            </div>
+          </div>
+          <button
+            onClick={() => onQuickLogActiveMinutes?.(15)}
+            className="px-3 py-1.5 text-[10px] font-display font-bold bg-orange-100 text-orange-600 hover:bg-orange-200 rounded-xl transition-all flex items-center gap-1 cursor-pointer shrink-0"
+          >
+            <Plus size={12} />
+            +15 min
+          </button>
+        </div>
+      </div>
+
       {/* Quick Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="card flex items-center gap-3 py-3 px-4">
@@ -280,14 +342,32 @@ export default function Dashboard({ metrics, user, challenges, weeklyChallenges 
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-[9px] text-theme-muted">{c.progress}/{c.goal}</span>
-                      {!joined && !done && (
-                        <button
-                          onClick={() => {}}
-                          className="text-[9px] font-bold text-theme-accent hover:text-theme-accent-hover cursor-pointer"
-                        >
-                          Join
-                        </button>
-                      )}
+                      <div className="flex items-center gap-1">
+                        {joined && !done && c.type === "steps" && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onQuickLogSteps?.(1000); }}
+                            className="text-[9px] font-bold text-emerald-600 bg-emerald-100 hover:bg-emerald-200 px-2 py-0.5 rounded-lg transition-all cursor-pointer flex items-center gap-0.5"
+                          >
+                            <Plus size={10} />1K Steps
+                          </button>
+                        )}
+                        {joined && !done && c.type === "duration" && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onQuickLogActiveMinutes?.(15); }}
+                            className="text-[9px] font-bold text-orange-600 bg-orange-100 hover:bg-orange-200 px-2 py-0.5 rounded-lg transition-all cursor-pointer flex items-center gap-0.5"
+                          >
+                            <Plus size={10} />15 min
+                          </button>
+                        )}
+                        {!joined && !done && (
+                          <button
+                            onClick={() => {}}
+                            className="text-[9px] font-bold text-theme-accent hover:text-theme-accent-hover cursor-pointer"
+                          >
+                            Join
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -354,14 +434,32 @@ export default function Dashboard({ metrics, user, challenges, weeklyChallenges 
           {activeChallenges.length === 0 ? (
             <p className="text-xs text-theme-muted py-2">No personal challenges yet. Join a coach challenge to get started!</p>
           ) : (
-            <div className="space-y-3">
+                <div className="space-y-3">
               {activeChallenges.map(c => {
                 const pct = c.targetValue > 0 ? Math.min(100, Math.round((c.currentValue / c.targetValue) * 100)) : 0;
                 return (
                   <div key={c.id}>
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-xs font-display font-bold text-theme-primary truncate">{c.title}</span>
-                      <span className="text-[10px] font-bold text-theme-muted">{c.currentValue}/{c.targetValue} {c.metricLabel}</span>
+                      <div className="flex items-center gap-1.5">
+                        {c.status === "active" && c.type === "steps" && (
+                          <button
+                            onClick={() => onQuickLogSteps?.(1000)}
+                            className="text-[8px] font-bold text-emerald-600 bg-emerald-100 hover:bg-emerald-200 px-1.5 py-0.5 rounded-lg transition-all cursor-pointer flex items-center gap-0.5"
+                          >
+                            <Plus size={9} />1K
+                          </button>
+                        )}
+                        {c.status === "active" && c.type === "duration" && (
+                          <button
+                            onClick={() => onQuickLogActiveMinutes?.(15)}
+                            className="text-[8px] font-bold text-orange-600 bg-orange-100 hover:bg-orange-200 px-1.5 py-0.5 rounded-lg transition-all cursor-pointer flex items-center gap-0.5"
+                          >
+                            <Plus size={9} />15m
+                          </button>
+                        )}
+                        <span className="text-[10px] font-bold text-theme-muted">{c.currentValue}/{c.targetValue} {c.metricLabel}</span>
+                      </div>
                     </div>
                     <div className="progress-bar h-1.5">
                       <div className="progress-bar-fill bg-theme-accent" style={{ width: `${pct}%` }}></div>

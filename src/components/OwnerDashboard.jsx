@@ -56,8 +56,9 @@ const MemberDetailModal = ({ member, onClose, shoutoutMember, setShoutoutMember,
             <span className={`inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
               member.plan === "Premium" ? "bg-theme-warning-light text-theme-warning" :
               member.plan === "Standard" ? "bg-theme-support-light text-theme-support" :
-              "bg-theme-border/40 text-theme-muted"
-            }`}>{member.plan} Plan</span>
+              member.plan === "Basic" ? "bg-theme-border/40 text-theme-muted" :
+              "bg-theme-border/20 text-theme-muted/50"
+            }`}>{member.plan ? `${member.plan} Plan` : "No Plan"}</span>
           </div>
         </div>
         <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-theme-border/30 text-theme-muted cursor-pointer">
@@ -497,8 +498,9 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
                       <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
                         member.plan === "Premium" ? "bg-theme-warning-light text-theme-warning" :
                         member.plan === "Standard" ? "bg-theme-support-light text-theme-support" :
-                        "bg-theme-border/30 text-theme-muted"
-                      }`}>{member.plan}</span>
+                        member.plan === "Basic" ? "bg-theme-border/30 text-theme-muted" :
+                        "bg-theme-border/20 text-theme-muted/50"
+                      }`}>{member.plan || "No Plan"}</span>
                     </div>
                   </div>
                 </div>

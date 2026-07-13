@@ -18,6 +18,7 @@ import ProgressTracker from "./components/ProgressTracker";
 import ChallengeHeroCard from "./components/ChallengeHeroCard";
 import ReminderSystem from "./components/ReminderSystem";
 import SubscriptionPlans from "./components/SubscriptionPlans";
+import RewardsStore from "./components/RewardsStore";
 import { 
   Flame, 
   Trophy, 
@@ -47,6 +48,7 @@ import {
   Activity,
   BarChart3,
   Image,
+  ShoppingBag,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -116,6 +118,13 @@ const initialBadges = [
   { id: "social-butterfly", title: "Squad Captain", description: "Invited friends or shared, and finished 2 group fitness challenges.", icon: "👑", category: "Social", requirementText: "Complete 2 group challenges", unlocked: false },
   { id: "century-club", title: "10K Stepper", description: "Walked 10,000+ steps in a single day.", icon: "👣", category: "Activity", requirementText: "Reach 10,000 steps in one day", unlocked: false },
   { id: "discount-racer", title: "Value Champion", description: "Unlocked the top 30% monthly fitness discount code.", icon: "🏷️", category: "Consistency", requirementText: "Complete 20 routines in a month", unlocked: false },
+  { id: "steps-10k", title: "First 10K Steps", description: "Walked 10,000 steps in a single day.", icon: "👣", category: "Activity", requirementText: "Reach 10,000 steps in one day", unlocked: false },
+  { id: "steps-50k", title: "50K Stepper", description: "Walked 50,000 total steps.", icon: "🏃", category: "Activity", requirementText: "Walk 50,000 total steps", unlocked: false },
+  { id: "hydration-3day", title: "Hydration Streak Master", description: "Hit water goal 3 days in a row.", icon: "💧", category: "Hydration", requirementText: "Hit water goal 3 days in a row", unlocked: false },
+  { id: "workout-10", title: "Dedicated Athlete", description: "Completed 10 workouts total.", icon: "💪", category: "Activity", requirementText: "Complete 10 workouts", unlocked: false },
+  { id: "streak-7", title: "Week Warrior", description: "Maintained a 7-day streak.", icon: "🔥", category: "Consistency", requirementText: "Maintain a 7-day streak", unlocked: false },
+  { id: "streak-30", title: "Monthly Legend", description: "Maintained a 30-day streak.", icon: "🏆", category: "Consistency", requirementText: "Maintain a 30-day streak", unlocked: false },
+  { id: "challenge-3", title: "Challenge Conqueror", description: "Completed 3 challenges.", icon: "🎯", category: "Social", requirementText: "Complete 3 challenges", unlocked: false },
 ];
 
 const initialChallenges = [
@@ -379,8 +388,49 @@ export default function App() {
     }
   });
 
+  const [ownedItems, setOwnedItems] = useState(() => {
+    try {
+      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}ownedItems`);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const handleRedeemItem = (itemId) => {
+    const items = [
+      { id: "frame-gold", cost: 3000 }, { id: "frame-neon", cost: 5000 }, { id: "frame-champion", cost: 8000 },
+      { id: "title-streaker", cost: 2000 }, { id: "title-marathoner", cost: 4000 }, { id: "title-hydration", cost: 2500 },
+      { id: "shield-basic", cost: 1500 }, { id: "shield-premium", cost: 3500 },
+      { id: "perk-basic-discount", cost: 6000 }, { id: "perk-premium-discount", cost: 12000 }, { id: "perk-partner-pass", cost: 10000 },
+    ];
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+    if (ownedItems.includes(itemId)) {
+      showToast("You already own this item.", "info");
+      return;
+    }
+    if (user.points < item.cost) {
+      showToast("Not enough points!", "error");
+      return;
+    }
+    setUser(prev => ({ ...prev, points: prev.points - item.cost }));
+    setOwnedItems(prev => [...prev, itemId]);
+    // Apply streak shields immediately
+    if (itemId === "shield-basic") {
+      setUser(prev => ({ ...prev, streakFreezes: prev.streakFreezes + 1 }));
+    }
+    if (itemId === "shield-premium") {
+      setUser(prev => ({ ...prev, streakFreezes: prev.streakFreezes + 3 }));
+    }
+    showToast(`Redeemed ${itemId.includes("frame") ? "Avatar Frame" : itemId.includes("title") ? "Profile Title" : itemId.includes("shield") ? "Streak Shield" : "Perk"}!`, "success");
+  };
+
   const handleSubscribe = (planName) => {
     setUserPlan(planName);
+    setMembers(prev => prev.map(m =>
+      m.id === user.id ? { ...m, plan: planName } : m
+    ));
     showToast(`You're now on the ${planName} plan! Welcome aboard.`, "success");
   };
 
@@ -448,6 +498,10 @@ export default function App() {
     safeStorage.setItem(`${STORAGE_KEY_PREFIX}userPlan`, userPlan);
   }, [userPlan]);
 
+  useEffect(() => {
+    safeStorage.setItem(`${STORAGE_KEY_PREFIX}ownedItems`, JSON.stringify(ownedItems));
+  }, [ownedItems]);
+
   // Auto-proceed when Firebase session is restored on page reload
   useEffect(() => {
     if (firebaseUser && !loading) {
@@ -500,7 +554,7 @@ export default function App() {
           name: fbName,
           avatar: firebaseUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(fbName)}&background=D95C42&color=fff`,
           email: firebaseUser.email || "",
-          plan: "Standard",
+          plan: null,
           joined: new Date().toISOString().split('T')[0],
           points: 0, streak: 0, checkInsThisMonth: 0,
           lastActive: "Just now", status: "online",
@@ -579,6 +633,68 @@ export default function App() {
     }
 
     setMetrics(newMetrics);
+  };
+
+  // === QUICK LOG HANDLERS ===
+  const handleQuickLogWater = () => {
+    setMetrics(prev => ({ ...prev, water: Math.min(prev.waterGoal, prev.water + 250) }));
+    setUser(prev => ({ ...prev, points: prev.points + 5 }));
+    updateChallengeProgress("frequency", 1);
+    showToast("+1 Glass of water logged! +5 pts", "success");
+  };
+
+  const handleQuickLogSteps = (amount = 500) => {
+    const newSteps = Math.min(metrics.stepGoal * 2, metrics.steps + amount);
+    const stepDiff = newSteps - metrics.steps;
+    let pointAward = 0;
+    if (stepDiff >= 1000) {
+      pointAward += Math.floor(stepDiff / 1000) * 10;
+    }
+    setMetrics(prev => ({ ...prev, steps: newSteps }));
+    if (pointAward > 0) {
+      setUser(prev => ({ ...prev, points: prev.points + pointAward }));
+    }
+    updateChallengeProgress("steps", stepDiff);
+    showToast(`+${stepDiff} steps logged!${pointAward > 0 ? ` +${pointAward} pts` : ""}`, "success");
+  };
+
+  const handleQuickLogActiveMinutes = (minutes = 15) => {
+    setMetrics(prev => ({
+      ...prev,
+      activeMinutes: Math.min(prev.activeMinutesGoal * 2, prev.activeMinutes + minutes),
+      caloriesBurned: prev.caloriesBurned + minutes * 8,
+    }));
+    setUser(prev => ({ ...prev, points: prev.points + 10 }));
+    updateChallengeProgress("duration", minutes);
+    showToast(`+${minutes} active minutes logged! +10 pts`, "success");
+  };
+
+  const updateChallengeProgress = (type, amount) => {
+    setWeeklyChallenges(prev => prev.map(wc => {
+      if (wc.status !== "active") return wc;
+      if (wc.type === type) {
+        const nextVal = Math.min(wc.targetValue, wc.currentValue + amount);
+        if (nextVal >= wc.targetValue && wc.currentValue < wc.targetValue) {
+          showToast(`Weekly challenge "${wc.title}" completed!`, "badge");
+          return { ...wc, currentValue: nextVal, status: "completed" };
+        }
+        return { ...wc, currentValue: nextVal };
+      }
+      return wc;
+    }));
+    setChallenges(prev => prev.map(c => {
+      if (c.status !== "active") return c;
+      if (c.type === type) {
+        const nextVal = Math.min(c.targetValue, c.currentValue + amount);
+        if (nextVal >= c.targetValue && c.currentValue < c.targetValue) {
+          setUser(p => ({ ...p, points: p.points + c.rewardPoints }));
+          showToast(`Challenge "${c.title}" completed! +${c.rewardPoints} pts`, "badge");
+          return { ...c, currentValue: nextVal, status: "completed" };
+        }
+        return { ...c, currentValue: nextVal };
+      }
+      return c;
+    }));
   };
 
   // Handler for logging workout
@@ -863,20 +979,33 @@ export default function App() {
 
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
     const isConsecutive = user.lastCheckIn === yesterday;
-    const newCheckInStreak = isConsecutive ? user.checkInStreak + 1 : 1;
-    const pointsAwarded = 50 + (isConsecutive ? Math.min(newCheckInStreak * 10, 100) : 0);
+    const missedDay = !isConsecutive && user.lastCheckIn && user.lastCheckIn !== yesterday;
+
+    let newCheckInStreak;
+    let streakFreezesUsed = 0;
+
+    if (missedDay && user.streakFreezes > 0) {
+      streakFreezesUsed = 1;
+      newCheckInStreak = user.checkInStreak + 1;
+    } else {
+      newCheckInStreak = isConsecutive ? user.checkInStreak + 1 : 1;
+    }
+
+    const pointsAwarded = 50 + (isConsecutive || streakFreezesUsed > 0 ? Math.min(newCheckInStreak * 10, 100) : 0);
 
     setUser(prev => ({
       ...prev,
       lastCheckIn: today,
       checkInStreak: newCheckInStreak,
-      weeklyCheckIns: prev.lastCheckIn !== today ? prev.weeklyCheckIns + (prev.lastCheckIn === yesterday ? 1 : 1) : prev.weeklyCheckIns,
+      streakFreezes: Math.max(0, prev.streakFreezes - streakFreezesUsed),
+      weeklyCheckIns: prev.lastCheckIn !== today ? prev.weeklyCheckIns + 1 : prev.weeklyCheckIns,
       streak: newCheckInStreak,
       points: prev.points + pointsAwarded,
       longestStreak: Math.max(prev.longestStreak, newCheckInStreak),
     }));
 
-    showToast(`Daily check-in complete! +${pointsAwarded} pts (${newCheckInStreak}d streak)`);
+    const freezeMsg = streakFreezesUsed > 0 ? ` (Streak Freeze auto-applied!)` : "";
+    showToast(`Daily check-in complete! +${pointsAwarded} pts (${newCheckInStreak}d streak)${freezeMsg}`);
   };
 
   // === STREAK PROTECTION ===
@@ -990,6 +1119,11 @@ export default function App() {
   const handleAssignWorkoutToMember = (planId, memberId) => {
     const plan = workoutPlans.find(p => p.id === planId);
     if (!plan) return;
+    const member = members.find(m => m.id === memberId);
+    if (!member) {
+      showToast("Member not found.", "error");
+      return;
+    }
     const existing = assignedWorkouts.find(a => a.planId === planId && a.clientId === memberId);
     if (existing) {
       showToast("This member already has this plan assigned.", "info");
@@ -1015,8 +1149,7 @@ export default function App() {
       }
       return p;
     }));
-    const member = members.find(m => m.id === memberId);
-    showToast(`Plan assigned to ${member?.name || memberId}!`, "success");
+    showToast(`Plan assigned to ${member.name || memberId}!`, "success");
   };
 
   // Handle client request for a workout plan
@@ -1250,8 +1383,9 @@ export default function App() {
                 { tab: "race", label: "Race", icon: Target },
                 { tab: "social", label: "Feed", icon: Users },
                 { tab: "leaderboard", label: "Top", icon: Trophy },
-                { tab: "subscription", label: "Plan", icon: Shield },
                 { tab: "badges", label: "More", icon: Award },
+                { tab: "store", label: "Store", icon: ShoppingBag },
+                { tab: "subscription", label: "Plan", icon: Shield },
               ].map(({ tab, label, icon: Icon }) => {
                 const isActive = activeTab === tab || (tab === "badges" && (activeTab === "groups" || activeTab === "weeklyChallenges" || activeTab === "badges"));
                 return (
@@ -1319,6 +1453,7 @@ export default function App() {
                   { tab: "progress", label: "Progress Tracker", icon: Activity },
                   { tab: "groups", label: "Accountability Groups", icon: Shield },
                   { tab: "weeklyChallenges", label: "Weekly Challenges", icon: Calendar },
+                  { tab: "store", label: "Rewards Store", icon: ShoppingBag },
                   { tab: "subscription", label: "Subscription", icon: Shield },
                 ].map(({ tab, label, icon: Icon }) => (
                   <button
@@ -1390,6 +1525,9 @@ export default function App() {
                     onJoinFeaturedChallenge={handleJoinFeaturedChallenge}
                     onUpdateReminders={handleUpdateReminders}
                     onUpdateProgress={handleUpdateProgress}
+                    onQuickLogWater={handleQuickLogWater}
+                    onQuickLogSteps={handleQuickLogSteps}
+                    onQuickLogActiveMinutes={handleQuickLogActiveMinutes}
                   />
                 )}
 
@@ -1444,6 +1582,14 @@ export default function App() {
                     userPlan={userPlan}
                     onSubscribe={handleSubscribe}
                     onNavigate={setActiveTab}
+                  />
+                )}
+
+                {activeTab === "store" && (
+                  <RewardsStore
+                    user={user}
+                    ownedItems={ownedItems}
+                    onRedeem={handleRedeemItem}
                   />
                 )}
 

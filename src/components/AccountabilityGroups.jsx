@@ -51,7 +51,7 @@ export default function AccountabilityGroups({ groups, currentUserId, onJoinGrou
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {groups.map((group) => {
           const isMember = group.members?.some(m => m.id === currentUserId);
-          const myRank = group.members?.findIndex(m => m.id === currentUserId) + 1;
+          const myRank = group.weeklyRanking?.findIndex(m => m.id === currentUserId) + 1 || 0;
 
           return (
             <div
