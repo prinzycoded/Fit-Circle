@@ -46,7 +46,7 @@ const CATEGORIES = [
   { id: "perk", label: "Perks & Discounts", icon: Tags },
 ];
 
-export default function RewardsStore({ user, ownedItems = [], onRedeem }) {
+export default function RewardsStore({ user, ownedItems = [], onRedeem, coachRewards = [], onRedeemCoachReward }) {
   const [activeCategory, setActiveCategory] = useState("all");
   const [confirming, setConfirming] = useState(null);
 
@@ -204,6 +204,109 @@ export default function RewardsStore({ user, ownedItems = [], onRedeem }) {
         <div className="card text-center py-12">
           <ShoppingBag size={36} className="mx-auto text-theme-muted mb-3" />
           <p className="text-sm font-bold text-theme-secondary">No items in this category.</p>
+        </div>
+      )}
+
+      {/* Coach-Created Rewards */}
+      {coachRewards.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 pt-4 border-t border-theme-border">
+            <div className="p-2 bg-purple-100 text-purple-500 rounded-xl">
+              <Award size={16} />
+            </div>
+            <div>
+              <h2 className="text-sm font-display font-extrabold text-theme-primary">Coach Rewards</h2>
+              <p className="text-[10px] text-theme-secondary">Exclusive rewards created by your coach</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {coachRewards.filter(r => r.active).map((reward) => {
+              const typeColors = {
+                consultation: { color: "text-purple-500", bg: "bg-purple-100" },
+                meal_plan: { color: "text-green-500", bg: "bg-green-100" },
+                discount: { color: "text-pink-500", bg: "bg-pink-100" },
+                custom: { color: "text-blue-500", bg: "bg-blue-100" },
+              };
+              const tc = typeColors[reward.type] || typeColors.custom;
+              const canAfford = user.points >= reward.cost;
+              const isConfirming = confirming === reward.id;
+
+              return (
+                <motion.div
+                  key={reward.id}
+                  layout
+                  className="card flex flex-col relative overflow-hidden border-2 border-purple-200/50"
+                >
+                  <div className="absolute top-0 right-0 bg-purple-500 text-white text-[8px] font-bold px-2 py-0.5 rounded-bl-xl uppercase tracking-wider">
+                    Coach
+                  </div>
+                  <div className={`w-12 h-12 rounded-2xl ${tc.bg} ${tc.color} flex items-center justify-center mb-3`}>
+                    <Gift size={22} />
+                  </div>
+
+                  <h3 className="text-sm font-display font-bold text-theme-primary">{reward.name}</h3>
+                  <p className="text-xs text-theme-secondary mt-1 flex-1">{reward.description}</p>
+
+                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-theme-border">
+                    <span className="flex items-center gap-1 text-sm font-display font-extrabold text-theme-primary">
+                      <Star size={14} className="text-theme-warning fill-theme-warning" />
+                      {reward.cost.toLocaleString()}
+                    </span>
+
+                    <AnimatePresence mode="wait">
+                      {isConfirming ? (
+                        <motion.div
+                          key="confirm-cr"
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          className="flex items-center gap-1"
+                        >
+                          <button
+                            onClick={() => {
+                              if (onRedeemCoachReward) onRedeemCoachReward(reward.id);
+                              setConfirming(null);
+                            }}
+                            disabled={!canAfford}
+                            className="text-[10px] font-display font-bold px-2.5 py-1.5 rounded-lg bg-purple-500 text-white hover:bg-purple-600 transition-all cursor-pointer"
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            onClick={() => setConfirming(null)}
+                            className="text-[10px] font-display font-bold px-2 py-1.5 rounded-lg border border-theme-border text-theme-secondary hover:bg-theme-border/30 transition-all cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </motion.div>
+                      ) : (
+                        <motion.button
+                          key="redeem-cr"
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          onClick={() => setConfirming(reward.id)}
+                          disabled={!canAfford}
+                          className={`text-xs font-display font-bold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
+                            canAfford
+                              ? "bg-purple-100 text-purple-600 hover:bg-purple-200"
+                              : "bg-theme-border/30 text-theme-muted cursor-not-allowed"
+                          }`}
+                        >
+                          {canAfford ? (
+                            <><Gift size={13} /> Redeem</>
+                          ) : (
+                            <><Lock size={13} /> {user.points < reward.cost ? `${reward.cost - user.points} more` : "Locked"}</>
+                          )}
+                        </motion.button>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

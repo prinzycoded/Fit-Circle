@@ -427,6 +427,138 @@ export default function App() {
     showToast(`Redeemed ${itemId.includes("frame") ? "Avatar Frame" : itemId.includes("title") ? "Profile Title" : itemId.includes("shield") ? "Streak Shield" : "Perk"}!`, "success");
   };
 
+  const [coachRewards, setCoachRewards] = useState(() => {
+    try {
+      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}coachRewards`);
+      return saved ? JSON.parse(saved) : [
+        { id: "cr_1", name: "1-on-1 Coaching Session", description: "30-min personal consultation via video call", cost: 5000, type: "consultation", active: true, createdAt: "2026-07-01", timesRedeemed: 2, color: "text-purple-500", bg: "bg-purple-100" },
+        { id: "cr_2", name: "Custom Meal Plan", description: "Personalized nutrition plan tailored to your goals", cost: 8000, type: "meal_plan", active: true, createdAt: "2026-07-01", timesRedeemed: 1, color: "text-green-500", bg: "bg-green-100" },
+        { id: "cr_3", name: "15% Membership Discount", description: "15% off next month's subscription fee", cost: 10000, type: "discount", active: true, createdAt: "2026-07-01", timesRedeemed: 3, color: "text-pink-500", bg: "bg-pink-100" },
+      ];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [redemptionQueue, setRedemptionQueue] = useState(() => {
+    try {
+      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}redemptionQueue`);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [pointLogs, setPointLogs] = useState(() => {
+    try {
+      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}pointLogs`);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const handleCreateCoachReward = (reward) => {
+    const newReward = {
+      id: `cr_${Date.now()}`,
+      ...reward,
+      active: true,
+      createdAt: new Date().toISOString().split('T')[0],
+      timesRedeemed: 0,
+    };
+    setCoachRewards(prev => [newReward, ...prev]);
+    showToast(`Reward "${reward.name}" created!`, "success");
+  };
+
+  const handleDeleteCoachReward = (rewardId) => {
+    setCoachRewards(prev => prev.filter(r => r.id !== rewardId));
+    showToast("Reward removed.", "info");
+  };
+
+  const handleFulfillRedemption = (redemptionId) => {
+    setRedemptionQueue(prev => prev.map(r => {
+      if (r.id === redemptionId) {
+        setCoachRewards(prev => prev.map(cr =>
+          cr.id === r.rewardId ? { ...cr, timesRedeemed: cr.timesRedeemed + 1 } : cr
+        ));
+        return { ...r, status: "fulfilled", fulfilledAt: new Date().toISOString().split('T')[0] };
+      }
+      return r;
+    }));
+    showToast("Redemption fulfilled!", "success");
+  };
+
+  const handleRejectRedemption = (redemptionId) => {
+    setRedemptionQueue(prev => prev.map(r =>
+      r.id === redemptionId ? { ...r, status: "rejected" } : r
+    ));
+    setMembers(prev => prev.map(m => {
+      const redemption = redemptionQueue.find(r => r.id === redemptionId);
+      if (redemption && m.id === redemption.clientId) {
+        const reward = coachRewards.find(cr => cr.id === redemption.rewardId);
+        if (reward) {
+          return { ...m, points: m.points + reward.cost };
+        }
+      }
+      return m;
+    }));
+    showToast("Redemption rejected. Points refunded.", "info");
+  };
+
+  const handleAwardBonusPoints = (memberId, amount, note) => {
+    setMembers(prev => prev.map(m =>
+      m.id === memberId ? { ...m, points: m.points + amount } : m
+    ));
+    setPointLogs(prev => [...prev, {
+      id: `pl_${Date.now()}`,
+      memberId,
+      memberName: members.find(m => m.id === memberId)?.name || "Unknown",
+      amount,
+      type: "bonus",
+      note,
+      createdAt: new Date().toISOString().split('T')[0],
+      createdBy: "coach",
+    }]);
+    showToast(`Awarded ${amount} bonus points!`, "success");
+  };
+
+  const handleClientRedeemCoachReward = (rewardId, clientId) => {
+    const reward = coachRewards.find(r => r.id === rewardId);
+    if (!reward) return;
+    const client = members.find(m => m.id === clientId);
+    if (!client) return;
+    if (client.points < reward.cost) {
+      showToast("Client doesn't have enough points!", "error");
+      return;
+    }
+    setMembers(prev => prev.map(m =>
+      m.id === clientId ? { ...m, points: m.points - reward.cost } : m
+    ));
+    setRedemptionQueue(prev => [...prev, {
+      id: `rd_${Date.now()}`,
+      rewardId: reward.id,
+      rewardName: reward.name,
+      rewardCost: reward.cost,
+      clientId: client.id,
+      clientName: client.name,
+      clientAvatar: client.avatar,
+      status: "pending",
+      requestedAt: new Date().toISOString().split('T')[0],
+      fulfilledAt: null,
+    }]);
+    setPointLogs(prev => [...prev, {
+      id: `pl_${Date.now()}`,
+      memberId: client.id,
+      memberName: client.name,
+      amount: -reward.cost,
+      type: "reward_spent",
+      note: `Redeemed: ${reward.name}`,
+      createdAt: new Date().toISOString().split('T')[0],
+      createdBy: "client",
+    }]);
+    showToast(`${client.name} redeemed ${reward.name}!`, "success");
+  };
+
   const [coachMessages, setCoachMessages] = useState(() => {
     try {
       const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}coachMessages`);
@@ -548,6 +680,18 @@ export default function App() {
   useEffect(() => {
     safeStorage.setItem(`${STORAGE_KEY_PREFIX}coachMessages`, JSON.stringify(coachMessages));
   }, [coachMessages]);
+
+  useEffect(() => {
+    safeStorage.setItem(`${STORAGE_KEY_PREFIX}coachRewards`, JSON.stringify(coachRewards));
+  }, [coachRewards]);
+
+  useEffect(() => {
+    safeStorage.setItem(`${STORAGE_KEY_PREFIX}redemptionQueue`, JSON.stringify(redemptionQueue));
+  }, [redemptionQueue]);
+
+  useEffect(() => {
+    safeStorage.setItem(`${STORAGE_KEY_PREFIX}pointLogs`, JSON.stringify(pointLogs));
+  }, [pointLogs]);
 
   // Auto-proceed when Firebase session is restored on page reload
   useEffect(() => {
@@ -1421,6 +1565,15 @@ export default function App() {
             workoutPlanRequests={workoutPlanRequests}
             onClearWorkoutRequest={handleClearWorkoutRequest}
             onSendCoachReply={handleSendCoachReply}
+            coachRewards={coachRewards}
+            redemptionQueue={redemptionQueue}
+            pointLogs={pointLogs}
+            onCreateCoachReward={handleCreateCoachReward}
+            onDeleteCoachReward={handleDeleteCoachReward}
+            onFulfillRedemption={handleFulfillRedemption}
+            onRejectRedemption={handleRejectRedemption}
+            onAwardBonusPoints={handleAwardBonusPoints}
+            onClientRedeemCoachReward={handleClientRedeemCoachReward}
           />
         ) : (<>
           {/* Mobile bottom nav bar */}
@@ -1647,6 +1800,42 @@ export default function App() {
                     user={user}
                     ownedItems={ownedItems}
                     onRedeem={handleRedeemItem}
+                    coachRewards={coachRewards}
+                    onRedeemCoachReward={(rewardId) => {
+                      const reward = coachRewards.find(r => r.id === rewardId);
+                      if (!reward) return;
+                      if (user.points < reward.cost) {
+                        showToast("Not enough points!", "error");
+                        return;
+                      }
+                      setUser(prev => ({ ...prev, points: prev.points - reward.cost }));
+                      setMembers(prev => prev.map(m =>
+                        m.id === user.id ? { ...m, points: (m.points || 0) - reward.cost } : m
+                      ));
+                      setRedemptionQueue(prev => [...prev, {
+                        id: `rd_${Date.now()}`,
+                        rewardId: reward.id,
+                        rewardName: reward.name,
+                        rewardCost: reward.cost,
+                        clientId: user.id,
+                        clientName: user.name,
+                        clientAvatar: user.avatar,
+                        status: "pending",
+                        requestedAt: new Date().toISOString().split('T')[0],
+                        fulfilledAt: null,
+                      }]);
+                      setPointLogs(prev => [...prev, {
+                        id: `pl_${Date.now()}`,
+                        memberId: user.id,
+                        memberName: user.name,
+                        amount: -reward.cost,
+                        type: "reward_spent",
+                        note: `Redeemed: ${reward.name}`,
+                        createdAt: new Date().toISOString().split('T')[0],
+                        createdBy: "client",
+                      }]);
+                      showToast(`Redeemed ${reward.name}!`, "success");
+                    }}
                   />
                 )}
 

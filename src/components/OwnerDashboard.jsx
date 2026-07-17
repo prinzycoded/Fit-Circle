@@ -41,6 +41,11 @@ import {
   Sparkles,
   Hash,
   Mail,
+  ShoppingBag,
+  Plus,
+  Package,
+  RefreshCw,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import CoachWorkoutBuilder from "./CoachWorkoutBuilder";
@@ -154,7 +159,529 @@ const MemberDetailModal = ({ member, onClose, shoutoutMember, setShoutoutMember,
   </div>
 );
 
-export default function OwnerDashboard({ gym, members, feedPosts, challenges, accountabilityGroups, currentUser, onRemovePost, onCreateAnnouncement, onCreateShoutout, onCreateChallenge, onDeleteChallenge, onNudgeGroup, onNavigate, onAddComment, workoutPlans = [], featuredChallenge, onCreateWorkoutPlan, onAssignWorkout, onUpdateFeaturedChallenge, workoutPlanRequests = [], onClearWorkoutRequest, coachMessages = [], onSendCoachReply }) {
+const REWARD_TYPES = [
+  { id: "consultation", label: "Consultation", color: "text-purple-500", bg: "bg-purple-100" },
+  { id: "meal_plan", label: "Meal Plan", color: "text-green-500", bg: "bg-green-100" },
+  { id: "discount", label: "Discount", color: "text-pink-500", bg: "bg-pink-100" },
+  { id: "custom", label: "Custom", color: "text-blue-500", bg: "bg-blue-100" },
+];
+
+function StoreManager({ members, coachRewards, redemptionQueue, pointLogs, currentUser, onCreateCoachReward, onDeleteCoachReward, onFulfillRedemption, onRejectRedemption, onAwardBonusPoints, onClientRedeemCoachReward }) {
+  const [storeTab, setStoreTab] = useState("rewards");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showBonusModal, setShowBonusModal] = useState(false);
+  const [showRedeemModal, setShowRedeemModal] = useState(false);
+  const [rewardForm, setRewardForm] = useState({ name: "", description: "", cost: 5000, type: "consultation" });
+  const [bonusForm, setBonusForm] = useState({ memberId: "", amount: 100, note: "" });
+  const [redeemForm, setRedeemForm] = useState({ memberId: "", rewardId: "" });
+
+  const pendingRedemptions = redemptionQueue.filter(r => r.status === "pending");
+  const recentLogs = [...pointLogs].sort((a, b) => b.createdAt?.localeCompare(a.createdAt) || 0).slice(0, 30);
+
+  const memberPointsMap = {};
+  members.forEach(m => {
+    const totalEarned = pointLogs.filter(l => l.memberId === m.id && l.amount > 0).reduce((s, l) => s + l.amount, 0);
+    const totalSpent = pointLogs.filter(l => l.memberId === m.id && l.amount < 0).reduce((s, l) => s + Math.abs(l.amount), 0);
+    memberPointsMap[m.id] = { points: m.points || 0, earned: totalEarned, spent: totalSpent, redemptions: redemptionQueue.filter(r => r.clientId === m.id).length };
+  });
+
+  const storeTabs = [
+    { id: "rewards", label: "Rewards", icon: Gift },
+    { id: "queue", label: "Queue", icon: Package, badge: pendingRedemptions.length },
+    { id: "analytics", label: "Analytics", icon: BarChart3 },
+    { id: "bonus", label: "Bonus", icon: Star },
+  ];
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-theme-warning-light text-theme-warning rounded-xl">
+            <ShoppingBag size={18} />
+          </div>
+          <div>
+            <h1 className="text-xl font-display font-extrabold text-theme-primary">Rewards Store</h1>
+            <p className="text-xs text-theme-secondary">Manage rewards, redemptions, and member points</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+        {storeTabs.map(({ id, label, icon: Icon, badge }) => (
+          <button
+            key={id}
+            onClick={() => setStoreTab(id)}
+            className={`px-3 py-1.5 text-xs font-display font-bold rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              storeTab === id
+                ? "bg-theme-accent text-white"
+                : "bg-theme-border/30 text-theme-secondary hover:bg-theme-border/50"
+            }`}
+          >
+            <Icon size={14} />
+            {label}
+            {badge > 0 && <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full">{badge}</span>}
+          </button>
+        ))}
+      </div>
+
+      {/* Rewards Management */}
+      {storeTab === "rewards" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold text-theme-muted uppercase tracking-wider">{coachRewards.length} rewards</p>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="px-3 py-1.5 rounded-xl bg-theme-accent hover:bg-theme-accent-hover text-white text-xs font-display font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <Plus size={13} />
+              New Reward
+            </button>
+          </div>
+
+          {coachRewards.length === 0 ? (
+            <div className="card text-center py-10">
+              <Gift size={36} className="mx-auto text-theme-muted mb-3" />
+              <p className="text-sm font-bold text-theme-secondary">No rewards yet</p>
+              <p className="text-xs text-theme-muted mt-1">Create rewards members can redeem with points.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {coachRewards.map((reward) => {
+                const typeInfo = REWARD_TYPES.find(t => t.id === reward.type) || REWARD_TYPES[3];
+                return (
+                  <div key={reward.id} className="card flex flex-col relative overflow-hidden">
+                    <div className={`w-10 h-10 rounded-xl ${reward.bg || typeInfo.bg} ${reward.color || typeInfo.color} flex items-center justify-center mb-3`}>
+                      <Gift size={20} />
+                    </div>
+                    <h3 className="text-sm font-display font-bold text-theme-primary">{reward.name}</h3>
+                    <p className="text-xs text-theme-secondary mt-1 flex-1">{reward.description}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${typeInfo.bg} ${typeInfo.color}`}>{typeInfo.label}</span>
+                      {!reward.active && <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-theme-border/30 text-theme-muted">Inactive</span>}
+                    </div>
+                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-theme-border">
+                      <span className="flex items-center gap-1 text-sm font-display font-extrabold text-theme-primary">
+                        <Star size={13} className="text-theme-warning fill-theme-warning" />
+                        {reward.cost.toLocaleString()}
+                      </span>
+                      <span className="text-[10px] text-theme-muted">{reward.timesRedeemed || 0} redeemed</span>
+                    </div>
+                    <button
+                      onClick={() => onDeleteCoachReward(reward.id)}
+                      className="mt-2 w-full py-1.5 rounded-lg border border-theme-border text-[10px] font-display font-bold text-theme-secondary hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <Trash2 size={11} />
+                      Remove
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Redemption Queue */}
+      {storeTab === "queue" && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Package size={16} className="text-theme-accent" />
+            <h2 className="text-sm font-display font-extrabold text-theme-primary">Fulfillment Queue</h2>
+            {pendingRedemptions.length > 0 && (
+              <span className="text-[10px] font-bold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">{pendingRedemptions.length} pending</span>
+            )}
+          </div>
+
+          {redemptionQueue.length === 0 ? (
+            <div className="card text-center py-10">
+              <Package size={36} className="mx-auto text-theme-muted mb-3" />
+              <p className="text-sm font-bold text-theme-secondary">No redemptions yet</p>
+              <p className="text-xs text-theme-muted mt-1">When members redeem rewards, they'll appear here.</p>
+            </div>
+          ) : (
+            <div className="card p-0 overflow-hidden">
+              <div className="divide-y divide-theme-border/50">
+                {[...redemptionQueue].sort((a, b) => a.status === "pending" ? -1 : 1).map((r) => (
+                  <div key={r.id} className="flex items-center justify-between px-5 py-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <img referrerPolicy="no-referrer" src={r.clientAvatar} alt="" className="w-8 h-8 rounded-xl border border-theme-border shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-display font-bold text-theme-primary truncate">{r.clientName}</p>
+                        <p className="text-[10px] text-theme-muted truncate">Redeemed: {r.rewardName} ({r.rewardCost.toLocaleString()} pts)</p>
+                        <p className="text-[9px] text-theme-muted mt-0.5">
+                          {r.status === "pending" ? (
+                            <span className="text-theme-warning font-bold">Awaiting fulfillment</span>
+                          ) : r.status === "fulfilled" ? (
+                            <span className="text-theme-success font-bold">Fulfilled {r.fulfilledAt}</span>
+                          ) : (
+                            <span className="text-red-500 font-bold">Rejected</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    {r.status === "pending" && (
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          onClick={() => onFulfillRedemption(r.id)}
+                          className="px-2.5 py-1.5 rounded-lg bg-theme-success text-white text-[10px] font-display font-bold hover:bg-theme-success/80 transition-all cursor-pointer"
+                        >
+                          Fulfill
+                        </button>
+                        <button
+                          onClick={() => onRejectRedemption(r.id)}
+                          className="px-2.5 py-1.5 rounded-lg border border-theme-border text-[10px] font-display font-bold text-theme-secondary hover:bg-red-50 hover:text-red-500 transition-all cursor-pointer"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                    {r.status !== "pending" && (
+                      <span className={`text-[10px] font-bold flex items-center gap-1 ${
+                        r.status === "fulfilled" ? "text-theme-success" : "text-red-500"
+                      }`}>
+                        <CheckCircle2 size={12} />
+                        {r.status === "fulfilled" ? "Done" : "Rejected"}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Manual redeem for coach */}
+          <div className="card">
+            <button
+              onClick={() => setShowRedeemModal(true)}
+              className="w-full flex items-center justify-between cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-theme-accent-light text-theme-accent">
+                  <ShoppingBag size={14} />
+                </div>
+                <div className="text-left">
+                  <p className="text-xs font-display font-bold text-theme-primary">Redeem on behalf of member</p>
+                  <p className="text-[10px] text-theme-muted">Manually redeem a reward for a client</p>
+                </div>
+              </div>
+              <ChevronRight size={14} className="text-theme-muted" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Analytics */}
+      {storeTab === "analytics" && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <BarChart3 size={16} className="text-theme-support" />
+            <h2 className="text-sm font-display font-extrabold text-theme-primary">Point Analytics</h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              { label: "Total Points Circulated", value: members.reduce((s, m) => s + (m.points || 0), 0).toLocaleString(), icon: Star, color: "text-theme-warning", bg: "bg-theme-warning-light" },
+              { label: "Total Rewards Redeemed", value: redemptionQueue.filter(r => r.status === "fulfilled").length, icon: Gift, color: "text-theme-accent", bg: "bg-theme-accent-light" },
+              { label: "Pending Fulfillment", value: pendingRedemptions.length, icon: Package, color: "text-theme-support", bg: "bg-theme-support-light" },
+            ].map((stat, i) => (
+              <div key={i} className="card flex items-center gap-3 px-4 py-3">
+                <div className={`p-2 rounded-lg ${stat.bg} ${stat.color}`}>
+                  <stat.icon size={16} />
+                </div>
+                <div>
+                  <p className="text-lg font-display font-extrabold text-theme-primary">{stat.value}</p>
+                  <p className="text-[10px] text-theme-muted">{stat.label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="card p-0 overflow-hidden">
+            <div className="px-5 py-3 border-b border-theme-border">
+              <p className="text-xs font-display font-bold text-theme-primary">Member Point Overview</p>
+            </div>
+            <div className="divide-y divide-theme-border/50">
+              {members.length === 0 ? (
+                <div className="px-5 py-6 text-center text-xs text-theme-muted">No members yet.</div>
+              ) : (
+                [...members]
+                  .sort((a, b) => (b.points || 0) - (a.points || 0))
+                  .map((m) => {
+                    const data = memberPointsMap[m.id] || {};
+                    const needsEncouragement = data.points < 100 && data.redemptions > 0;
+                    const nearMilestone = data.points >= 1000 && data.points < 2000;
+                    return (
+                      <div key={m.id} className="flex items-center justify-between px-5 py-2.5 hover:bg-theme-border/10 transition-colors">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <img referrerPolicy="no-referrer" src={m.avatar} alt="" className="w-7 h-7 rounded-lg border border-theme-border shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-xs font-display font-bold text-theme-primary truncate flex items-center gap-1">
+                              {m.name}
+                              {needsEncouragement && <Sparkles size={11} className="text-theme-warning" title="Needs encouragement" />}
+                              {nearMilestone && <Flame size={11} className="text-theme-success" title="Near milestone" />}
+                            </p>
+                            <p className="text-[9px] text-theme-muted">Earned: {data.earned?.toLocaleString() || 0} pts</p>
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-xs font-display font-extrabold text-theme-primary">{(m.points || 0).toLocaleString()}</p>
+                          <p className="text-[9px] text-theme-muted">{data.redemptions || 0} redemptions</p>
+                        </div>
+                      </div>
+                    );
+                  })
+              )}
+            </div>
+          </div>
+
+          <div className="card p-0 overflow-hidden">
+            <div className="px-5 py-3 border-b border-theme-border">
+              <p className="text-xs font-display font-bold text-theme-primary">Recent Point Activity</p>
+            </div>
+            <div className="divide-y divide-theme-border/50 max-h-64 overflow-y-auto">
+              {recentLogs.length === 0 ? (
+                <div className="px-5 py-6 text-center text-xs text-theme-muted">No activity yet.</div>
+              ) : (
+                recentLogs.map((log) => (
+                  <div key={log.id} className="flex items-center justify-between px-5 py-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                        log.amount > 0 ? "bg-theme-success-light text-theme-success" : "bg-theme-accent-light text-theme-accent"
+                      }`}>
+                        {log.amount > 0 ? "+" : ""}{log.amount}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-display font-bold text-theme-primary truncate">{log.memberName}</p>
+                        <p className="text-[9px] text-theme-muted truncate">{log.note || log.type}</p>
+                      </div>
+                    </div>
+                    <span className="text-[9px] text-theme-muted shrink-0">{log.createdAt}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bonus Points */}
+      {storeTab === "bonus" && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Star size={16} className="text-theme-warning" />
+            <h2 className="text-sm font-display font-extrabold text-theme-primary">Award Bonus Points</h2>
+          </div>
+
+          <div className="card">
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Select Member</label>
+                <select
+                  value={bonusForm.memberId}
+                  onChange={(e) => setBonusForm({ ...bonusForm, memberId: e.target.value })}
+                  className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary focus:outline-none focus:border-theme-accent transition-colors cursor-pointer"
+                >
+                  <option value="">Choose a member...</option>
+                  {members.map(m => (
+                    <option key={m.id} value={m.id}>{m.name} ({m.points?.toLocaleString()} pts)</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Points to Award</label>
+                <input
+                  type="number"
+                  value={bonusForm.amount}
+                  onChange={(e) => setBonusForm({ ...bonusForm, amount: parseInt(e.target.value) || 0 })}
+                  min={1}
+                  className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-sm font-body text-theme-primary focus:outline-none focus:border-theme-accent transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Note (visible to member)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Great effort this week! Keep it up!"
+                  value={bonusForm.note}
+                  onChange={(e) => setBonusForm({ ...bonusForm, note: e.target.value })}
+                  className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary placeholder-theme-muted focus:outline-none focus:border-theme-accent transition-colors"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  if (bonusForm.memberId && bonusForm.amount > 0) {
+                    onAwardBonusPoints(bonusForm.memberId, bonusForm.amount, bonusForm.note || "Bonus award");
+                    setBonusForm({ memberId: "", amount: 100, note: "" });
+                  }
+                }}
+                disabled={!bonusForm.memberId || bonusForm.amount <= 0}
+                className="w-full py-2.5 rounded-xl bg-theme-warning hover:bg-theme-warning/80 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-display font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Star size={14} />
+                Award Points
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Reward Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowCreateModal(false)}>
+          <div className="card max-w-lg w-full space-y-5" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-theme-warning-light text-theme-warning rounded-xl">
+                  <Gift size={18} />
+                </div>
+                <h3 className="text-base font-display font-extrabold text-theme-primary">Create Reward</h3>
+              </div>
+              <button onClick={() => setShowCreateModal(false)} className="p-1.5 rounded-lg hover:bg-theme-border/30 text-theme-muted cursor-pointer">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Reward Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 1-on-1 Coaching Session"
+                  value={rewardForm.name}
+                  onChange={(e) => setRewardForm({ ...rewardForm, name: e.target.value })}
+                  className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-sm font-body text-theme-primary placeholder-theme-muted focus:outline-none focus:border-theme-accent transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Description</label>
+                <textarea
+                  placeholder="Describe what this reward includes..."
+                  value={rewardForm.description}
+                  onChange={(e) => setRewardForm({ ...rewardForm, description: e.target.value })}
+                  rows={2}
+                  className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary placeholder-theme-muted resize-none focus:outline-none focus:border-theme-accent transition-colors"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Type</label>
+                  <select
+                    value={rewardForm.type}
+                    onChange={(e) => setRewardForm({ ...rewardForm, type: e.target.value })}
+                    className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary focus:outline-none focus:border-theme-accent cursor-pointer"
+                  >
+                    {REWARD_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Point Cost</label>
+                  <input
+                    type="number"
+                    value={rewardForm.cost}
+                    onChange={(e) => setRewardForm({ ...rewardForm, cost: parseInt(e.target.value) || 0 })}
+                    min={100}
+                    className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-sm font-body text-theme-primary focus:outline-none focus:border-theme-accent transition-colors"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                if (rewardForm.name.trim() && rewardForm.cost > 0) {
+                  onCreateCoachReward(rewardForm);
+                  setRewardForm({ name: "", description: "", cost: 5000, type: "consultation" });
+                  setShowCreateModal(false);
+                }
+              }}
+              disabled={!rewardForm.name.trim() || rewardForm.cost <= 0}
+              className="w-full py-2.5 rounded-xl bg-theme-accent hover:bg-theme-accent-hover disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-display font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <Plus size={14} />
+              Create Reward
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Redeem on Behalf Modal */}
+      {showRedeemModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowRedeemModal(false)}>
+          <div className="card max-w-lg w-full space-y-5" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-theme-accent-light text-theme-accent rounded-xl">
+                  <ShoppingBag size={18} />
+                </div>
+                <h3 className="text-base font-display font-extrabold text-theme-primary">Redeem for Member</h3>
+              </div>
+              <button onClick={() => setShowRedeemModal(false)} className="p-1.5 rounded-lg hover:bg-theme-border/30 text-theme-muted cursor-pointer">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Member</label>
+                <select
+                  value={redeemForm.memberId}
+                  onChange={(e) => setRedeemForm({ ...redeemForm, memberId: e.target.value })}
+                  className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary focus:outline-none focus:border-theme-accent cursor-pointer"
+                >
+                  <option value="">Select member...</option>
+                  {members.map(m => (
+                    <option key={m.id} value={m.id}>{m.name} ({(m.points || 0).toLocaleString()} pts)</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-display font-bold text-theme-muted uppercase tracking-wider block mb-1">Reward</label>
+                <select
+                  value={redeemForm.rewardId}
+                  onChange={(e) => setRedeemForm({ ...redeemForm, rewardId: e.target.value })}
+                  className="w-full bg-theme-border/20 border border-theme-border rounded-xl px-4 py-2.5 text-xs font-body text-theme-primary focus:outline-none focus:border-theme-accent cursor-pointer"
+                >
+                  <option value="">Select reward...</option>
+                  {coachRewards.filter(r => r.active).map(r => (
+                    <option key={r.id} value={r.id}>{r.name} ({r.cost.toLocaleString()} pts)</option>
+                  ))}
+                </select>
+              </div>
+              {redeemForm.memberId && redeemForm.rewardId && (
+                <div className="rounded-xl bg-theme-bg border border-theme-border p-3 space-y-1">
+                  <p className="text-[9px] font-bold text-theme-muted uppercase">Summary</p>
+                  <p className="text-xs font-bold text-theme-primary">
+                    {members.find(m => m.id === redeemForm.memberId)?.name} will redeem {coachRewards.find(r => r.id === redeemForm.rewardId)?.name}
+                  </p>
+                  <p className="text-[10px] text-theme-muted">
+                    Balance: {(members.find(m => m.id === redeemForm.memberId)?.points || 0).toLocaleString()} pts
+                    &middot; Cost: {coachRewards.find(r => r.id === redeemForm.rewardId)?.cost.toLocaleString()} pts
+                  </p>
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  if (redeemForm.memberId && redeemForm.rewardId) {
+                    onClientRedeemCoachReward(redeemForm.rewardId, redeemForm.memberId);
+                    setRedeemForm({ memberId: "", rewardId: "" });
+                    setShowRedeemModal(false);
+                  }
+                }}
+                disabled={!redeemForm.memberId || !redeemForm.rewardId}
+                className="w-full py-2.5 rounded-xl bg-theme-accent hover:bg-theme-accent-hover disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-display font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <ShoppingBag size={14} />
+                Confirm Redemption
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function OwnerDashboard({ gym, members, feedPosts, challenges, accountabilityGroups, currentUser, onRemovePost, onCreateAnnouncement, onCreateShoutout, onCreateChallenge, onDeleteChallenge, onNudgeGroup, onNavigate, onAddComment, workoutPlans = [], featuredChallenge, onCreateWorkoutPlan, onAssignWorkout, onUpdateFeaturedChallenge, workoutPlanRequests = [], onClearWorkoutRequest, coachMessages = [], onSendCoachReply, coachRewards = [], redemptionQueue = [], pointLogs = [], onCreateCoachReward, onDeleteCoachReward, onFulfillRedemption, onRejectRedemption, onAwardBonusPoints, onClientRedeemCoachReward }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewingMember, setViewingMember] = useState(null);
   const [sortBy, setSortBy] = useState("points");
@@ -280,6 +807,7 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
     { id: "messages", label: "Messages", icon: Mail },
     { id: "activity", label: "Activity", icon: TrendingUp },
     { id: "groups", label: "Groups", icon: Group },
+    { id: "store", label: "Store", icon: ShoppingBag },
   ];
 
   return (
@@ -921,6 +1449,23 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
           ))}
         </div>
       </div>
+      )}
+
+      {/* Store */}
+      {activeAdminSection === "store" && (
+        <StoreManager
+          members={members}
+          coachRewards={coachRewards}
+          redemptionQueue={redemptionQueue}
+          pointLogs={pointLogs}
+          currentUser={currentUser}
+          onCreateCoachReward={onCreateCoachReward}
+          onDeleteCoachReward={onDeleteCoachReward}
+          onFulfillRedemption={onFulfillRedemption}
+          onRejectRedemption={onRejectRedemption}
+          onAwardBonusPoints={onAwardBonusPoints}
+          onClientRedeemCoachReward={onClientRedeemCoachReward}
+        />
       )}
 
       {/* Groups */}

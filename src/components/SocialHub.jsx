@@ -206,32 +206,53 @@ export default function SocialHub({
     if (!file) return;
     if (!file.type.startsWith("image/")) return;
     setIsCompressing(true);
-    setImagePreview(URL.createObjectURL(file));
+
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+
+    const timeout = setTimeout(() => {
+      setIsCompressing(false);
+    }, 10000);
+
     try {
       const compressed = await compressImage(file);
+      clearTimeout(timeout);
       setPostImage(compressed);
     } catch (err) {
       console.error("Image compression failed, using original:", err);
-      const fallbackReader = new FileReader();
-      fallbackReader.onload = (ev) => setPostImage(ev.target.result);
-      fallbackReader.readAsDataURL(file);
+      clearTimeout(timeout);
+      try {
+        const fallbackBase64 = await new Promise((resolve, reject) => {
+          const fallbackReader = new FileReader();
+          fallbackReader.onload = (ev) => resolve(ev.target.result);
+          fallbackReader.onerror = () => reject(new Error("Fallback read failed"));
+          fallbackReader.readAsDataURL(file);
+        });
+        setPostImage(fallbackBase64);
+      } catch (fallbackErr) {
+        console.error("Fallback also failed:", fallbackErr);
+      }
     } finally {
+      clearTimeout(timeout);
       setIsCompressing(false);
     }
   };
 
   const handleRemoveImage = () => {
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
     setPostImage("");
     setImagePreview(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSubmitPost = () => {
-    if (!postContent.trim() || isCompressing) return;
+    if ((!postContent.trim() && !postImage) || isCompressing) return;
     onCreatePost(postContent.trim(), postType, postImage || null);
     setPostContent("");
     setPostType("Milestone");
     setPostImage("");
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
     setImagePreview(null);
     setShowImageInput(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
