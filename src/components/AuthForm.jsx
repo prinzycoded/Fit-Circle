@@ -79,11 +79,8 @@ export default function AuthForm({ role = "client", onLoginSuccess }) {
   const isOwner = role === "owner";
 
   return (
-    <div className="rounded-3xl p-8 text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #D95C42 0%, #1D202B 100%)' }}>
-      <div className="absolute right-0 top-0 bottom-0 opacity-5 flex items-center p-4">
-        <Dumbbell size={180} />
-      </div>
-      <div className="relative z-10 max-w-md mx-auto">
+    <div className="rounded-3xl p-8 text-white" style={{ background: 'linear-gradient(135deg, #D95C42 0%, #1D202B 100%)' }}>
+      <div className="max-w-md mx-auto">
         <div className="flex items-center gap-2 mb-6">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isOwner ? "bg-theme-warning text-[#1D202B]" : "bg-white/20"}`}>
             {isOwner ? <Shield size={20} /> : <Dumbbell size={20} className="rotate-45" />}

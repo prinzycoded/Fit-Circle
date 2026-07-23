@@ -99,7 +99,7 @@ export default function LeaderboardComponents({ leaderboardData, currentUserId }
                 </div>
               </div>
             )}
-            <div className="text-center flex flex-col items-center -mt-4">
+            <div className="text-center flex flex-col items-center sm:-mt-4">
               <Crown size={24} className="text-theme-warning" />
               <img referrerPolicy="no-referrer" src={first.avatar} alt="" className="w-14 h-14 rounded-full border-2 border-theme-warning shadow-lg mt-1" />
               <p className="text-sm font-display font-extrabold text-theme-primary mt-1.5">{first.name}</p>

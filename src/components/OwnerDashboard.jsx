@@ -52,7 +52,7 @@ import CoachWorkoutBuilder from "./CoachWorkoutBuilder";
 
 const MemberDetailModal = ({ member, onClose, shoutoutMember, setShoutoutMember, shoutoutReason, setShoutoutReason, onCreateShoutout }) => (
   <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-    <div className="card max-w-lg w-full space-y-5" onClick={e => e.stopPropagation()}>
+    <div className="card max-w-lg w-full space-y-5 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <img referrerPolicy="no-referrer" src={member.avatar} alt="" className="w-14 h-14 rounded-2xl border border-theme-border" />
@@ -528,7 +528,7 @@ function StoreManager({ members, coachRewards, redemptionQueue, pointLogs, curre
       {/* Create Reward Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowCreateModal(false)}>
-          <div className="card max-w-lg w-full space-y-5" onClick={e => e.stopPropagation()}>
+          <div className="card max-w-lg w-full space-y-5 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-theme-warning-light text-theme-warning rounded-xl">
@@ -607,7 +607,7 @@ function StoreManager({ members, coachRewards, redemptionQueue, pointLogs, curre
       {/* Redeem on Behalf Modal */}
       {showRedeemModal && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowRedeemModal(false)}>
-          <div className="card max-w-lg w-full space-y-5" onClick={e => e.stopPropagation()}>
+          <div className="card max-w-lg w-full space-y-5 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-theme-accent-light text-theme-accent rounded-xl">
@@ -1555,7 +1555,7 @@ export default function OwnerDashboard({ gym, members, feedPosts, challenges, ac
       {/* Announcement Modal */}
       {showAnnounceModal && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowAnnounceModal(false)}>
-          <div className="card max-w-lg w-full space-y-4" onClick={e => e.stopPropagation()}>
+          <div className="card max-w-lg w-full space-y-4 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-theme-accent-light text-theme-accent rounded-xl">

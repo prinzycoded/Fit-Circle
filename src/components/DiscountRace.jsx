@@ -126,7 +126,7 @@ export default function DiscountRace({ user, onIncrementRoutine }) {
           <p className="text-xs font-display font-bold text-theme-accent">{totalPercentage}% Complete</p>
         </div>
 
-        <div id="racetrack-lane" className="relative z-10 py-8 sm:py-12 px-2 sm:px-4 bg-black/30 border border-theme-border/20 rounded-2xl md:my-4 min-h-[200px] sm:min-h-[240px]">
+        <div id="racetrack-lane" className="relative z-10 py-8 sm:py-12 px-2 sm:px-4 bg-black/30 border border-theme-border/20 rounded-2xl md:my-4 min-h-[200px] sm:min-h-[240px] overflow-hidden">
           
           <div className="absolute left-6 sm:left-10 right-6 sm:right-10 top-1/2 -translate-y-1/2 h-2 bg-theme-border/10 rounded-full overflow-hidden">
             <div 
@@ -251,7 +251,7 @@ export default function DiscountRace({ user, onIncrementRoutine }) {
       </div>
 
       {copiedCoupon && (
-        <div id="copied-toast" className="fixed bottom-6 right-6 z-50 bg-theme-surface border border-theme-border rounded-xl px-4 py-3 flex items-center gap-2 shadow-lg">
+        <div id="copied-toast" className="fixed bottom-20 right-6 z-[60] bg-theme-surface border border-theme-border rounded-xl px-4 py-3 flex items-center gap-2 shadow-lg">
           <CheckCircle className="text-theme-success" size={16} />
           <span className="text-xs font-bold text-theme-primary">
             Copied <span className="font-body font-bold text-theme-accent">{copiedCoupon}</span>

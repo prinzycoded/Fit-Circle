@@ -183,7 +183,7 @@ export default function ProgressTracker({ progressData, onUpdateProgress }) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="card max-w-md w-full space-y-4"
+              className="card max-w-md w-full space-y-4 max-h-[85vh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "./contexts/AuthContext";
 import Dashboard from "./components/Dashboard";
 import DiscountRace from "./components/DiscountRace";
@@ -52,6 +52,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { loadUserData, saveUserData } from "./services/firestore";
 
 const STORAGE_KEY_PREFIX = "fitcircle_";
 
@@ -229,143 +230,57 @@ const initialMemberList = [
 export default function App() {
   const { firebaseUser, loading, logout } = useAuth();
   const [authEntryDone, setAuthEntryDone] = useState(false);
+  const prevUid = useRef(null);
+
+  const scopedKey = useCallback((key) => {
+    const uid = firebaseUser?.uid || 'anonymous';
+    return `${STORAGE_KEY_PREFIX}${uid}_${key}`;
+  }, [firebaseUser?.uid]);
+
+  const loadFromScopedStorage = useCallback((key, defaultValue) => {
+    try {
+      const saved = safeStorage.getItem(scopedKey(key));
+      if (saved) return JSON.parse(saved);
+      const oldSaved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}${key}`);
+      if (oldSaved) return JSON.parse(oldSaved);
+      return defaultValue;
+    } catch (e) {
+      return defaultValue;
+    }
+  }, [scopedKey]);
 
   // Navigation State
   const [activeTab, setActiveTab] = useState("welcome");
 
   // Core App States
-  const [metrics, setMetrics] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}metrics`);
-      return saved ? JSON.parse(saved) : initialDailyMetrics;
-    } catch (e) {
-      console.error("Corrupted local metrics storage, resetting to default.", e);
-      return initialDailyMetrics;
-    }
-  });
+  const [metrics, setMetrics] = useState(() => loadFromScopedStorage('metrics', initialDailyMetrics));
 
-  const [user, setUser] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}user`);
-      return saved ? JSON.parse(saved) : initialUserProfile;
-    } catch (e) {
-      console.error("Corrupted local user storage, resetting to default.", e);
-      return initialUserProfile;
-    }
-  });
+  const [user, setUser] = useState(() => loadFromScopedStorage('user', initialUserProfile));
 
-  const [friends, setFriends] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}friends`);
-      return saved ? JSON.parse(saved) : initialFriends;
-    } catch (e) {
-      console.error("Corrupted local friends storage, resetting to default.", e);
-      return initialFriends;
-    }
-  });
+  const [friends, setFriends] = useState(() => loadFromScopedStorage('friends', initialFriends));
 
-  const [feedPosts, setFeedPosts] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}posts`);
-      return saved ? JSON.parse(saved) : initialFeedPosts;
-    } catch (e) {
-      console.error("Corrupted local posts storage, resetting to default.", e);
-      return initialFeedPosts;
-    }
-  });
+  const [feedPosts, setFeedPosts] = useState(() => loadFromScopedStorage('posts', initialFeedPosts));
 
-  const [badges, setBadges] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}badges`);
-      return saved ? JSON.parse(saved) : initialBadges;
-    } catch (e) {
-      console.error("Corrupted local badges storage, resetting to default.", e);
-      return initialBadges;
-    }
-  });
+  const [badges, setBadges] = useState(() => loadFromScopedStorage('badges', initialBadges));
 
-  const [challenges, setChallenges] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}challenges`);
-      return saved ? JSON.parse(saved) : initialChallenges;
-    } catch (e) {
-      console.error("Corrupted local challenges storage, resetting to default.", e);
-      return initialChallenges;
-    }
-  });
+  const [challenges, setChallenges] = useState(() => loadFromScopedStorage('challenges', initialChallenges));
 
-  const [accountabilityGroups, setAccountabilityGroups] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}groups`);
-      return saved ? JSON.parse(saved) : initialAccountabilityGroups;
-    } catch (e) {
-      return initialAccountabilityGroups;
-    }
-  });
+  const [accountabilityGroups, setAccountabilityGroups] = useState(() => loadFromScopedStorage('groups', initialAccountabilityGroups));
 
-  const [weeklyChallenges, setWeeklyChallenges] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}weeklyChals`);
-      return saved ? JSON.parse(saved) : initialWeeklyChallenges;
-    } catch (e) {
-      return initialWeeklyChallenges;
-    }
-  });
+  const [weeklyChallenges, setWeeklyChallenges] = useState(() => loadFromScopedStorage('weeklyChals', initialWeeklyChallenges));
 
   // Role State: "client" or "owner"
-  const [workoutPlans, setWorkoutPlans] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}workoutPlans`);
-      return saved ? JSON.parse(saved) : initialWorkoutPlans;
-    } catch (e) {
-      return initialWorkoutPlans;
-    }
-  });
+  const [workoutPlans, setWorkoutPlans] = useState(() => loadFromScopedStorage('workoutPlans', initialWorkoutPlans));
 
-  const [assignedWorkouts, setAssignedWorkouts] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}assignedWorkouts`);
-      return saved ? JSON.parse(saved) : initialAssignedWorkouts;
-    } catch (e) {
-      return initialAssignedWorkouts;
-    }
-  });
+  const [assignedWorkouts, setAssignedWorkouts] = useState(() => loadFromScopedStorage('assignedWorkouts', initialAssignedWorkouts));
 
-  const [workoutPlanRequests, setWorkoutPlanRequests] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}workoutRequests`);
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  const [workoutPlanRequests, setWorkoutPlanRequests] = useState(() => loadFromScopedStorage('workoutRequests', []));
 
-  const [progressData, setProgressData] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}progressData`);
-      return saved ? JSON.parse(saved) : initialProgressData;
-    } catch (e) {
-      return initialProgressData;
-    }
-  });
+  const [progressData, setProgressData] = useState(() => loadFromScopedStorage('progressData', initialProgressData));
 
-  const [reminderSettings, setReminderSettings] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}reminderSettings`);
-      return saved ? JSON.parse(saved) : initialReminderSettings;
-    } catch (e) {
-      return initialReminderSettings;
-    }
-  });
+  const [reminderSettings, setReminderSettings] = useState(() => loadFromScopedStorage('reminderSettings', initialReminderSettings));
 
-  const [featuredChallenge, setFeaturedChallenge] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}featuredChallenge`);
-      return saved ? JSON.parse(saved) : initialFeaturedChallenge;
-    } catch (e) {
-      return initialFeaturedChallenge;
-    }
-  });
+  const [featuredChallenge, setFeaturedChallenge] = useState(() => loadFromScopedStorage('featuredChallenge', initialFeaturedChallenge));
 
   const [viewAs, setViewAs] = useState(() => {
     try {
@@ -380,23 +295,9 @@ export default function App() {
   const [members, setMembers] = useState(initialMemberList);
 
   // Subscription state
-  const [userPlan, setUserPlan] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}userPlan`);
-      return saved || null;
-    } catch (e) {
-      return null;
-    }
-  });
+  const [userPlan, setUserPlan] = useState(() => loadFromScopedStorage('userPlan', null));
 
-  const [ownedItems, setOwnedItems] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}ownedItems`);
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  const [ownedItems, setOwnedItems] = useState(() => loadFromScopedStorage('ownedItems', []));
 
   const handleRedeemItem = (itemId) => {
     const items = [
@@ -427,36 +328,15 @@ export default function App() {
     showToast(`Redeemed ${itemId.includes("frame") ? "Avatar Frame" : itemId.includes("title") ? "Profile Title" : itemId.includes("shield") ? "Streak Shield" : "Perk"}!`, "success");
   };
 
-  const [coachRewards, setCoachRewards] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}coachRewards`);
-      return saved ? JSON.parse(saved) : [
-        { id: "cr_1", name: "1-on-1 Coaching Session", description: "30-min personal consultation via video call", cost: 5000, type: "consultation", active: true, createdAt: "2026-07-01", timesRedeemed: 2, color: "text-purple-500", bg: "bg-purple-100" },
-        { id: "cr_2", name: "Custom Meal Plan", description: "Personalized nutrition plan tailored to your goals", cost: 8000, type: "meal_plan", active: true, createdAt: "2026-07-01", timesRedeemed: 1, color: "text-green-500", bg: "bg-green-100" },
-        { id: "cr_3", name: "15% Membership Discount", description: "15% off next month's subscription fee", cost: 10000, type: "discount", active: true, createdAt: "2026-07-01", timesRedeemed: 3, color: "text-pink-500", bg: "bg-pink-100" },
-      ];
-    } catch (e) {
-      return [];
-    }
-  });
+  const [coachRewards, setCoachRewards] = useState(() => loadFromScopedStorage('coachRewards', [
+    { id: "cr_1", name: "1-on-1 Coaching Session", description: "30-min personal consultation via video call", cost: 5000, type: "consultation", active: true, createdAt: "2026-07-01", timesRedeemed: 2, color: "text-purple-500", bg: "bg-purple-100" },
+    { id: "cr_2", name: "Custom Meal Plan", description: "Personalized nutrition plan tailored to your goals", cost: 8000, type: "meal_plan", active: true, createdAt: "2026-07-01", timesRedeemed: 1, color: "text-green-500", bg: "bg-green-100" },
+    { id: "cr_3", name: "15% Membership Discount", description: "15% off next month's subscription fee", cost: 10000, type: "discount", active: true, createdAt: "2026-07-01", timesRedeemed: 3, color: "text-pink-500", bg: "bg-pink-100" },
+  ]));
 
-  const [redemptionQueue, setRedemptionQueue] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}redemptionQueue`);
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  const [redemptionQueue, setRedemptionQueue] = useState(() => loadFromScopedStorage('redemptionQueue', []));
 
-  const [pointLogs, setPointLogs] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}pointLogs`);
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  const [pointLogs, setPointLogs] = useState(() => loadFromScopedStorage('pointLogs', []));
 
   const handleCreateCoachReward = (reward) => {
     const newReward = {
@@ -559,14 +439,7 @@ export default function App() {
     showToast(`${client.name} redeemed ${reward.name}!`, "success");
   };
 
-  const [coachMessages, setCoachMessages] = useState(() => {
-    try {
-      const saved = safeStorage.getItem(`${STORAGE_KEY_PREFIX}coachMessages`);
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  const [coachMessages, setCoachMessages] = useState(() => loadFromScopedStorage('coachMessages', []));
 
   const handleSendCoachMessage = (content) => {
     const newMsg = {
@@ -614,84 +487,84 @@ export default function App() {
 
   // Sync state with safeStorage
   useEffect(() => {
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}metrics`, JSON.stringify(metrics));
-  }, [metrics]);
+    safeStorage.setItem(scopedKey('metrics'), JSON.stringify(metrics));
+  }, [metrics, scopedKey]);
 
   useEffect(() => {
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}user`, JSON.stringify(user));
-  }, [user]);
+    safeStorage.setItem(scopedKey('user'), JSON.stringify(user));
+  }, [user, scopedKey]);
 
   useEffect(() => {
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}friends`, JSON.stringify(friends));
-  }, [friends]);
+    safeStorage.setItem(scopedKey('friends'), JSON.stringify(friends));
+  }, [friends, scopedKey]);
 
   useEffect(() => {
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}posts`, JSON.stringify(feedPosts));
-  }, [feedPosts]);
+    safeStorage.setItem(scopedKey('posts'), JSON.stringify(feedPosts));
+  }, [feedPosts, scopedKey]);
 
   useEffect(() => {
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}badges`, JSON.stringify(badges));
-  }, [badges]);
+    safeStorage.setItem(scopedKey('badges'), JSON.stringify(badges));
+  }, [badges, scopedKey]);
 
   useEffect(() => {
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}challenges`, JSON.stringify(challenges));
-  }, [challenges]);
+    safeStorage.setItem(scopedKey('challenges'), JSON.stringify(challenges));
+  }, [challenges, scopedKey]);
 
   useEffect(() => {
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}groups`, JSON.stringify(accountabilityGroups));
-  }, [accountabilityGroups]);
+    safeStorage.setItem(scopedKey('groups'), JSON.stringify(accountabilityGroups));
+  }, [accountabilityGroups, scopedKey]);
 
   useEffect(() => {
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}weeklyChals`, JSON.stringify(weeklyChallenges));
-  }, [weeklyChallenges]);
+    safeStorage.setItem(scopedKey('weeklyChals'), JSON.stringify(weeklyChallenges));
+  }, [weeklyChallenges, scopedKey]);
 
   useEffect(() => {
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}workoutPlans`, JSON.stringify(workoutPlans));
-  }, [workoutPlans]);
+    safeStorage.setItem(scopedKey('workoutPlans'), JSON.stringify(workoutPlans));
+  }, [workoutPlans, scopedKey]);
 
   useEffect(() => {
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}assignedWorkouts`, JSON.stringify(assignedWorkouts));
-  }, [assignedWorkouts]);
+    safeStorage.setItem(scopedKey('assignedWorkouts'), JSON.stringify(assignedWorkouts));
+  }, [assignedWorkouts, scopedKey]);
 
   useEffect(() => {
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}workoutRequests`, JSON.stringify(workoutPlanRequests));
-  }, [workoutPlanRequests]);
+    safeStorage.setItem(scopedKey('workoutRequests'), JSON.stringify(workoutPlanRequests));
+  }, [workoutPlanRequests, scopedKey]);
 
   useEffect(() => {
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}progressData`, JSON.stringify(progressData));
-  }, [progressData]);
+    safeStorage.setItem(scopedKey('progressData'), JSON.stringify(progressData));
+  }, [progressData, scopedKey]);
 
   useEffect(() => {
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}reminderSettings`, JSON.stringify(reminderSettings));
-  }, [reminderSettings]);
+    safeStorage.setItem(scopedKey('reminderSettings'), JSON.stringify(reminderSettings));
+  }, [reminderSettings, scopedKey]);
 
   useEffect(() => {
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}featuredChallenge`, JSON.stringify(featuredChallenge));
-  }, [featuredChallenge]);
+    safeStorage.setItem(scopedKey('featuredChallenge'), JSON.stringify(featuredChallenge));
+  }, [featuredChallenge, scopedKey]);
 
   useEffect(() => {
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}userPlan`, userPlan);
-  }, [userPlan]);
+    safeStorage.setItem(scopedKey('userPlan'), userPlan);
+  }, [userPlan, scopedKey]);
 
   useEffect(() => {
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}ownedItems`, JSON.stringify(ownedItems));
-  }, [ownedItems]);
+    safeStorage.setItem(scopedKey('ownedItems'), JSON.stringify(ownedItems));
+  }, [ownedItems, scopedKey]);
 
   useEffect(() => {
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}coachMessages`, JSON.stringify(coachMessages));
-  }, [coachMessages]);
+    safeStorage.setItem(scopedKey('coachMessages'), JSON.stringify(coachMessages));
+  }, [coachMessages, scopedKey]);
 
   useEffect(() => {
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}coachRewards`, JSON.stringify(coachRewards));
-  }, [coachRewards]);
+    safeStorage.setItem(scopedKey('coachRewards'), JSON.stringify(coachRewards));
+  }, [coachRewards, scopedKey]);
 
   useEffect(() => {
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}redemptionQueue`, JSON.stringify(redemptionQueue));
-  }, [redemptionQueue]);
+    safeStorage.setItem(scopedKey('redemptionQueue'), JSON.stringify(redemptionQueue));
+  }, [redemptionQueue, scopedKey]);
 
   useEffect(() => {
-    safeStorage.setItem(`${STORAGE_KEY_PREFIX}pointLogs`, JSON.stringify(pointLogs));
-  }, [pointLogs]);
+    safeStorage.setItem(scopedKey('pointLogs'), JSON.stringify(pointLogs));
+  }, [pointLogs, scopedKey]);
 
   // Auto-proceed when Firebase session is restored on page reload
   useEffect(() => {
@@ -755,6 +628,105 @@ export default function App() {
       });
     }
   }, [firebaseUser?.uid]);
+
+  // Reload state when user changes (login/logout/switch)
+  useEffect(() => {
+    const currentUid = firebaseUser?.uid || null;
+    if (prevUid.current !== currentUid) {
+      const previousUid = prevUid.current;
+      prevUid.current = currentUid;
+      // Final Firestore sync when logging out
+      if (previousUid && !currentUid) {
+        saveUserData(previousUid, {
+          metrics, user, friends, posts: feedPosts, badges, challenges,
+          groups: accountabilityGroups, weeklyChals: weeklyChallenges,
+          workoutPlans, assignedWorkouts, workoutRequests: workoutPlanRequests,
+          progressData, reminderSettings, featuredChallenge,
+          viewAs, userPlan, ownedItems, coachMessages, coachRewards,
+          redemptionQueue, pointLogs,
+        });
+      }
+      // Clear old unscoped keys to prevent data bleeding between users
+      const oldKeys = ['metrics', 'user', 'friends', 'posts', 'badges', 'challenges', 'groups', 'weeklyChals', 'workoutPlans', 'assignedWorkouts', 'workoutRequests', 'progressData', 'reminderSettings', 'featuredChallenge', 'userPlan', 'ownedItems', 'coachMessages', 'coachRewards', 'redemptionQueue', 'pointLogs'];
+      oldKeys.forEach(key => {
+        safeStorage.removeItem(`${STORAGE_KEY_PREFIX}${key}`);
+      });
+      if (currentUid) {
+        loadUserData(currentUid).then(firestoreData => {
+          if (prevUid.current !== currentUid) return;
+          if (firestoreData && Object.keys(firestoreData).length > 0) {
+            const setState = (key, setter, fallback) => {
+              if (firestoreData[key] !== undefined) setter(firestoreData[key]);
+              else setter(loadFromScopedStorage(key, fallback));
+            };
+            setState('metrics', setMetrics, initialDailyMetrics);
+            setState('user', setUser, initialUserProfile);
+            setState('friends', setFriends, initialFriends);
+            setState('posts', setFeedPosts, initialFeedPosts);
+            setState('badges', setBadges, initialBadges);
+            setState('challenges', setChallenges, initialChallenges);
+            setState('groups', setAccountabilityGroups, initialAccountabilityGroups);
+            setState('weeklyChals', setWeeklyChallenges, initialWeeklyChallenges);
+            setState('workoutPlans', setWorkoutPlans, initialWorkoutPlans);
+            setState('assignedWorkouts', setAssignedWorkouts, initialAssignedWorkouts);
+            setState('workoutRequests', setWorkoutPlanRequests, []);
+            setState('progressData', setProgressData, initialProgressData);
+            setState('reminderSettings', setReminderSettings, initialReminderSettings);
+            setState('featuredChallenge', setFeaturedChallenge, initialFeaturedChallenge);
+            setState('userPlan', setUserPlan, null);
+            setState('ownedItems', setOwnedItems, []);
+            setState('coachMessages', setCoachMessages, []);
+            setState('coachRewards', setCoachRewards, []);
+            setState('redemptionQueue', setRedemptionQueue, []);
+            setState('pointLogs', setPointLogs, []);
+            oldKeys.forEach(key => {
+              if (firestoreData[key] !== undefined) {
+                safeStorage.setItem(scopedKey(key), JSON.stringify(firestoreData[key]));
+              }
+            });
+          } else {
+            setMetrics(loadFromScopedStorage('metrics', initialDailyMetrics));
+            setUser(loadFromScopedStorage('user', initialUserProfile));
+            setFriends(loadFromScopedStorage('friends', initialFriends));
+            setFeedPosts(loadFromScopedStorage('posts', initialFeedPosts));
+            setBadges(loadFromScopedStorage('badges', initialBadges));
+            setChallenges(loadFromScopedStorage('challenges', initialChallenges));
+            setAccountabilityGroups(loadFromScopedStorage('groups', initialAccountabilityGroups));
+            setWeeklyChallenges(loadFromScopedStorage('weeklyChals', initialWeeklyChallenges));
+            setWorkoutPlans(loadFromScopedStorage('workoutPlans', initialWorkoutPlans));
+            setAssignedWorkouts(loadFromScopedStorage('assignedWorkouts', initialAssignedWorkouts));
+            setWorkoutPlanRequests(loadFromScopedStorage('workoutRequests', []));
+            setProgressData(loadFromScopedStorage('progressData', initialProgressData));
+            setReminderSettings(loadFromScopedStorage('reminderSettings', initialReminderSettings));
+            setFeaturedChallenge(loadFromScopedStorage('featuredChallenge', initialFeaturedChallenge));
+            setUserPlan(loadFromScopedStorage('userPlan', null));
+            setOwnedItems(loadFromScopedStorage('ownedItems', []));
+            setCoachMessages(loadFromScopedStorage('coachMessages', []));
+            setCoachRewards(loadFromScopedStorage('coachRewards', []));
+            setRedemptionQueue(loadFromScopedStorage('redemptionQueue', []));
+            setPointLogs(loadFromScopedStorage('pointLogs', []));
+          }
+        });
+      }
+    }
+  }, [firebaseUser?.uid]);
+
+  // Debounced Firestore save — syncs to cloud 2s after last state change
+  useEffect(() => {
+    if (!firebaseUser?.uid) return;
+    const uid = firebaseUser.uid;
+    const timer = setTimeout(() => {
+      saveUserData(uid, {
+        metrics, user, friends, posts: feedPosts, badges, challenges,
+        groups: accountabilityGroups, weeklyChals: weeklyChallenges,
+        workoutPlans, assignedWorkouts, workoutRequests: workoutPlanRequests,
+        progressData, reminderSettings, featuredChallenge,
+        viewAs, userPlan, ownedItems, coachMessages, coachRewards,
+        redemptionQueue, pointLogs,
+      });
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [firebaseUser?.uid, metrics, user, friends, feedPosts, badges, challenges, accountabilityGroups, weeklyChallenges, workoutPlans, assignedWorkouts, workoutPlanRequests, progressData, reminderSettings, featuredChallenge, viewAs, userPlan, ownedItems, coachMessages, coachRewards, redemptionQueue, pointLogs]);
 
   // Secondary evaluation after logging or changing metrics to see if badges trigger
   useEffect(() => {

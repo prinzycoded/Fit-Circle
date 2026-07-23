@@ -18,6 +18,11 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     await signOut(auth);
+    try {
+      localStorage.removeItem("fitcircle_role");
+    } catch (e) {
+      console.warn("localStorage delete denied", e);
+    }
   };
 
   return (
