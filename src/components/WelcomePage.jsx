@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import OnboardingFlow from "./OnboardingFlow";
 import {
   Dumbbell,
   Trophy,
@@ -22,7 +23,14 @@ import StreakSystem from "./StreakSystem";
 import StreakRescueAlert from "./StreakRescueAlert";
 import SyndicateDashboardCard from "./SyndicateDashboardCard";
 
-export default function WelcomePage({ user, badges, onCheckIn, onBuyFreeze, onUseFreeze, accountabilityGroups, onRescueStreak, onNavigate }) {
+export default function WelcomePage({ user, badges, onCheckIn, onBuyFreeze, onUseFreeze, accountabilityGroups, onRescueStreak, onNavigate, onboarding, onCompleteOnboardingStep, onDismissWelcome }) {
+  useEffect(() => {
+    if (!onboarding || !onboarding.completed) return;
+    const today = new Date().toISOString().split('T')[0];
+    if (user.lastCheckIn === today && !onboarding.completed.includes("checkin")) {
+      onCompleteOnboardingStep("checkin");
+    }
+  }, [user.lastCheckIn, onboarding?.completed, onCompleteOnboardingStep]);
   const features = [
     { icon: Target, label: "Health Dashboard", desc: "Track workouts, log activity, and monitor your fitness journey." },
     { icon: Compass, label: "Consistency Race", desc: "Complete monthly routines to unlock discount rewards and coupons." },
@@ -40,6 +48,13 @@ export default function WelcomePage({ user, badges, onCheckIn, onBuyFreeze, onUs
 
   return (
     <div className="space-y-4 sm:space-y-8">
+
+      <OnboardingFlow
+        onboarding={onboarding || { completed: [], welcomeDismissed: false }}
+        onCompleteStep={onCompleteOnboardingStep}
+        onDismissWelcome={onDismissWelcome}
+        onNavigate={onNavigate}
+      />
 
       {/* Arena Contest Hero */}
       <div className="rounded-xl sm:rounded-2xl text-white relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #D95C42 0%, #7C2D12 50%, #1D202B 100%)' }}>
